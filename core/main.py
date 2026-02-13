@@ -162,7 +162,7 @@ class ConfigManager:
         },
         "idle_reasoner": {
             "short_idle_threshold": 60.0,
-            "long_idle_threshold": 600.0,
+            "long_idle_threshold": 300.0,
             "enable_world_model_dreaming": True,
             "enable_active_memory_rehearsal": True,
             "enable_curiosity_landscape_optimization": True,
@@ -3983,6 +3983,43 @@ class CuriosityEngine:
         self.interaction_history.append(text)
         if len(self.interaction_history) > getattr(self, "_max_interaction_history", 200000):
             self.interaction_history = self.interaction_history[-self._max_interaction_history:]
+        # -------------------------------------------------------
+        # HANDLE RESPONSE FEEDBACK (emergent sentiment learning)
+        # -------------------------------------------------------
+        if self.expecting_response_feedback:
+            feedback_lower = text.lower()
+            rating = None
+            ...
+            if rating is not None and self.pending_feedback_context is not None:
+                entry = self.pending_feedback_context
+                entry.rating = rating
+                entry.metadata['feedback_timestamp'] = time.time()
+                entry.metadata['feedback_text'] = text
+                self.reasoner.add_feedback(entry)
+                print(f"📊 [Feedback Recorded] User rated response as: {rating}")
+
+                if 'positive' in rating and hasattr(self, '_last_factor_vector'):
+                    self._reinforce_identity(self._last_factor_vector, reward_signal=0.2)
+
+                self.expecting_response_feedback = False
+                self.pending_feedback_context = None
+            else:
+                print(f"🌑 [Feedback] No clear rating detected, ignoring.")
+                self.expecting_response_feedback = False
+                self.pending_feedback_context = None
+
+            # -------- ADD THIS EARLY RETURN HERE --------
+            return {
+                "ci_report": {},
+                "phon_score": 0,
+                "diagnostic": {},
+                "token_analyses": [],
+                "curiosity_artifacts": ["Feedback processed."],
+                "meta_weights": self.meta_learner.get_weights(),
+                "total_intrinsic_reward": self.reward_tracker.total_reward,
+                "episode_reward": 0.0,
+                "factor_vector": {},
+            }
 
         # -------------------------------------------------------
         # CHAT MODE TRIGGER
@@ -4120,6 +4157,14 @@ class CuriosityEngine:
                 def_emb = self.semantic_learner.text_to_embedding(text)
                 if def_emb is not None:
                     self.reasoner.store_definition(self.last_asked_word, text, def_emb)
+                # Mark word as now known / stabilized
+                self.concept_model.register_definition_event(self.last_asked_word)
+
+                # Reduce curiosity bias for this word
+                if self.last_asked_word in self.word_history:
+                    for rec in self.word_history[self.last_asked_word][-3:]:
+                        rec['curiosity_factors'].gp_uncertainty *= 0.3
+                        rec['curiosity_factors'].bayesian_surprise *= 0.3
                     # Immediately check if this definition is similar to others
                     hypothesis = self.reasoner.generate_synonym_hypothesis(self.last_asked_word)
                     if hypothesis:
@@ -4171,41 +4216,6 @@ class CuriosityEngine:
                 self.feedback_attempt_word = None
                 self.feedback_attempt_response = None
                 self.feedback_timestamp = None
-
-        # -------------------------------------------------------
-        # HANDLE RESPONSE FEEDBACK (emergent sentiment learning)
-        # -------------------------------------------------------
-        if self.expecting_response_feedback:
-            feedback_lower = text.lower()
-            rating = None
-            if any(kw in feedback_lower for kw in ['positive', 'good', 'great', 'awesome', 'yes', 'correct', 'right', 'yeah', 'true', 'yep', 'love it']):
-                rating = 'positive'
-            elif any(kw in feedback_lower for kw in ['negative', 'bad', 'wrong', 'incorrect', 'no', 'nope', 'never', 'not good', 'terrible']):
-                rating = 'negative'
-            elif any(kw in feedback_lower for kw in ['neutral', 'ok', 'okay', 'fine', 'average', 'so-so']):
-                rating = 'neutral'
-            elif 'context positive' in feedback_lower:
-                rating = 'context_positive'
-            elif 'context negative' in feedback_lower:
-                rating = 'context_negative'
-            elif 'context neutral' in feedback_lower:
-                rating = 'context_neutral'
-
-            if rating is not None and self.pending_feedback_context is not None:
-                entry = self.pending_feedback_context
-                entry.rating = rating
-                entry.metadata['feedback_timestamp'] = time.time()
-                entry.metadata['feedback_text'] = text
-                self.reasoner.add_feedback(entry)
-                print(f"📊 [Feedback Recorded] User rated response as: {rating}")
-                if 'positive' in rating and hasattr(self, '_last_factor_vector'):
-                    self._reinforce_identity(self._last_factor_vector, reward_signal=0.2)
-                self.expecting_response_feedback = False
-                self.pending_feedback_context = None
-            else:
-                print(f"🌑 [Feedback] No clear rating detected, ignoring.")
-                self.expecting_response_feedback = False
-                self.pending_feedback_context = None
 
         # 3. Token analysiss
         tokens = self._tokenize(text)
@@ -4691,7 +4701,6 @@ class CuriosityEngine:
     # =========================================================================
     # IDLE TASK METHODS (called by IdleReasoner)
     # =========================================================================
-
     def _get_resource_status(self):
         """
         Returns (cpu_ok, mem_ok, throttle_factor, cpu_percent, mem_percent).
