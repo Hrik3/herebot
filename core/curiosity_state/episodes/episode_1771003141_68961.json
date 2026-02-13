@@ -1,0 +1,23 @@
+{
+  "timestamp": 1771003141.1204178,
+  "user_input": "cat is animal",
+  "system_response": "What does 'cat' mean? (My uncertainty about this word is 0.10.)",
+  "factor_vector": {
+    "curiosity": 4.719546595355517,
+    "threat": 0.2041252859715912,
+    "trust": 0.5509398919625492,
+    "confidence": 0.6418633100547404,
+    "uncertainty": 0.047946930265831286,
+    "energy": 0.3420000000000001,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9487,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 2.5663968428445805,
+  "metadata": {
+    "ci_confidence": 0.6418633100547404
+  }
+}

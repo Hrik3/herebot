@@ -1,0 +1,11 @@
+{
+  "timestamp": 1771004111.989843,
+  "user_input": "water is blue",
+  "system_response": "[synthetic]",
+  "factor_vector": {},
+  "factor_dim": 0,
+  "intrinsic_reward": 0.0,
+  "metadata": {
+    "synthetic": true
+  }
+}

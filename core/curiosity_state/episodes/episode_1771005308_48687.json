@@ -1,0 +1,23 @@
+{
+  "timestamp": 1771005308.102148,
+  "user_input": "hey bro",
+  "system_response": "What do you mean by 'hey'?",
+  "factor_vector": {
+    "curiosity": 7.153577811933573,
+    "threat": 0.2350212909699873,
+    "trust": 0.5441364470670138,
+    "confidence": 0.6368217725750318,
+    "uncertainty": 0.05528951874026813,
+    "energy": 0.375,
+    "attention": 0.1,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9625,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 6.391012131548603,
+  "metadata": {
+    "ci_confidence": 0.6368217725750318
+  }
+}

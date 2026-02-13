@@ -1,0 +1,23 @@
+{
+  "timestamp": 1771003477.1427615,
+  "user_input": "means",
+  "system_response": "What does 'means' mean? (My uncertainty about this word is 0.10.)",
+  "factor_vector": {
+    "curiosity": 2.8257170936900646,
+    "threat": 0.1893484133437784,
+    "trust": 0.7009468932706661,
+    "confidence": 0.6470845512237556,
+    "uncertainty": 0.04923090275342043,
+    "energy": 0.375,
+    "attention": 0.05,
+    "comprehension": 0.5,
+    "fluency": 0.7,
+    "cognitive_load": 0.98125,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.19120437360244547,
+  "metadata": {
+    "ci_confidence": 0.6470845512237556
+  }
+}

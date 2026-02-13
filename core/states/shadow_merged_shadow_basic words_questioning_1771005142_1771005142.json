@@ -1,0 +1,26 @@
+{
+  "label": "shadow_basic words_questioning_1771005142",
+  "vector": [
+    5.003298179255744,
+    0.18781587977023273,
+    0.6348515098215988,
+    0.6670766132773202,
+    0.0458732100196844,
+    0.375,
+    0.1,
+    0.25,
+    0.7,
+    0.9624999999999999
+  ],
+  "dimension": 10,
+  "timestamp": 1771005142.6459959,
+  "metadata": {
+    "merged_from": [
+      "basic words",
+      "questioning"
+    ],
+    "similarity": 0.9428989616213846,
+    "timestamp": 1771005142.6459727
+  },
+  "is_shadow": true
+}

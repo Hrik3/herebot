@@ -1,0 +1,23 @@
+{
+  "timestamp": 1771002276.423552,
+  "user_input": "animal is living",
+  "system_response": "What does 'animal' mean? (My uncertainty about this word is 0.10.)",
+  "factor_vector": {
+    "curiosity": 5.796296154490432,
+    "threat": 0.19961454071525286,
+    "trust": 0.5531237710230457,
+    "confidence": 0.6427235065289196,
+    "uncertainty": 0.06310167023154034,
+    "energy": 0.358,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9463,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 6.098963847505841,
+  "metadata": {
+    "ci_confidence": 0.6427235065289196
+  }
+}

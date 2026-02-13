@@ -1,0 +1,11 @@
+{
+  "timestamp": 1771004109.79854,
+  "user_input": "color is word",
+  "system_response": "[synthetic]",
+  "factor_vector": {},
+  "factor_dim": 0,
+  "intrinsic_reward": 0.0,
+  "metadata": {
+    "synthetic": true
+  }
+}

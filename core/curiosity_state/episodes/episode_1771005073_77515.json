@@ -1,0 +1,11 @@
+{
+  "timestamp": 1771005073.275218,
+  "user_input": "positive means good",
+  "system_response": "[synthetic]",
+  "factor_vector": {},
+  "factor_dim": 0,
+  "intrinsic_reward": 0.0,
+  "metadata": {
+    "synthetic": true
+  }
+}

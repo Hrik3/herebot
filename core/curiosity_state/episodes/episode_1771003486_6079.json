@@ -1,0 +1,23 @@
+{
+  "timestamp": 1771003486.5982687,
+  "user_input": "hi",
+  "system_response": "What do you mean by 'hi'?",
+  "factor_vector": {
+    "curiosity": 2.5816478217563166,
+    "threat": 0.19350023800000005,
+    "trust": 0.687999462,
+    "confidence": 0.5949994049999998,
+    "uncertainty": 0.04903927441687165,
+    "energy": 0.375,
+    "attention": 0.05,
+    "comprehension": 0.5,
+    "fluency": 0.7,
+    "cognitive_load": 0.98125,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.4638474221861241,
+  "metadata": {
+    "ci_confidence": 0.5949994049999998
+  }
+}

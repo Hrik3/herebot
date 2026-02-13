@@ -1,0 +1,26 @@
+{
+  "label": "shadow_basic knowledge_questioning_1771005070",
+  "vector": [
+    6.078466567689232,
+    0.19455475109221199,
+    0.5595615250909706,
+    0.6641118375418383,
+    0.04568456702063972,
+    0.3735,
+    0.15,
+    0.0,
+    0.7,
+    0.943975
+  ],
+  "dimension": 10,
+  "timestamp": 1771005070.8551695,
+  "metadata": {
+    "merged_from": [
+      "basic knowledge",
+      "questioning"
+    ],
+    "similarity": 0.9964136206064508,
+    "timestamp": 1771005070.855144
+  },
+  "is_shadow": true
+}

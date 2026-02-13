@@ -582,6 +582,42 @@ class HierarchicalConceptModel:
             "stability": 1.0,
             "type": "explicit_definition"
         }
+
+    def register_definition_event(self, word: str):
+        """
+        Called when a word receives an explicit definition.
+        Performs semantic stabilization:
+        - Reinforces dominant concept
+        - Reduces entropy
+        - Marks word as stabilized
+        """
+
+        if word not in self.word_concept_counts:
+            return
+
+        counts = self.word_concept_counts[word]
+
+        # Reinforce dominant concept
+        if isinstance(counts, dict) and len(counts) > 0:
+            dominant = max(counts, key=counts.get)
+            counts[dominant] += 10
+
+        # Mark stabilized
+        if not hasattr(self, "stabilized_words"):
+            self.stabilized_words = set()
+
+        self.stabilized_words.add(word)
+
+        # Track definition event
+        if not hasattr(self, "definition_events"):
+            self.definition_events = {}
+
+        self.definition_events[word] = {
+            "timestamp": time.time(),
+            "stability": 1.0,
+            "type": "explicit_definition"
+        }
+
     @classmethod
     def load(cls, path: str, config_manager: Optional['ConfigManager'] = None):
         with open(path, 'rb') as f:
@@ -701,18 +737,49 @@ class SemanticLearner:
             return 0.0
         return np.dot(e1, e2) / (norm1 * norm2)
 
-    def text_to_embedding(self, text: str) -> Optional[np.ndarray]:
+    def text_to_embedding(self, text: str, fallback_to_char=True) -> Optional[np.ndarray]:
         """
         Convert a text string to an embedding by averaging embeddings of known words.
-        Returns None if no known words in text.
+        If fallback_to_char, use character n-gram embedding for unknown words.
+        Returns None only if no words and no characters (empty).
         """
         tokens = text.split()
-        known_embs = [self.word_embeddings[t] for t in tokens if t in self.word_embeddings]
+        known_embs = []
+        for t in tokens:
+            if t in self.word_embeddings:
+                known_embs.append(self.word_embeddings[t])
+            elif fallback_to_char:
+                # use character embedding
+                known_embs.append(self.char_ngram_embedding(t, emb_dim=self.emb_dim))
         if not known_embs:
             return None
         emb = np.mean(known_embs, axis=0)
-        return emb / (np.linalg.norm(emb) + 1e-12)
+        norm = np.linalg.norm(emb)
+        if norm > 0:
+            emb /= norm
+        return emb
 
+    def char_ngram_embedding(self, text: str, n=3, emb_dim=64) -> np.ndarray:
+        """
+        Compute a simple character n-gram embedding for unknown words.
+        Hash each n-gram to a position, use bag-of-char-ngrams.
+        """
+        # Pad text
+        text = ' ' + text.lower() + ' '
+        ngrams = []
+        for i in range(len(text)-n+1):
+            ngram = text[i:i+n]
+            ngrams.append(ngram)
+        emb = np.zeros(emb_dim)
+        for ng in set(ngrams):  # unique n-grams
+            idx = hash(ng) % emb_dim
+            emb[idx] += 1.0
+        # normalize
+        norm = np.linalg.norm(emb)
+        if norm > 0:
+            emb /= norm
+        return emb
+    
     def save(self, path: str):
         tmp = path + ".tmp"
         with open(tmp, 'wb') as f:
@@ -1255,6 +1322,7 @@ class BehavioralRuleLearner:
 
     def propose_new_rules(self, engine: 'CuriosityEngine') -> List[BehavioralRule]:
         candidates = []
+        # Existing identity alias detection
         episodes = engine.episodic_memory.episodes[-200:]
         alias_candidates = defaultdict(int)
         for ep in episodes:
@@ -1286,15 +1354,210 @@ class BehavioralRuleLearner:
                         prior=0.2
                     )
                     candidates.append(rule)
-        for rule in candidates:
-            self.add_candidate_rule(rule)
+
+        # New pattern detections
+        candidates.extend(self.detect_greeting_patterns(engine))
+        candidates.extend(self.detect_qa_patterns(engine))
+        # deep_pattern_mining will be called separately during idle
+
         return candidates
 
+    def detect_greeting_patterns(self, engine: 'CuriosityEngine') -> List[BehavioralRule]:
+        """
+        Scan episodic memory for common opening utterances and their typical responses.
+        Creates rules of type 'conversational_pattern'.
+        """
+        candidates = []
+        episodes = engine.episodic_memory.episodes[-500:]  # recent history
+
+        # Count user utterance frequencies (first turn of a session or after long gaps)
+        user_utterance_counter = Counter()
+        response_counter = defaultdict(Counter)  # user_input -> Counter of system_responses
+
+        for ep in episodes:
+            user_input = ep.get('user_input', '').lower().strip()
+            system_response = ep.get('system_response', '').strip()
+            if not user_input or not system_response:
+                continue
+            user_utterance_counter[user_input] += 1
+            response_counter[user_input][system_response] += 1
+
+        # Find frequent user utterances (e.g., greetings)
+        threshold = 3  # at least 3 occurrences
+        for user_input, freq in user_utterance_counter.items():
+            if freq >= threshold and len(user_input.split()) <= 3:  # short phrases
+                # Get the most common system response
+                if user_input in response_counter:
+                    most_common_resp = response_counter[user_input].most_common(1)[0][0]
+                    rule_id = f"pattern_greeting_{hash(user_input) % 10000:04x}"
+                    if rule_id not in self.rules:
+                        rule = BehavioralRule(
+                            rule_id=rule_id,
+                            rule_type='conversational_pattern',
+                            condition={'user_input_pattern': user_input},
+                            action={'response_template': most_common_resp},
+                            confidence=0.4 + 0.1 * freq,
+                            prior=0.3
+                        )
+                        candidates.append(rule)
+        return candidates
+
+    def detect_qa_patterns(self, engine: 'CuriosityEngine') -> List[BehavioralRule]:
+        """
+        Find question–answer pairs: user inputs ending with '?' and system responses.
+        """
+        candidates = []
+        episodes = engine.episodic_memory.episodes[-300:]
+        question_counter = Counter()
+        answer_counter = defaultdict(Counter)
+
+        for ep in episodes:
+            user_input = ep.get('user_input', '').strip()
+            system_response = ep.get('system_response', '').strip()
+            if not user_input or not system_response:
+                continue
+            if user_input.endswith('?'):
+                # Normalize question (remove punctuation, lower)
+                norm_q = user_input.lower().rstrip('?').strip()
+                question_counter[norm_q] += 1
+                # Store a simplified version: if question contains "what is X", we might generalize
+                words = norm_q.split()
+                if len(words) >= 3 and words[0] in ['what', 'who', 'where', 'when', 'why', 'how']:
+                    # Create a template: e.g., "what is X" -> response pattern?
+                    # For now, just store exact match
+                    answer_counter[norm_q][system_response] += 1
+                else:
+                    answer_counter[norm_q][system_response] += 1
+
+        for q, freq in question_counter.items():
+            if freq >= 2 and q in answer_counter:
+                most_common_ans = answer_counter[q].most_common(1)[0][0]
+                rule_id = f"pattern_qa_{hash(q) % 10000:04x}"
+                if rule_id not in self.rules:
+                    rule = BehavioralRule(
+                        rule_id=rule_id,
+                        rule_type='conversational_pattern',
+                        condition={'question_pattern': q},
+                        action={'answer_template': most_common_ans},
+                        confidence=0.3 + 0.1 * freq,
+                        prior=0.2
+                    )
+                    candidates.append(rule)
+        return candidates
+
+    def deep_pattern_mining(self, engine: 'CuriosityEngine') -> List[BehavioralRule]:
+        """
+        Offline mining of longer sequences (e.g., 2-turn exchanges) using simple Markov chain.
+        Called only during idle.
+        """
+        candidates = []
+        episodes = engine.episodic_memory.episodes[-1000:]  # larger history
+
+        # Build a bigram model over (user_input, system_response) pairs
+        transition = defaultdict(Counter)  # prev_system -> next_user
+        # We need to consider sequences: user1 -> system1 -> user2 -> system2 ...
+        for i in range(len(episodes) - 1):
+            ep1 = episodes[i]
+            ep2 = episodes[i+1]
+            if 'system_response' in ep1 and 'user_input' in ep2:
+                prev_resp = ep1['system_response'].strip()
+                next_user = ep2['user_input'].strip().lower()
+                if prev_resp and next_user:
+                    transition[prev_resp][next_user] += 1
+
+        # Find common transitions
+        for prev_resp, next_users in transition.items():
+            total = sum(next_users.values())
+            for next_user, count in next_users.items():
+                if count >= 3 and count / total > 0.3:
+                    rule_id = f"pattern_transition_{hash(prev_resp+next_user) % 10000:04x}"
+                    if rule_id not in self.rules:
+                        rule = BehavioralRule(
+                            rule_id=rule_id,
+                            rule_type='conversational_pattern',
+                            condition={'previous_response_pattern': prev_resp},
+                            action={'expected_user_input': next_user},
+                            confidence=0.5 + 0.1 * (count / total),
+                            prior=0.2
+                        )
+                        candidates.append(rule)
+        return candidates
+    
     def integrate_rule(self, rule_id: str):
         """Mark rule as fully integrated (confidence = 1.0)."""
         if rule_id in self.rules:
             self.rules[rule_id].confidence = 1.0
             self.save()
+
+# ------------------------------------------------------------
+# Word-State Associator – maps words to semantic state labels
+# ------------------------------------------------------------
+class WordStateAssociator:
+    """
+    Tracks associations between words/phrases and user-defined state labels (e.g., "greeting").
+    Supports multiple labels per word with confidence scores.
+    """
+    def __init__(self):
+        self.word_to_labels: Dict[str, Dict[str, float]] = defaultdict(dict)  # word -> {label: confidence}
+        self.label_to_words: Dict[str, Set[str]] = defaultdict(set)           # label -> set of words
+        self.conflict_resolution_threshold = 0.3   # minimum confidence difference to auto-resolve
+
+    def add_association(self, word: str, label: str, confidence: float = 1.0, source: str = "explicit"):
+        """
+        Add a word-label association. If the word already has the label, update confidence.
+        If the word has other labels with similar confidence, we may need to ask later.
+        """
+        current = self.word_to_labels[word].get(label, 0.0)
+        self.word_to_labels[word][label] = max(current, confidence)
+        self.label_to_words[label].add(word)
+
+    def get_labels(self, word: str, threshold: float = 0.5) -> List[str]:
+        """Return labels for word with confidence > threshold."""
+        return [lab for lab, conf in self.word_to_labels.get(word, {}).items() if conf > threshold]
+
+    def get_words(self, label: str, threshold: float = 0.5) -> List[str]:
+        """Return words associated with a label (with any confidence)."""
+        return list(self.label_to_words.get(label, set()))
+
+    def find_similar_words_by_label(self, word: str) -> List[str]:
+        """Find other words that share at least one label with the given word."""
+        labels = self.get_labels(word, threshold=0.3)
+        similar = set()
+        for lab in labels:
+            similar.update(self.get_words(lab))
+        similar.discard(word)
+        return list(similar)
+
+    def detect_conflicts(self, word: str) -> List[Tuple[str, str]]:
+        """
+        Return pairs of labels for the same word that have similar confidence,
+        indicating possible ambiguity that should be clarified.
+        """
+        if word not in self.word_to_labels:
+            return []
+        labels = list(self.word_to_labels[word].items())
+        conflicts = []
+        for i, (l1, c1) in enumerate(labels):
+            for l2, c2 in labels[i+1:]:
+                if abs(c1 - c2) < self.conflict_resolution_threshold:
+                    conflicts.append((l1, l2))
+        return conflicts
+
+    def save(self, path: str):
+        # Convert sets to lists for JSON serialization
+        data = {
+            'word_to_labels': {w: dict(labs) for w, labs in self.word_to_labels.items()},
+            'label_to_words': {lab: list(words) for lab, words in self.label_to_words.items()},
+        }
+        with open(path, 'w') as f:
+            json.dump(data, f, indent=2)
+
+    def load(self, path: str):
+        if os.path.exists(path):
+            with open(path, 'r') as f:
+                data = json.load(f)
+            self.word_to_labels = defaultdict(dict, {w: defaultdict(float, labs) for w, labs in data['word_to_labels'].items()})
+            self.label_to_words = defaultdict(set, {lab: set(words) for lab, words in data['label_to_words'].items()})
 
 @dataclass
 class ConscienceBelief:
@@ -2250,12 +2513,19 @@ class ReasoningEngine:
         # ---- Feedback corpus for emergent sentiment learning ----
         self.feedback_corpus = ContextualSentimentCorpus()
         self.response_template_registry = {}   # template_id -> template text (for future learning)
-        # ============================================================
+        self.word_state = WordStateAssociator()
+        # --- NEW: Phrase-level reasoning ---
+        self.phrase_definitions: Dict[str, str] = {}           # phrase -> definition text
+        self.phrase_embeddings: Dict[str, np.ndarray] = {}     # phrase -> embedding
+        self.phrase_metadata: Dict[str, dict] = {}
+        self.phrase_relations: Dict[str, List[Tuple[str, str, float]]] = defaultdict(list)  # phrase -> (rel_type, target, confidence)
+        self.inferences: List[Dict] = []                        # pending inferred relations to ask user
+        self.is_a_relations: Dict[str, Set[str]] = defaultdict(set)   # subject -> set of objects (for "is a")
+        self.means_relations: Dict[str, Set[str]] = defaultdict(set)  # subject -> set of objects (for "means")
 
     def update_parameters_from_config(self):
         """Placeholder for hot reload."""
         pass
-
     # ------------------------------------------------------------------
     # Co-occurrence and basic hypothesis
     # ------------------------------------------------------------------
@@ -2276,6 +2546,68 @@ class ReasoningEngine:
         # --- store sentence (without embedding now; embedding added later) ---
         self.store_sentence(sentence, tokens, embedding=None,
                             metadata={'source': 'user', 'timestamp': time.time()})
+
+    def store_phrase_relation(self, subject: str, object: str, rel_type: str, confidence: float = 1.0):
+        """
+        Store a relation between two phrases (e.g., 'cat' 'is_a' 'animal').
+        Also checks for transitive inferences immediately.
+        """
+        if rel_type == 'is_a':
+            self.is_a_relations[subject].add(object)
+        elif rel_type == 'means':
+            self.means_relations[subject].add(object)
+        # Also store in generic phrase_relations for completeness
+        self.phrase_relations[subject].append((rel_type, object, confidence))
+        self._check_transitive_inferences(subject, object, rel_type)
+
+    def _check_transitive_inferences(self, subject: str, object: str, rel_type: str):
+        """
+        When a new relation (subject rel_type object) is added, look for
+        chains that yield new inferred relations.
+        """
+        if rel_type == 'is_a':
+            # If object has outgoing is_a relations, subject inherits them
+            for obj2 in self.is_a_relations.get(object, []):
+                if obj2 not in self.is_a_relations[subject]:
+                    self.add_inference_hypothesis(subject, 'is_a', obj2, confidence=0.8)
+            # Also check if subject appears as object of another relation
+            for subj2, objs in self.is_a_relations.items():
+                if subject in objs and object not in self.is_a_relations[subj2]:
+                    self.add_inference_hypothesis(subj2, 'is_a', object, confidence=0.8)
+        elif rel_type == 'means':
+            # Similar transitive closure for "means"
+            for obj2 in self.means_relations.get(object, []):
+                if obj2 not in self.means_relations[subject]:
+                    self.add_inference_hypothesis(subject, 'means', obj2, confidence=0.8)
+            for subj2, objs in self.means_relations.items():
+                if subject in objs and object not in self.means_relations[subj2]:
+                    self.add_inference_hypothesis(subj2, 'means', object, confidence=0.8)
+
+    def add_inference_hypothesis(self, subject: str, rel_type: str, object: str, confidence: float):
+        """
+        Create a natural language hypothesis for a transitive inference and
+        add it to the hypotheses list to be asked later.
+        """
+        key = f"inference:{subject}:{rel_type}:{object}"
+        if any(h.get('key') == key for h in self.hypotheses):
+            return
+        if rel_type == 'is_a':
+            text = f"Is '{subject}' a '{object}'?"
+        elif rel_type == 'means':
+            text = f"Does '{subject}' mean '{object}'?"
+        else:
+            text = f"Does '{subject}' relate to '{object}'?"
+        hyp = {
+            'key': key,
+            'type': 'inference',
+            'subject': subject,
+            'predicate': rel_type,
+            'object': object,
+            'confidence': confidence,
+            'text': text,
+            'asked': False,
+        }
+        self.hypotheses.append(hyp)
 
     def infer_possible_meanings(self, word: str) -> List[str]:
         if word not in self.co_occurrence:
@@ -2323,6 +2655,28 @@ class ReasoningEngine:
         results.sort(key=lambda x: -x[1])
         return results
 
+    def find_similar_phrases(self, phrase_emb: np.ndarray, threshold: float = 0.85) -> List[Tuple[str, float]]:
+        """
+        Return list of (phrase, similarity) for stored phrases with embedding similar to query.
+        """
+        results = []
+        for key, emb in self.phrase_embeddings.items():
+            sim = np.dot(phrase_emb, emb) / (np.linalg.norm(phrase_emb) * np.linalg.norm(emb) + 1e-12)
+            if sim >= threshold:
+                # retrieve original phrase from metadata
+                phrase = self.phrase_metadata.get(key, {}).get('phrase', key)
+                results.append((phrase, sim))
+        results.sort(key=lambda x: -x[1])
+        return results
+
+    def store_phrase(self, phrase: str, embedding: np.ndarray, metadata: dict = None):
+        """Store a phrase and its embedding for future similarity."""
+        canon = phrase.strip().lower()
+        if not canon:
+            return
+        key = str(hash(canon))
+        self.phrase_embeddings[key] = embedding
+        self.phrase_metadata[key] = metadata or {'phrase': canon, 'timestamp': time.time()}
     # ------------------------------------------------------------------
     # Synonym/category hypothesis generation
     # ------------------------------------------------------------------
@@ -2365,6 +2719,7 @@ class ReasoningEngine:
         # Convert numpy arrays to lists
         def_emb_serializable = {w: emb.tolist() for w, emb in self.definition_embeddings.items()}
         sent_emb_serializable = {h: emb.tolist() for h, emb in self.sentence_embeddings.items()}
+        phrase_embed_serializable = {p: emb.tolist() for p, emb in self.phrase_embeddings.items()} 
         tmp = path + ".tmp"
         with open(tmp, 'wb') as f:
             pickle.dump({
@@ -2373,14 +2728,22 @@ class ReasoningEngine:
                 'hypotheses': self.hypotheses,
                 'definitions': self.definitions,
                 'definition_embeddings': def_emb_serializable,
-                # new sentence fields
                 'sentence_patterns': self.sentence_patterns,
                 'sentence_embeddings': sent_emb_serializable,
                 'sentence_metadata': self.sentence_metadata,
                 'sentence_asked': self.sentence_asked,
+                # NEW fields
+                'phrase_definitions': self.phrase_definitions,
+                'phrase_embeddings': phrase_embed_serializable,
+                'phrase_relations': self.phrase_relations,
+                'phrase_metadata': self.phrase_metadata, 
+                'inferences': self.inferences,
+                'is_a_relations': dict(self.is_a_relations),
+                'means_relations': dict(self.means_relations),
             }, f)
         os.replace(tmp, path)
-
+        # Save word-state associations separately
+        self.word_state.save(os.path.join(STATE_DIR, 'word_state.json'))
 
     def load(self, path: str):
         with open(path, 'rb') as f:
@@ -2391,10 +2754,8 @@ class ReasoningEngine:
             self.definitions = data.get('definitions', {})
             emb_dict = data.get('definition_embeddings', {})
             self.definition_embeddings = {w: np.array(emb) for w, emb in emb_dict.items()}
-            # load sentence fields (with defaults if missing)
             raw = data.get('sentence_patterns', {})
             self.sentence_patterns = defaultdict(int)
-
             for k, v in raw.items():
                 if isinstance(v, int):
                     self.sentence_patterns[k] = v
@@ -2406,6 +2767,17 @@ class ReasoningEngine:
             self.sentence_embeddings = {h: np.array(emb) for h, emb in sent_emb_dict.items()}
             self.sentence_metadata = data.get('sentence_metadata', {})
             self.sentence_asked = data.get('sentence_asked', set())
+            # NEW: load phrase data
+            self.phrase_definitions = data.get('phrase_definitions', {})
+            phrase_emb_dict = data.get('phrase_embeddings', {})
+            self.phrase_embeddings = {p: np.array(emb) for p, emb in phrase_emb_dict.items()}
+            self.phrase_relations = data.get('phrase_relations', defaultdict(list))
+            self.inferences = data.get('inferences', [])
+            self.is_a_relations = defaultdict(set, data.get('is_a_relations', {}))
+            self.means_relations = defaultdict(set, data.get('means_relations', {}))
+            self.phrase_metadata = data.get('phrase_metadata', {})
+        # Load word-state associations
+        self.word_state.load(os.path.join(STATE_DIR, 'word_state.json'))
 
     def detect_pattern_and_query(self, word: str) -> Optional[str]:
         pat = self.context_patterns[word]
@@ -2622,6 +2994,7 @@ class StateManager:
 
     def save_state(self, label: str, vector: np.ndarray, metadata: dict = None, is_shadow: bool = False, response: str = None):
         """Save a factor vector under the given label."""
+        os.makedirs(self.state_dir, exist_ok=True)
         safe_label = "".join(c for c in label if c.isalnum() or c in " _-").strip()
         if not safe_label:
             safe_label = "unnamed_state"
@@ -2793,23 +3166,28 @@ class StateManager:
 
     def create_shadow_resolution(self, conflict: Dict) -> str:
         """Merge the two conflicting vectors (average) and create a temporary shadow state."""
-        l1, l2 = conflict["labels"][0], conflict["labels"][1]
-        v1 = self.states[l1]
-        v2 = self.states[l2]
-        # Align to the longer length before averaging
-        max_len = max(len(v1), len(v2))
-        v1_aligned = np.pad(v1, (0, max_len - len(v1)), 'constant') if len(v1) < max_len else v1[:max_len]
-        v2_aligned = np.pad(v2, (0, max_len - len(v2)), 'constant') if len(v2) < max_len else v2[:max_len]
-        merged_vector = self._normalize_vector((v1_aligned + v2_aligned) / 2.0)
+        try:
+            l1, l2 = conflict["labels"][0], conflict["labels"][1]
+            v1 = self.states[l1]
+            v2 = self.states[l2]
+            # Align to the longer length before averaging
+            max_len = max(len(v1), len(v2))
+            v1_aligned = np.pad(v1, (0, max_len - len(v1)), 'constant') if len(v1) < max_len else v1[:max_len]
+            v2_aligned = np.pad(v2, (0, max_len - len(v2)), 'constant') if len(v2) < max_len else v2[:max_len]
+            merged_vector = self._normalize_vector((v1_aligned + v2_aligned) / 2.0)
 
-        shadow_label = f"shadow_{l1}_{l2}_{int(time.time())}"
-        metadata = {
-            "merged_from": [l1, l2],
-            "similarity": conflict["similarity"],
-            "timestamp": time.time(),
-        }
-        self.save_state(shadow_label, merged_vector, metadata, is_shadow=True)
-        return shadow_label
+            shadow_label = f"shadow_{l1}_{l2}_{int(time.time())}"
+            metadata = {
+                "merged_from": [l1, l2],
+                "similarity": conflict["similarity"],
+                "timestamp": time.time(),
+            }
+            self.save_state(shadow_label, merged_vector, metadata, is_shadow=True)
+            return shadow_label
+        except Exception as e:
+            print(f"   [Error creating shadow resolution: {e}]")
+            # Return a fallback label
+            return f"shadow_error_{int(time.time())}"
 
     def apply_shadow_to_conflict(self, conflict: Dict, shadow_label: str):
         """Mark conflict as resolved with the given shadow label."""
@@ -3336,7 +3714,7 @@ class CuriosityEngine:
 
         # Reasoning engine
         self.reasoner = ReasoningEngine(config_manager=self.config_manager)
-
+        self._last_state_learning_time = 0
         # ---- Language & consciousness modules ----
         self.semantic_learner = SemanticLearner(config_manager=self.config_manager)
         self.syntax_learner = SyntaxLearner(config_manager=self.config_manager)
@@ -3346,7 +3724,7 @@ class CuriosityEngine:
         self.consciousness = ConsciousnessModel(config_manager=self.config_manager)
         self.episodic_memory = EpisodicMemory(config_manager=self.config_manager)
         # ------------------------------------------
-
+        self._last_feedback_ask_time = 0
         # ---- Adaptive Control Space ----
         self.control_space = AdaptiveControlSpace(config_manager=self.config_manager)
         # Register listener for new control factors → become curiosity factors
@@ -3775,6 +4153,14 @@ class CuriosityEngine:
                 "bayesian_surprise": bayes_surprise,
                 "gp_uncertainty": gp_uncertainty,
             }
+            # If word has a definition, reduce its curiosity significantly
+            if self.reasoner and self.reasoner.definitions.get(token):
+                factor_dict["novelty"] *= 0.1
+                factor_dict["surprise"] *= 0.1
+                factor_dict["bayesian_surprise"] *= 0.1
+                factor_dict["gp_uncertainty"] *= 0.1
+                factor_dict["uncertainty"] *= 0.1
+                factor_dict["learning_progress"] *= 0.1
 
             for dyn_factor in self.meta_learner.dynamic_factor_names:
                 val = self.meta_learner.compute_dynamic_factor(
@@ -3805,10 +4191,14 @@ class CuriosityEngine:
         Uses meta-level novelty gating to avoid state collapse.
         Now also sets the persistent latent state concept and its embedding.
         """
-
         if factor_vector is None or len(factor_vector) == 0:
             print("   [State Learning] Empty factor vector – skipping.")
             return
+
+        # Only consider state learning if enough interactions have passed since last state addition
+        if time.time() - self._last_state_learning_time < 30:  # at most once per 30 seconds
+            return
+
         # similarity threshold (high)
         sim_threshold = self.config_manager.get('engine.state_similarity_threshold', 0.97)
 
@@ -3825,7 +4215,15 @@ class CuriosityEngine:
         if similar_label:
             stored_vec = self.state_manager.states.get(similar_label)
             if stored_vec is not None:
-                dist = np.linalg.norm(factor_vector - stored_vec)
+                v1 = self.state_manager._normalize_vector(factor_vector)
+                v2 = self.state_manager._normalize_vector(stored_vec)
+
+                if v1.shape != v2.shape:
+                    max_len = max(len(v1), len(v2))
+                    v1 = np.pad(v1, (0, max_len - len(v1)))
+                    v2 = np.pad(v2, (0, max_len - len(v2)))
+
+                dist = np.linalg.norm(v1 - v2)
 
                 # if sufficiently different → treat as new state
                 if dist > novelty_dist_threshold:
@@ -3839,7 +4237,13 @@ class CuriosityEngine:
             self._update_state_embedding(similar_label, stored_vec)
             return
 
-        # Novel state detected
+        # Novel state detected – only ask for label if the vector has high variance (meaningful)
+        # Compute variance of factor vector as a measure of distinctiveness
+        vec_variance = np.var(factor_vector)
+        if vec_variance < 0.05:  # very flat vector – probably not meaningful
+            print("   [State Learning] Factor vector too uniform – skipping state creation.")
+            return
+
         print("\n🧠 [State Learning] I encountered a new internal state.")
         print("    Factor vector: " + " ".join(f"{v:.2f}" for v in factor_vector))
         print("    How do humans call this state? (e.g., 'confident exploration', 'cautious inquiry')")
@@ -3849,6 +4253,7 @@ class CuriosityEngine:
 
         self.state_manager.save_state(label, factor_vector, metadata)
         print(f"    ✅ State saved as '{label}'.")
+        self._last_state_learning_time = time.time()  # record time
         # Reinforce identity – labeling a state is a positive interaction
         self._reinforce_identity(factor_vector, reward_signal=0.2)
         # Set this new state as the current latent concept
@@ -3868,7 +4273,6 @@ class CuriosityEngine:
                 if hypothesis:
                     # Hypothesis is already added to reasoner.hypotheses; we may print it or log it.
                     print(f"💡 [Semantic Hypothesis] {hypothesis}")
-
     # ------------------------------------------------------------------
     # Identity reinforcement
     # ------------------------------------------------------------------
@@ -3954,33 +4358,98 @@ class CuriosityEngine:
                                     token_analyses: List[Dict], sentence_emb: np.ndarray):
         """
         Called only when all tokens are known.
-        Stores sentence, generates hypotheses, and may add a query to the action queue.
+        Stores sentence, generates hypotheses, detects relational statements,
+        and updates word-state associations.
         """
         # Store sentence with embedding
         self.reasoner.store_sentence(sentence, tokens, embedding=sentence_emb,
                                      metadata={'timestamp': time.time(), 'source': 'user'})
 
-        # Generate hypothesis
+        # --- Detect categorical or definitional statement ---
+        # Find main verb: look for 'is' or 'means' in tokens
+        verb_pos = None
+        verb = None
+        for i, tok in enumerate(tokens):
+            if tok in ['is', 'are', 'was', 'were', 'means', 'like']:
+                verb_pos = i
+                verb = tok
+                break
+        if verb_pos is not None:
+            subject = ' '.join(tokens[:verb_pos]).strip()
+            object = ' '.join(tokens[verb_pos+1:]).strip()
+            if subject and object:
+                if verb in ['is', 'are', 'was', 'were']:
+                    rel_type = 'is_a'
+                elif verb == 'means':
+                    rel_type = 'means'
+                elif verb == 'like':
+                    rel_type = 'similar'
+                else:
+                    rel_type = 'unknown'
+                # Store relation in reasoner
+                self.reasoner.store_phrase_relation(subject, object, rel_type, confidence=1.0)
+                # Also generate a direct hypothesis about this relation if it's new
+                key = f"relation:{rel_type}:{subject}:{object}"
+                if not any(h.get('key') == key for h in self.reasoner.hypotheses):
+                    hyp = {
+                        'key': key,
+                        'type': 'relation',
+                        'subject': subject,
+                        'predicate': rel_type,
+                        'object': object,
+                        'text': f"Did I understand correctly: '{subject}' {verb} '{object}'?",
+                        'asked': False,
+                    }
+                    self.reasoner.hypotheses.append(hyp)
+
+                # ---- NEW: Word-state association ----
+                # If subject is a word/phrase and object is a state label (single word), associate
+                # Also handle "X like Y" as suggesting similarity
+                if rel_type in ('means', 'is_a'):
+                    # Treat object as a label for subject
+                    self.reasoner.word_state.add_association(subject, object, confidence=1.0, source="explicit")
+                    print(f"📝 [Word-State] Associated '{subject}' with label '{object}'")
+                elif rel_type == 'similar':
+                    # If subject and object are both words, they should share labels
+                    subj_labels = self.reasoner.word_state.get_labels(subject)
+                    obj_labels = self.reasoner.word_state.get_labels(object)
+                    # Propagate labels from object to subject with lower confidence
+                    for lab in obj_labels:
+                        self.reasoner.word_state.add_association(subject, lab, confidence=0.7, source="similarity")
+                    for lab in subj_labels:
+                        self.reasoner.word_state.add_association(object, lab, confidence=0.7, source="similarity")
+                    print(f"📝 [Word-State] Propagated labels between '{subject}' and '{object}'")
+
+        # Generate other hypotheses (existing logic)
         hypothesis = self.reasoner.generate_sentence_hypothesis(sentence, tokens, sentence_emb)
         if hypothesis:
             print(f"💡 [Sentence Hypothesis] {hypothesis}")
             # Hypothesis is already in self.reasoner.hypotheses
+        # Store phrase embedding for future similarity
+        if sentence_emb is not None:
+            self.reasoner.store_phrase(sentence, sentence_emb, metadata={'source': 'user', 'timestamp': time.time()})
 
         # Check if we should ask about this sentence (low comprehension)
         if token_analyses:
-            # comprehension = 1 - average novelty
-            if not token_analyses:
-                avg_novelty = 0.5
-            else:
-                avg_novelty = np.mean([ta['factors'].factor_dict.get('novelty', 0.5) for ta in token_analyses])
+            avg_novelty = np.mean([ta['factors'].factor_dict.get('novelty', 0.5) for ta in token_analyses])
             comprehension = 1.0 - avg_novelty
             if comprehension < 0.5:   # threshold
                 query = self.reasoner.plan_sentence_query(sentence, uncertainty=1.0 - comprehension)
                 if query:
-                    # Store this as a pending query that ActionGenerator can see
                     self.pending_sentence_query = query
                     print(f"❓ [Pending Sentence Query] {query}")
 
+    def _derive_inferences_from_definition(self, subject: str, definition_text: str):
+        """
+        Given a definition of subject (word or phrase), try to derive transitive inferences.
+        For example, if we have "X means Y" and later "Y means Z", we can infer "X means Z".
+        This method is called after a definition is stored.
+        """
+        # For now, we rely on the reasoner's relation graphs; the actual inference is
+        # triggered when a relation is added via store_phrase_relation.
+        # Here we just log that a definition was added (no direct action needed).
+        pass
+    
     def _normalize_vector(self, vector: np.ndarray) -> np.ndarray:
         """Pad or truncate vector to match the current reference dimension (from StateManager)."""
         return self.state_manager._normalize_vector(vector)    
@@ -4013,9 +4482,26 @@ class CuriosityEngine:
 
     def _should_ask_feedback(self, tokens: List[str], factor_dict: Dict, template_id: Optional[str] = None) -> bool:
         """Determine whether to ask for feedback, based on confidence and probability."""
-        if np.random.rand() > self.feedback_ask_probability:
+        # Base probability
+        base_prob = self.feedback_ask_probability
+
+        # Reduce probability if we have high context confidence
+        context_confidence = self.reasoner.get_context_confidence(f"template:{template_id}") if template_id else 0.0
+        if context_confidence > 0.8:
+            base_prob *= 0.2  # ask much less when confident
+
+        # Also reduce if we asked recently (cooldown)
+        if time.time() - self._last_feedback_ask_time < 60:  # at most once per minute
             return False
-        return self.reasoner.should_ask_feedback(tokens, factor_dict, template_id)
+
+        if np.random.rand() > base_prob:
+            return False
+
+        # Check the corpus if it still needs feedback for this context
+        needs = self.reasoner.should_ask_feedback(tokens, factor_dict, template_id)
+        if needs:
+            self._last_feedback_ask_time = time.time()
+        return needs
 
     def _generate_feedback_question(self) -> str:
         """Generate a neutral question asking for user feedback."""
@@ -4096,10 +4582,17 @@ class CuriosityEngine:
         # -------------------------------------------------------
         # HANDLE RESPONSE FEEDBACK (emergent sentiment learning)
         # -------------------------------------------------------
-        if self.expecting_response_feedback:
+        if not self.chat_mode_active and self.expecting_response_feedback:
             feedback_lower = text.lower()
             rating = None
-            ...
+            # Detect rating from user input
+            if any(kw in feedback_lower for kw in ['positive', 'good', 'great', 'yes', 'correct', 'right', '👍']):
+                rating = 'positive'
+            elif any(kw in feedback_lower for kw in ['negative', 'bad', 'wrong', 'no', 'incorrect', '👎']):
+                rating = 'negative'
+            elif any(kw in feedback_lower for kw in ['neutral', 'ok', 'fine', 'average']):
+                rating = 'neutral'
+            # If rating found and we have a pending context
             if rating is not None and self.pending_feedback_context is not None:
                 entry = self.pending_feedback_context
                 entry.rating = rating
@@ -4117,20 +4610,6 @@ class CuriosityEngine:
                 print(f"🌑 [Feedback] No clear rating detected, ignoring.")
                 self.expecting_response_feedback = False
                 self.pending_feedback_context = None
-
-            # -------- ADD THIS EARLY RETURN HERE --------
-            return {
-                "ci_report": {},
-                "phon_score": 0,
-                "diagnostic": {},
-                "token_analyses": [],
-                "curiosity_artifacts": ["Feedback processed."],
-                "meta_weights": self.meta_learner.get_weights(),
-                "total_intrinsic_reward": self.reward_tracker.total_reward,
-                "episode_reward": 0.0,
-                "factor_vector": {},
-            }
-
         # -------------------------------------------------------
         # CHAT MODE TRIGGER
         # -------------------------------------------------------
@@ -4157,7 +4636,7 @@ class CuriosityEngine:
         # -------------------------------------------------------
         # HANDLE RULE CONFIRMATION RESPONSE
         # -------------------------------------------------------
-        if self.expecting_rule_confirmation:
+        if not self.chat_mode_active and self.expecting_rule_confirmation:
             feedback_lower = text.lower()
             is_positive = any(kw in feedback_lower for kw in ['yes', 'correct', 'right', 'yeah', 'true', 'yep', 'ok', 'sure', 'confirm'])
             is_negative = any(kw in feedback_lower for kw in ['no', 'wrong', 'incorrect', 'not', 'nope', 'never'])
@@ -4180,10 +4659,11 @@ class CuriosityEngine:
                 self.behavioral_learner.update_confidence(self.pending_rule_id, -0.1, feedback=False)
                 self.expecting_rule_confirmation = False
                 self.pending_rule_id = None
+    
         # -------------------------------------------------------
         # HANDLE LOGIC DOUBT FEEDBACK
         # -------------------------------------------------------
-        if self.expecting_logic_feedback:
+        if not self.chat_mode_active and self.expecting_logic_feedback:
             feedback_lower = text.lower()
             is_positive = any(kw in feedback_lower for kw in ['yes', 'correct', 'right', 'yeah', 'true', 'yep', 'ok', 'sure', 'confirm'])
             is_negative = any(kw in feedback_lower for kw in ['no', 'wrong', 'incorrect', 'not', 'nope', 'never'])
@@ -4215,7 +4695,7 @@ class CuriosityEngine:
         # -------------------------------------------------------
         # HANDLE PENDING PATTERN LABEL
         # -------------------------------------------------------
-        if getattr(self, "expecting_pattern_label", False):          
+        if not self.chat_mode_active and getattr(self, "expecting_pattern_label", False):                
             label = text.strip().lower()
 
             # store relation: word → category
@@ -4252,41 +4732,71 @@ class CuriosityEngine:
         phon_score, phon_diagnostics = self.phon_engine.score_text(text)
         diag_explanation = self.diag_engine.explain(ci_report, phon_score)
 
-        # ---- Detect if user is defining a previously asked word ----
-        if self.last_asked_word is not None:
+        # ---- Detect if user is defining a previously asked word/phrase ----
+        if not self.chat_mode_active and self.last_asked_word is not None:
             if "means" in text.lower() or "is" in text.lower() or "refers to" in text.lower():
 
-                # ensure embedding exists BEFORE learning definition
-                if self.last_asked_word not in self.semantic_learner.word_embeddings:
-                    self.semantic_learner.initialize_word(self.last_asked_word)
+                is_phrase = ' ' in self.last_asked_word  # phrase contains space
 
-                # now learn the definition
-                self.semantic_learner.observe_definition(self.last_asked_word, text)
+                if is_phrase:
+                    # Handle phrase definition
+                    phrase = self.last_asked_word
+                    definition = text
+                    # Compute embedding for the phrase (average of its word embeddings)
+                    phrase_tokens = phrase.split()
+                    known_embs = [self.semantic_learner.word_embeddings[t] for t in phrase_tokens if t in self.semantic_learner.word_embeddings]
+                    if known_embs:
+                        phrase_emb = np.mean(known_embs, axis=0)
+                    else:
+                        phrase_emb = None
+                    # Store in reasoner
+                    self.reasoner.phrase_definitions[phrase] = definition
+                    if phrase_emb is not None:
+                        self.reasoner.phrase_embeddings[phrase] = phrase_emb
+                    print(f"📘 [Phrase Definition] Learned about '{phrase}': {definition}")
+                    # Derive inferences from this definition
+                    self._derive_inferences_from_definition(phrase, definition)
 
-                # Store definition in reasoning engine with embedding
-                def_emb = self.semantic_learner.text_to_embedding(text)
-                if def_emb is not None:
-                    self.reasoner.store_definition(self.last_asked_word, text, def_emb)
-                # Mark word as now known / stabilized
-                self.concept_model.register_definition_event(self.last_asked_word)
+                else:
+                    # Original word definition handling
+                    if self.last_asked_word not in self.semantic_learner.word_embeddings:
+                        self.semantic_learner.initialize_word(self.last_asked_word)
 
-                # Reduce curiosity bias for this word
-                if self.last_asked_word in self.word_history:
-                    for rec in self.word_history[self.last_asked_word][-3:]:
-                        rec['curiosity_factors'].gp_uncertainty *= 0.3
-                        rec['curiosity_factors'].bayesian_surprise *= 0.3
-                    # Immediately check if this definition is similar to others
-                    hypothesis = self.reasoner.generate_synonym_hypothesis(self.last_asked_word)
-                    if hypothesis:
-                        print(f"💡 [Semantic Hypothesis] {hypothesis}")
-                print(f"📘 [Definition Learning] Learned about '{self.last_asked_word}': {text}")
+                    self.semantic_learner.observe_definition(self.last_asked_word, text)
+
+                    def_emb = self.semantic_learner.text_to_embedding(text)
+                    if def_emb is not None:
+                        self.reasoner.store_definition(self.last_asked_word, text, def_emb)
+                        self.concept_model.register_definition_event(self.last_asked_word)
+
+                    self.concept_model.register_definition_event(self.last_asked_word)
+
+                    if self.last_asked_word in self.word_history:
+                        for rec in self.word_history[self.last_asked_word][-3:]:
+                            rec['curiosity_factors'].gp_uncertainty *= 0.3
+                            rec['curiosity_factors'].bayesian_surprise *= 0.3
+                        # Also force entropy to near zero in concept model
+                        if hasattr(self.concept_model, 'word_concept_counts') and self.last_asked_word in self.concept_model.word_concept_counts:
+                            # Set all counts to concentrate on one concept
+                            counts = self.concept_model.word_concept_counts[self.last_asked_word]
+                            if counts:
+                                dominant = max(counts, key=counts.get)
+                                new_counts = Counter({dominant: 100})
+                                self.concept_model.word_concept_counts[self.last_asked_word] = new_counts
+                        hypothesis = self.reasoner.generate_synonym_hypothesis(self.last_asked_word)
+                        if hypothesis:
+                            print(f"💡 [Semantic Hypothesis] {hypothesis}")
+                    print(f"📘 [Definition Learning] Learned about '{self.last_asked_word}': {text}")
+                    # Derive inferences from word definition (simple)
+                    self._derive_inferences_from_definition(self.last_asked_word, text)
+
                 # Reinforce identity with positive reward
                 if hasattr(self, '_last_factor_vector'):
                     self._reinforce_identity(self._last_factor_vector, reward_signal=0.3)
                 self.last_asked_word = None  # reset
 
         # ---- Handle feedback from trust-based utterances ----
-        if self.expecting_feedback:
+        if not self.chat_mode_active and self.expecting_feedback:
             feedback_lower = text.lower()
             is_positive = any(kw in feedback_lower for kw in ['yes', 'correct', 'right', 'yeah', 'true', 'yep'])
             is_negative = any(kw in feedback_lower for kw in ['no', 'wrong', 'incorrect', 'not', 'nope'])
@@ -4334,57 +4844,50 @@ class CuriosityEngine:
         # -------------------------------------------------------
         # PENDING LOGIC DOUBT (highest priority)
         # -------------------------------------------------------
-        doubt = self.logic_inheritance.get_next_doubt()
-        if doubt:
-            rule = doubt['rule']
-            description = rule.get('description', f"I wrote a logical rule: {rule}")
-            query = f"I have a doubt about some logic I wrote: {description} Is this correct?"
-            print(f"\n🧠 [Logic Doubt] {query}")
-            print(f"🤖 AGI> {query}")
-            self.expecting_logic_feedback = True
-            self.pending_logic_doubt = doubt
-            return {
-                "ci_report": {},
-                "phon_score": 0,
-                "diagnostic": {},
-                "token_analyses": [],
-                "curiosity_artifacts": ["Logic doubt – awaiting confirmation."],
-                "meta_weights": self.meta_learner.get_weights(),
-                "total_intrinsic_reward": self.reward_tracker.total_reward,
-                "episode_reward": 0.0,
-                "factor_vector": {},
-            }
+        if not self.chat_mode_active:
+            doubt = self.logic_inheritance.get_next_doubt()
+            if doubt:
+                rule = doubt['rule']
+                description = rule.get('description', f"I wrote a logical rule: {rule}")
+                query = f"I have a doubt about some logic I wrote: {description} Is this correct?"
+                print(f"\n🧠 [Logic Doubt] {query}")
+                print(f"🤖 AGI> {query}")
+                self.expecting_logic_feedback = True
+                self.pending_logic_doubt = doubt
+                return {
+                    "ci_report": {},
+                    "phon_score": 0,
+                    "diagnostic": {},
+                    "token_analyses": [],
+                    "curiosity_artifacts": ["Logic doubt – awaiting confirmation."],
+                    "meta_weights": self.meta_learner.get_weights(),
+                    "total_intrinsic_reward": self.reward_tracker.total_reward,
+                    "episode_reward": 0.0,
+                    "factor_vector": {},
+                }
         # -------------------------------------------------------
         # UNKNOWN WORD DETECTION (prevents early greeting collapse)
         # -------------------------------------------------------
-        unknown_tokens = [t for t in tokens if t not in self.semantic_learner.word_embeddings]
-
-        # if too many unknown words → ask user meaning instead of learning a state
-        unknown_ratio = len(unknown_tokens) / max(len(tokens), 1)
-
-        if unknown_ratio > 0.5:
-            target = unknown_tokens[0]
-            self.last_asked_word = target
-
-            system_reply = f"What does '{target}' mean?"
-
-            print(f"\n🧠 [Knowledge Gap] {system_reply}")
-            print(f"🤖 AGI> {system_reply}")
-
-            return {
-                "ci_report": ci_report,
-                "phon_score": phon_score,
-                "diagnostic": diag_explanation,
-                "token_analyses": [],
-                "curiosity_artifacts": ["Knowledge gap detected — waiting for definition."],
-                "meta_weights": self.meta_learner.get_weights(),
-                "total_intrinsic_reward": self.reward_tracker.total_reward,
-                "episode_reward": 0.0,
-                "factor_vector": {},
-    }
-
-
-
+        if not self.chat_mode_active:
+            unknown_tokens = [t for t in tokens if t not in self.semantic_learner.word_embeddings]
+            unknown_ratio = len(unknown_tokens) / max(len(tokens), 1)
+            if unknown_ratio > 0.5:
+                target = unknown_tokens[0]
+                self.last_asked_word = target
+                system_reply = f"What does '{target}' mean?"
+                print(f"\n🧠 [Knowledge Gap] {system_reply}")
+                print(f"🤖 AGI> {system_reply}")
+                return {
+                    "ci_report": ci_report,
+                    "phon_score": phon_score,
+                    "diagnostic": diag_explanation,
+                    "token_analyses": [],
+                    "curiosity_artifacts": ["Knowledge gap detected — waiting for definition."],
+                    "meta_weights": self.meta_learner.get_weights(),
+                    "total_intrinsic_reward": self.reward_tracker.total_reward,
+                    "episode_reward": 0.0,
+                    "factor_vector": {},
+                }
         token_analyses = []
         for token in tokens:
             token_ci = self.ci_engine.evaluate(token)
@@ -4445,24 +4948,25 @@ class CuriosityEngine:
             if sentence_emb is not None:
                 self._process_sentence_reasoning(text, tokens, token_analyses, sentence_emb)        
         # ---- Pattern-based semantic emergence ----
-        for token in set(tokens):
-            pattern_query = self.reasoner.detect_pattern_and_query(token)
-            if pattern_query:
-                self.last_asked_word = token
-                self.expecting_pattern_label = True
-                print(f"\n🧠 [Pattern Discovery] {pattern_query}")
-                print(f"🤖 AGI> {pattern_query}")
-                return {
-                    "ci_report": ci_report,
-                    "phon_score": phon_score,
-                    "diagnostic": diag_explanation,
-                    "token_analyses": token_analyses,
-                    "curiosity_artifacts": ["Pattern discovered — awaiting label."],
-                    "meta_weights": self.meta_learner.get_weights(),
-                    "total_intrinsic_reward": self.reward_tracker.total_reward,
-                    "episode_reward": self.reward_tracker.episode_reward,
-                    "factor_vector": {},
-                }
+        if not self.chat_mode_active:
+            for token in set(tokens):
+                pattern_query = self.reasoner.detect_pattern_and_query(token)
+                if pattern_query:
+                    self.last_asked_word = token
+                    self.expecting_pattern_label = True
+                    print(f"\n🧠 [Pattern Discovery] {pattern_query}")
+                    print(f"🤖 AGI> {pattern_query}")
+                    return {
+                        "ci_report": ci_report,
+                        "phon_score": phon_score,
+                        "diagnostic": diag_explanation,
+                        "token_analyses": token_analyses,
+                        "curiosity_artifacts": ["Pattern discovered — awaiting label."],
+                        "meta_weights": self.meta_learner.get_weights(),
+                        "total_intrinsic_reward": self.reward_tracker.total_reward,
+                        "episode_reward": self.reward_tracker.episode_reward,
+                        "factor_vector": {},
+                    }
 
 
         # ---- Factor computation & state learning ----
@@ -4500,16 +5004,17 @@ class CuriosityEngine:
         #-------------------------------------------------------
         # STATE LEARNING GATE — requires minimal knowledge maturity
         # -------------------------------------------------------
-        known_vocab_size = len(self.semantic_learner.word_embeddings)
-
-        if known_vocab_size > 20:  # adjustable
-            self._handle_state_learning(factor_vector, metadata)
+        if not self.chat_mode_active:
+            known_vocab_size = len(self.semantic_learner.word_embeddings)
+            if known_vocab_size > 20:  # adjustable
+                self._handle_state_learning(factor_vector, metadata)
 
         # ---------------------------------------------------
         # ---- Check for unresolved conflicts and ask user ----
-        unresolved = self.state_manager.get_unresolved_conflicts()
-        if unresolved:
-            print("\n🧠 [Conflict Resolution] I have some unresolved state conflicts from previous idle introspection.")
+        if not self.chat_mode_active:
+            unresolved = self.state_manager.get_unresolved_conflicts()
+            if unresolved:
+                print("\n🧠 [Conflict Resolution] I have some unresolved state conflicts from previous idle introspection.")
             for conflict in unresolved[:2]:  # handle up to 2 per interaction
                 l1, l2 = conflict["labels"]
                 sim = conflict["similarity"]
@@ -4538,8 +5043,14 @@ class CuriosityEngine:
                     self.state_manager.save_state(new_label2, vec2)
                     self.state_manager.delete_state(l1)
                     self.state_manager.delete_state(l2)
+                    # Update conflict: mark as resolved and set resolution label
                     conflict["resolved"] = True
                     conflict["resolution_label"] = f"{new_label1},{new_label2}"
+                    # Also update any other conflicts that might reference these labels
+                    for c in self.state_manager.conflicts:
+                        if l1 in c["labels"] or l2 in c["labels"]:
+                            c["resolved"] = True
+                            c["resolution_label"] = "renamed"
                     print(f"    ✅ States renamed and kept.")
                 elif choice == "4" and shadow_label:
                     # Promote shadow to permanent
@@ -4556,41 +5067,43 @@ class CuriosityEngine:
             # Save after handling
             self.state_manager._save_conflicts()
         # ---- Behavioral rule testing (ask user to confirm hypotheses) ----
-        context = {
-            'user_input': text,
-            'tokens': tokens,
-            'token_analyses': token_analyses,
-            'factor_dict': factor_dict,
-            'state': self.current_state_label
-        }
-        testable = self.behavioral_learner.get_testable_rules(context)
-        if testable:
-            rule = max(testable, key=lambda r: r.confidence)
-            if rule.rule_type == 'identity_alias':
-                alias = rule.condition['alias']
-                query = f"Do you want me to be called '{alias}'? Should I refer to myself as '{alias}'?"
-            elif rule.rule_type == 'pronoun_mapping':
-                query = f"When you say '{rule.condition['pronoun']}', do you mean me?"
-            else:
-                query = f"I noticed a pattern: {rule.condition}. Is that correct?"
-            rule.asked = True
-            rule.last_tested = time.time()
-            self.behavioral_learner.save()
-            self.expecting_rule_confirmation = True
-            self.pending_rule_id = rule.rule_id
-            print(f"\n🧠 [Rule Hypothesis] {query}")
-            print(f"🤖 AGI> {query}")
-            return {
-                "ci_report": ci_report,
-                "phon_score": phon_score,
-                "diagnostic": diag_explanation,
-                "token_analyses": token_analyses,
-                "curiosity_artifacts": ["Behavioral rule hypothesis — awaiting confirmation."],
-                "meta_weights": self.meta_learner.get_weights(),
-                "total_intrinsic_reward": self.reward_tracker.total_reward,
-                "episode_reward": self.reward_tracker.episode_reward,
-                "factor_vector": factor_dict if isinstance(factor_dict, dict) else {},
+        if not self.chat_mode_active:
+            context = {
+                'user_input': text,
+                'tokens': tokens,
+                'token_analyses': token_analyses,
+                'factor_dict': factor_dict,
+                'state': self.current_state_label
             }
+            testable = self.behavioral_learner.get_testable_rules(context)
+            if testable:
+                rule = max(testable, key=lambda r: r.confidence)
+                if rule.rule_type == 'identity_alias':
+                    alias = rule.condition['alias']
+                    query = f"Do you want me to be called '{alias}'? Should I refer to myself as '{alias}'?"
+                elif rule.rule_type == 'pronoun_mapping':
+                    query = f"When you say '{rule.condition['pronoun']}', do you mean me?"
+                else:
+                    query = f"I noticed a pattern: {rule.condition}. Is that correct?"
+                rule.asked = True
+                rule.last_tested = time.time()
+                self.behavioral_learner.save()
+                self.expecting_rule_confirmation = True
+                self.pending_rule_id = rule.rule_id
+                print(f"\n🧠 [Rule Hypothesis] {query}")
+                print(f"🤖 AGI> {query}")
+                return {
+                    "ci_report": ci_report,
+                    "phon_score": phon_score,
+                    "diagnostic": diag_explanation,
+                    "token_analyses": token_analyses,
+                    "curiosity_artifacts": ["Behavioral rule hypothesis — awaiting confirmation."],
+                    "meta_weights": self.meta_learner.get_weights(),
+                    "total_intrinsic_reward": self.reward_tracker.total_reward,
+                    "episode_reward": self.reward_tracker.episode_reward,
+                    "factor_vector": factor_dict if isinstance(factor_dict, dict) else {},
+                }
+
         # 4. Generate advanced artifacts (now including factor info)
         # ---- Semantic relation discovery ----
         self._detect_semantic_relations(tokens, token_analyses)
@@ -4612,7 +5125,7 @@ class CuriosityEngine:
         print(f"🤖 AGI> {system_reply}")
 
         # ---- Ask for user feedback on the response (emergent learning) ----
-        if not self.expecting_response_feedback and not self.expecting_feedback and not self.expecting_rule_confirmation and not self.expecting_logic_feedback:
+        if not self.chat_mode_active and not self.expecting_response_feedback and not self.expecting_feedback and not self.expecting_rule_confirmation and not self.expecting_logic_feedback:
             # Determine a template ID for this response (simple hash of the response text)
             template_id = f"resp_{hash(system_reply) % 10000:04x}"
             self.reasoner.register_response_template(template_id, system_reply)
@@ -5843,6 +6356,132 @@ class CuriosityEngine:
                 print(f"   ⚠️ Generated {logic_id} but shadow test failed: {test_result['error'][:50]}")
                 # Error already appended as comment in the .py file
 
+    def deep_behavioral_pattern_mining(self):
+        """18. Deep offline mining of conversational patterns."""
+        if not self.config_manager.get('idle_reasoner.enable_behavioral_rule_discovery', True):
+            return
+        cpu_ok, mem_ok, throttle, cpu_p, mem_p = self._get_resource_status()
+        if not cpu_ok or not mem_ok:
+            print(f"   [Resource Aware] Skipping deep pattern mining (CPU:{cpu_p:.1f}%  MEM:{mem_p:.1f}%).")
+            return
+
+        print("🔍 [Deep Pattern Mining] Mining long‑range conversational patterns...")
+        candidates = self.behavioral_learner.deep_pattern_mining(self)
+        if candidates:
+            for rule in candidates:
+                self.behavioral_learner.add_candidate_rule(rule)
+                print(f"   ➕ Discovered pattern: {rule.condition} -> {rule.action}")
+        else:
+            print("   No new deep patterns found.")
+
+    def propagate_word_state_associations(self):
+        """
+        During idle, use semantic similarity to propagate word-state labels.
+        If two words have high embedding similarity, they likely share labels.
+        """
+        if not self.config_manager.get('idle_reasoner.enable_semantic_self_talk', True):  # reuse existing config
+            return
+        cpu_ok, mem_ok, throttle, cpu_p, mem_p = self._get_resource_status()
+        if not cpu_ok or not mem_ok:
+            print(f"   [Resource Aware] Skipping word-state propagation (CPU:{cpu_p:.1f}% MEM:{mem_p:.1f}%).")
+            return
+
+        print("🔄 [Word-State Propagation] Spreading labels via semantic similarity...")
+        assoc = self.reasoner.word_state
+        # Get all words that have embeddings
+        all_words = list(self.semantic_learner.word_embeddings.keys())
+        if len(all_words) < 5:
+            return
+
+        # Compute pairwise similarities for a sample of words (to avoid O(n^2))
+        import random
+        sample = random.sample(all_words, min(50, len(all_words)))
+        similarities = {}
+        for w1 in sample:
+            for w2 in sample:
+                if w1 >= w2:
+                    continue
+                sim = self.semantic_learner.similarity(w1, w2)
+                if sim > 0.8:  # high similarity
+                    similarities[(w1, w2)] = sim
+
+        # Propagate labels between similar words
+        propagated = 0
+        for (w1, w2), sim in similarities.items():
+            labels1 = set(assoc.get_labels(w1, threshold=0.3))
+            labels2 = set(assoc.get_labels(w2, threshold=0.3))
+            # For each label in w1, add to w2 with confidence scaled by similarity
+            for lab in labels1:
+                if lab not in labels2:
+                    assoc.add_association(w2, lab, confidence=sim * 0.8, source="similarity")
+                    propagated += 1
+            for lab in labels2:
+                if lab not in labels1:
+                    assoc.add_association(w1, lab, confidence=sim * 0.8, source="similarity")
+                    propagated += 1
+        print(f"   Propagated {propagated} label associations.")
+
+        # Check for conflicts (words with multiple labels of similar confidence)
+        for word in all_words:
+            conflicts = assoc.detect_conflicts(word)
+            if conflicts:
+                print(f"   ⚠️ Word '{word}' has ambiguous labels: {conflicts}. (Will ask user later)")
+                # We could add a hypothesis to ask the user, but for now just note.
+
+    def mine_phrase_relations(self):
+        """
+        During idle, find similar phrases in episodic memory and hypothesize relations.
+        """
+        if not self.config_manager.get('idle_reasoner.enable_semantic_self_talk', True):
+            return
+        cpu_ok, mem_ok, throttle, cpu_p, mem_p = self._get_resource_status()
+        if not cpu_ok or not mem_ok:
+            print(f"   [Resource Aware] Skipping phrase relation mining (CPU:{cpu_p:.1f}% MEM:{mem_p:.1f}%).")
+            return
+
+        print("🔍 [Phrase Relation Mining] Finding similar phrases...")
+        # Collect recent user inputs from episodic memory
+        episodes = self.episodic_memory.episodes[-200:]
+        phrases = []
+        for ep in episodes:
+            user_input = ep.get('user_input', '')
+            if user_input and len(user_input.split()) <= 10:  # phrase up to 10 words
+                phrases.append(user_input)
+
+        if len(phrases) < 5:
+            return
+
+        # Compute embeddings for these phrases (if possible)
+        phrase_embs = {}
+        for p in phrases:
+            emb = self.semantic_learner.text_to_embedding(p, fallback_to_char=True)
+            if emb is not None:
+                phrase_embs[p] = emb
+
+        # Compare pairwise (sample to avoid O(n^2))
+        import random
+        items = list(phrase_embs.items())
+        if len(items) > 30:
+            items = random.sample(items, 30)
+        for i, (p1, emb1) in enumerate(items):
+            for p2, emb2 in items[i+1:]:
+                sim = np.dot(emb1, emb2) / (np.linalg.norm(emb1)*np.linalg.norm(emb2)+1e-12)
+                if sim > 0.85:  # high similarity
+                    # Check if we already have a relation or hypothesis
+                    key = f"phrase_similar:{p1}:{p2}"
+                    if not any(h.get('key') == key for h in self.reasoner.hypotheses):
+                        hyp = {
+                            'key': key,
+                            'type': 'phrase_similarity',
+                            'phrase1': p1,
+                            'phrase2': p2,
+                            'similarity': sim,
+                            'text': f"I notice that '{p1}' and '{p2}' seem similar. Are they related?",
+                            'asked': False,
+                        }
+                        self.reasoner.hypotheses.append(hyp)
+                        print(f"   ➕ Proposed phrase similarity: '{p1}' ↔ '{p2}' (sim={sim:.2f})")
+                        
     def perform_all_idle_tasks(self):
         """Orchestrate all idle‑time tasks, respecting configuration."""
         now = time.time()
@@ -5880,6 +6519,9 @@ class CuriosityEngine:
             self.generate_logic_from_experience,
             self.autonomous_code_generation_and_testing,
             self.contextual_sentiment_analysis,
+            self.deep_behavioral_pattern_mining,
+            self.propagate_word_state_associations,
+            self.mine_phrase_relations,
         ]
         for task in tasks:
             try:
@@ -5941,7 +6583,7 @@ class CuriosityEngine:
 
         return thought
 # ------------------------------------------------------------
-# Action Generator – produces system responses
+# Action Generator – produces system responsesself.propagate_word_state_associations,
 # ------------------------------------------------------------
 class ActionGenerator:
     """
@@ -6115,13 +6757,15 @@ class ActionGenerator:
     def generate_chat_response(self, user_input: str, state: Dict) -> str:
         """
         Generate a conversational, non‑interrogative response when chat mode is active.
-        Uses recent chat history, known vocabulary, and sentence patterns.
+        Uses learned conversational patterns from behavioral rules, then definitions, then trigram.
         """
+        user_input_lower = user_input.lower().strip()
 
-        # Use identity alias if available
+        # --- Use identity alias if available ---
         alias = None
         if self.engine.identity_aliases:
             alias = next(iter(self.engine.identity_aliases))
+
         # --- If we have a pending sentence query, ask it (still valid) ---
         if self.engine.pending_sentence_query:
             query = self.engine.pending_sentence_query
@@ -6130,29 +6774,82 @@ class ActionGenerator:
 
         # --- If there's an unanswered hypothesis, still ask it (curiosity) ---
         for hyp in self.reasoner.hypotheses:
-            if hyp.get('type') in ('synonym', 'category', 'analogy') and not hyp.get('asked', False):
+            if hyp.get('type') in ('synonym', 'category', 'analogy', 'inference') and not hyp.get('asked', False):
                 hyp['asked'] = True
                 return hyp['text']
 
-        # --- Otherwise, generate a chatty reply using the bigram / trigram model ---
-        # Build a simple trigram model from episodic memory (only known words)
+        # --- 1. Check learned behavioral patterns (conversational_pattern) ---
+        # We look for rules where condition contains 'user_input_pattern' or 'question_pattern'
+        for rule in self.engine.behavioral_learner.rules.values():
+            if rule.rule_type == 'conversational_pattern' and rule.confidence > 0.6:
+                cond = rule.condition
+                if 'user_input_pattern' in cond and user_input_lower == cond['user_input_pattern']:
+                    # Exact match greeting pattern
+                    if 'response_template' in rule.action:
+                        resp = rule.action['response_template']
+                        # Replace placeholder if needed (e.g., [name])
+                        return resp
+                elif 'question_pattern' in cond and user_input_lower.rstrip('?') == cond['question_pattern']:
+                    if 'answer_template' in rule.action:
+                        return rule.action['answer_template']
+                elif 'expected_user_input' in cond and user_input_lower == cond['expected_user_input']:
+                    # This is a transition pattern; we might use the previous response as a clue
+                    # For now, just acknowledge
+                    return f"I see you're continuing the conversation."
+
+        # --- 2. Try to understand the user's input using known definitions and relations ---
+        tokens = self.engine._tokenize(user_input)
+        # Check for exact phrase matches in phrase definitions
+        for phrase in self.reasoner.phrase_definitions:
+            if phrase in user_input_lower:
+                def_text = self.reasoner.phrase_definitions[phrase]
+                return f"Ah, '{phrase}' means {def_text}. That's interesting."
+
+        # --- 2.5 NEW: Use word-state labels to provide contextual info ---
+        for word in tokens:
+            labels = self.reasoner.word_state.get_labels(word, threshold=0.6)
+            if labels:
+                label_str = ', '.join(labels)
+                return f"I know '{word}' is associated with: {label_str}. Tell me more about it."
+
+        # --- 2.2 Check if user input is similar to known phrases ---
+        input_emb = self.semantic_learner.text_to_embedding(user_input, fallback_to_char=True)
+        if input_emb is not None:
+            similar = self.reasoner.find_similar_phrases(input_emb, threshold=0.8)
+            if similar:
+                best_phrase, sim = similar[0]
+                return f"This reminds me of when you said '{best_phrase}'. Tell me more."
+            
+        # Check for words with definitions
+        for word in tokens:
+            if word in self.reasoner.definitions:
+                def_text = self.reasoner.definitions[word][:50]
+                relations = self.reasoner.phrase_relations.get(word, [])
+                rel_strs = []
+                for rel_type, obj, conf in relations[:2]:
+                    if conf > 0.7:
+                        rel_strs.append(f"{rel_type} {obj}")
+                if rel_strs:
+                    return f"I know that {word} is {def_text}. Also, it is {', '.join(rel_strs)}."
+                else:
+                    return f"I understand '{word}' as {def_text}. Tell me more."
+
+        # --- 3. Fall back to trigram model from episodic memory ---
+        # Build a simple trigram model from recent episodes
         trigram = defaultdict(Counter)
         episodes = self.engine.episodic_memory.episodes[-50:]  # recent
         for ep in episodes:
             sent = ep.get('user_input', '')
-            tokens = self.engine._tokenize(sent)
-            if len(tokens) < 3 or not self.engine._all_tokens_known(tokens):
+            tokens_ep = self.engine._tokenize(sent)
+            if len(tokens_ep) < 3 or not self.engine._all_tokens_known(tokens_ep):
                 continue
-            for i in range(len(tokens)-2):
-                ctx = tuple(tokens[i:i+2])
-                nxt = tokens[i+2]
+            for i in range(len(tokens_ep)-2):
+                ctx = tuple(tokens_ep[i:i+2])
+                nxt = tokens_ep[i+2]
                 trigram[ctx][nxt] += 1
 
-        # --- Also use the current user input as a seed if possible ---
-        user_tokens = self.engine._tokenize(user_input)
-        known_user_tokens = [t for t in user_tokens if t in self.semantic.word_embeddings]
+        known_user_tokens = [t for t in tokens if t in self.semantic.word_embeddings]
         if len(known_user_tokens) >= 2 and trigram:
-            # Try to continue the user's sentence
             if len(known_user_tokens) >= 2:
                 seed = tuple(known_user_tokens[-2:])
             else:
@@ -6164,20 +6861,20 @@ class ActionGenerator:
                 next_w = np.random.choice(next_words, p=probs)
                 return f"{' '.join(known_user_tokens)} {next_w} ... what do you think?"
             else:
-                # Fallback: talk about a recent topic
                 recent_ep = episodes[-1] if episodes else None
                 if recent_ep:
                     topic = recent_ep.get('user_input', '').split()[:2]
                     topic = ' '.join(topic)
                     return f"Tell me more about {topic}."
         elif known_user_tokens:
-            # At least one known word – ask about it
-            topic = known_user_tokens[0]
-            return f"What do you mean by '{topic}'?"
+            word = known_user_tokens[0]
+            if word in self.reasoner.definitions:
+                return f"I recall that {word} means {self.reasoner.definitions[word][:50]}."
+            else:
+                return f"What do you mean by '{word}'?"
         else:
-            # Nothing known – fallback to generic
             return "That's interesting. Can you tell me more?"
-        
+              
     def generate_reply(self, user_input: str, state: Dict) -> str:
         """
         Main entry point: decide what to say.
@@ -6217,7 +6914,7 @@ class ActionGenerator:
 
         # --- Priority 2: Pending hypotheses (synonym, category, analogy) ---
         for hyp in self.reasoner.hypotheses:
-            if hyp.get('type') in ('synonym', 'category', 'analogy') and not hyp.get('asked', False):
+            if hyp.get('type') in ('synonym', 'category', 'analogy', 'inference') and not hyp.get('asked', False):
                 hyp['asked'] = True
                 return hyp['text']
 

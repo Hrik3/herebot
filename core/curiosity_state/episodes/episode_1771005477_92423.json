@@ -1,0 +1,23 @@
+{
+  "timestamp": 1771005477.9675415,
+  "user_input": "hi",
+  "system_response": "What does 'hi' mean? (My uncertainty about this word is 0.11.)",
+  "factor_vector": {
+    "curiosity": 3.7899779799505717,
+    "threat": 0.20770005752788517,
+    "trust": 0.6607229456414928,
+    "confidence": 0.559499856180287,
+    "uncertainty": 0.0489672100439282,
+    "energy": 0.372,
+    "attention": 0.05,
+    "comprehension": 0.5,
+    "fluency": 0.7,
+    "cognitive_load": 0.9814,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.22534127611275354,
+  "metadata": {
+    "ci_confidence": 0.559499856180287
+  }
+}

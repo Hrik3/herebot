@@ -1,0 +1,23 @@
+{
+  "timestamp": 1771004356.3408175,
+  "user_input": "yes means positive",
+  "system_response": "What does 'yes' mean? (My uncertainty about this word is 0.10.)",
+  "factor_vector": {
+    "curiosity": 5.688495239317015,
+    "threat": 0.1877632512360676,
+    "trust": 0.553931361181023,
+    "confidence": 0.6457631923958324,
+    "uncertainty": 0.039348009564043995,
+    "energy": 0.347,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.94795,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 3.334980362469684,
+  "metadata": {
+    "ci_confidence": 0.6457631923958324
+  }
+}

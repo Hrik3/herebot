@@ -1,0 +1,26 @@
+{
+  "label": "shadow_basic knowledge_kindness_1771004108",
+  "vector": [
+    5.168411480619707,
+    0.19330580680018516,
+    0.5530240874620815,
+    0.6447279339287977,
+    0.04661907775300711,
+    0.35700000000000004,
+    0.15,
+    0.0,
+    0.7,
+    0.94645
+  ],
+  "dimension": 10,
+  "timestamp": 1771004108.1433036,
+  "metadata": {
+    "merged_from": [
+      "basic knowledge",
+      "kindness"
+    ],
+    "similarity": 0.9997670910398049,
+    "timestamp": 1771004108.143278
+  },
+  "is_shadow": true
+}

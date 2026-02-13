@@ -1,0 +1,23 @@
+{
+  "timestamp": 1771004578.8489556,
+  "user_input": "who are you ?",
+  "system_response": "Tell me more about who means.",
+  "factor_vector": {
+    "curiosity": 7.159511664624329,
+    "threat": 0.21112233840414552,
+    "trust": 0.5542034579636553,
+    "confidence": 0.6596094462812369,
+    "uncertainty": 0.044746762453648746,
+    "energy": 0.345,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.94825,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 12.18630703164753,
+  "metadata": {
+    "ci_confidence": 0.6596094462812369
+  }
+}

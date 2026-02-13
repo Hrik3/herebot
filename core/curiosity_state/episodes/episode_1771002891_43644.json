@@ -1,0 +1,23 @@
+{
+  "timestamp": 1771002891.6631048,
+  "user_input": "color",
+  "system_response": "What does 'color' mean? (My uncertainty about this word is 0.10.)",
+  "factor_vector": {
+    "curiosity": 2.906561185244178,
+    "threat": 0.18136641966423858,
+    "trust": 0.711378338226977,
+    "confidence": 0.6878339508394036,
+    "uncertainty": 0.04454635127465273,
+    "energy": 0.375,
+    "attention": 0.05,
+    "comprehension": 0.5,
+    "fluency": 0.7,
+    "cognitive_load": 0.98125,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.16099173342568862,
+  "metadata": {
+    "ci_confidence": 0.6878339508394036
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "label": "shadow_basic knowledge_identity_1771005070",
+  "vector": [
+    4.426114245462351,
+    0.18279048654530208,
+    0.5583117862825038,
+    0.6629181579498866,
+    0.04691496678603243,
+    0.3735,
+    0.125,
+    0.0,
+    0.7,
+    0.95335
+  ],
+  "dimension": 10,
+  "timestamp": 1771005070.854514,
+  "metadata": {
+    "merged_from": [
+      "basic knowledge",
+      "identity"
+    ],
+    "similarity": 0.9963967159064804,
+    "timestamp": 1771005070.854452
+  },
+  "is_shadow": true
+}

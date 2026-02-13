@@ -1,0 +1,23 @@
+{
+  "timestamp": 1771004519.5007534,
+  "user_input": "herebot",
+  "system_response": "What does 'herebot' mean? (My uncertainty about this word is 0.10.)",
+  "factor_vector": {
+    "curiosity": 3.5639080783225494,
+    "threat": 0.16690754875506644,
+    "trust": 0.7143367490945829,
+    "confidence": 0.6871178459206323,
+    "uncertainty": 0.04477055276526641,
+    "energy": 0.375,
+    "attention": 0.05,
+    "comprehension": 0.5,
+    "fluency": 0.7,
+    "cognitive_load": 0.98125,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.1766316721177495,
+  "metadata": {
+    "ci_confidence": 0.6871178459206323
+  }
+}

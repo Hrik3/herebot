@@ -1,0 +1,26 @@
+{
+  "label": "shadow_basic knowledge_basic words_1771004108",
+  "vector": [
+    3.900885482123553,
+    0.19608728466575767,
+    0.6256569085400379,
+    0.6441197754882738,
+    0.04904225975437576,
+    0.3735,
+    0.1,
+    0.25,
+    0.7,
+    0.962725
+  ],
+  "dimension": 10,
+  "timestamp": 1771004108.1425433,
+  "metadata": {
+    "merged_from": [
+      "basic knowledge",
+      "basic words"
+    ],
+    "similarity": 0.9641049326565043,
+    "timestamp": 1771004108.1424859
+  },
+  "is_shadow": true
+}
