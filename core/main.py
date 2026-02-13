@@ -3595,7 +3595,6 @@ class CuriosityEngine:
             # Allow conscience to adjust its own thresholds
             self.conscience_manager.evolve_parameters()
             print("🧬 [Emotional Reconfiguration] Configuration updated based on internal state.")
-
     # ------------------------------------------------------------------
     # Feature extraction helpers (unchanged)
     # ------------------------------------------------------------------
@@ -4283,6 +4282,11 @@ class CuriosityEngine:
             new_entropy = self.concept_model.entropy_word(token)
             igain = self._information_gain(token, new_entropy)
 
+            # bootstrap curiosity when entropy history is short
+            if igain == 0.0:
+                igain = 0.25 * factors.bayesian_surprise + 0.25 * factors.gp_uncertainty
+
+
             self.gp_model.update(features_array, token_ci['confidence'])
 
             reward = self.reward_tracker.compute_reward(token_ci, igain, factors.bayesian_surprise)
@@ -4961,7 +4965,7 @@ class CuriosityEngine:
             def residual_compute(token, token_ci, token_phon, diag, features, global_factors):
                 # placeholder: returns small random value
                 return np.random.rand() * 0.1
-            self.meta_learner.add_factor(new_factor_name, initial_mu=0.0, compute_function=residual_compute)
+            self.meta_learner.add_factor(new_factor_name, initial_mu=0.2, compute_function=residual_compute)
             print(f"   Spawned new curiosity factor '{new_factor_name}' from unexplained variance.")
 
     def concept_graph_compression(self):
