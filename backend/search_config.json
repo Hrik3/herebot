@@ -1,0 +1,11 @@
+{
+    "n_features": 1048576,
+    "indptr": "corpus_features_indptr.dat",
+    "indices": "corpus_features_indices.dat",
+    "data": "corpus_features_data.dat",
+
+    "cpu_threshold": 75,
+    "ram_threshold": 80,
+
+    "degraded_search_ratio": 0.25
+}

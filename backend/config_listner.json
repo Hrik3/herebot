@@ -1,0 +1,18 @@
+{
+  "n_features": 1048576,
+  "dtype": "float32",
+  "main_npz": "main.npz",
+  "vectorizer_pkl": "vectorizer.pkl",
+  "shard_dir": "shards",
+  "archive_dir": "shards_processed",
+  "batch_size": 50000,
+  "auto_flush": true,
+  "rebuild_threshold_shards": 100,
+  "rebuild_ram_high": 80.0,
+  "rebuild_ram_low": 50.0,
+  "rebuild_check_interval": 10,
+  "stats_update_interval": 60,
+  "config_reload_interval": 5,
+  "initial_rows_capacity": 1024,
+  "initial_nnz_capacity": 1024
+}
