@@ -189,8 +189,8 @@ class ConfigManager:
             "capacity": 10000,
         },
         "idle_reasoner": {
-            "short_idle_threshold": 10.0,
-            "long_idle_threshold": 50.0,
+            "short_idle_threshold": 60.0,
+            "long_idle_threshold": 400.0,
             "enable_world_model_dreaming": True,
             "enable_active_memory_rehearsal": True,
             "enable_curiosity_landscape_optimization": True,
@@ -531,6 +531,57 @@ class HierarchicalConceptModel:
             }, f)
         os.replace(tmp, path)
 
+    def register_definition_event(self, word: str):
+        """
+        Called when a word receives an explicit definition from the user.
+        Performs strong supervised stabilization:
+        - boosts observation confidence
+        - collapses entropy for the concept
+        - marks the concept as semantically anchored
+        - schedules hierarchy promotion
+        """
+
+        if not hasattr(self, "word_concept_counts"):
+            return
+
+        if word not in self.word_concept_counts:
+            return
+
+        # ---------- Strong confidence reinforcement ----------
+        # Explicit definitions act as high-confidence observations
+        self.word_concept_counts[word] += 10
+
+        # ---------- Mark stabilized words ----------
+        if not hasattr(self, "stabilized_words"):
+            self.stabilized_words = set()
+
+        self.stabilized_words.add(word)
+
+        # ---------- Entropy collapse ----------
+        if hasattr(self, "word_entropies") and word in self.word_entropies:
+            self.word_entropies[word] *= 0.2  # strong reduction
+
+        # ---------- Semantic anchoring ----------
+        if not hasattr(self, "semantic_anchors"):
+            self.semantic_anchors = set()
+        self.semantic_anchors.add(word)
+
+        # ---------- Promote toward higher-level concept (hierarchical compression) ----------
+        if hasattr(self, "_promote_word_to_higher_concept"):
+            try:
+                self._promote_word_to_higher_concept(word)
+            except Exception:
+                pass
+
+        # ---------- Schedule stability reinforcement ----------
+        if not hasattr(self, "definition_events"):
+            self.definition_events = {}
+
+        self.definition_events[word] = {
+            "timestamp": time.time(),
+            "stability": 1.0,
+            "type": "explicit_definition"
+        }
     @classmethod
     def load(cls, path: str, config_manager: Optional['ConfigManager'] = None):
         with open(path, 'rb') as f:
