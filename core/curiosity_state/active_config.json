@@ -30,8 +30,8 @@
     "capacity": 10000
   },
   "idle_reasoner": {
-    "short_idle_threshold": 60.0,
-    "long_idle_threshold": 300.0,
+    "short_idle_threshold": 10.0,
+    "long_idle_threshold": 50.0,
     "enable_world_model_dreaming": true,
     "enable_active_memory_rehearsal": true,
     "enable_curiosity_landscape_optimization": true,

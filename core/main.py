@@ -104,6 +104,34 @@ def safe_choice(a):
 
     idx = np.random.randint(len(a))
     return a[idx]
+def align_vector(vec: np.ndarray, target_dim: int, fill: float = 0.0) -> np.ndarray:
+    """Pad or truncate vector safely to target dimension."""
+    if vec is None:
+        return np.zeros(target_dim)
+
+    if len(vec) == target_dim:
+        return vec
+
+    if len(vec) > target_dim:
+        return vec[:target_dim]
+
+    out = np.full(target_dim, fill)
+    out[:len(vec)] = vec
+    return out
+def align_factor_vector(vec: np.ndarray, target_dim: int, fill: float = 0.5):
+    """Ensure vector matches target dimensionality."""
+    if vec is None:
+        return np.full(target_dim, fill)
+
+    vec = np.asarray(vec).reshape(-1)
+
+    if len(vec) == target_dim:
+        return vec
+
+    if len(vec) < target_dim:
+        return np.pad(vec, (0, target_dim - len(vec)), constant_values=fill)
+
+    return vec[:target_dim]
 
 # ------------------------------------------------------------
 # Configuration Manager – loads parameters from active_config.json
@@ -161,8 +189,8 @@ class ConfigManager:
             "capacity": 10000,
         },
         "idle_reasoner": {
-            "short_idle_threshold": 60.0,
-            "long_idle_threshold": 300.0,
+            "short_idle_threshold": 10.0,
+            "long_idle_threshold": 50.0,
             "enable_world_model_dreaming": True,
             "enable_active_memory_rehearsal": True,
             "enable_curiosity_landscape_optimization": True,
@@ -921,37 +949,28 @@ class MetaCuriosityLearner:
         pass
 
     def add_factor(self, factor_name: str, initial_mu: float = 0.0,
-                   compute_function: Optional[Callable] = None,
-                   metadata: dict = None):
-        """
-        Add a new curiosity factor with a prior weight and an optional
-        compute function that will be called to obtain its value per token.
-        """
+                compute_function: Optional[Callable] = None,
+                metadata: dict = None):
+
         if factor_name in self.factor_names:
             return
-        
-        # Add to dynamic list
+
+        # append ONLY to dynamic list
         self.dynamic_factor_names.append(factor_name)
-        new_n = len(self.factor_names)
-        
-        # Resize arrays
-        self.mu = np.pad(self.mu, (0, 1))
-        self.lambda_ = np.pad(self.lambda_, (0, 1))
-        self.alpha = np.pad(self.alpha, (0, 1))
-        self.beta = np.pad(self.beta, (0, 1))
-        
-        # Set initial values for the new factor
-        self.mu[-1] = initial_mu
-        self.lambda_[-1] = 0.1
-        self.alpha[-1] = 1.0
-        self.beta[-1] = 1.0
-        
-        # Store compute function if provided
+
         if compute_function is not None:
             self.dynamic_compute_functions[factor_name] = compute_function
-        
+
+        # resize
+        self.mu = np.append(self.mu, initial_mu)
+        self.lambda_ = np.append(self.lambda_, 1.0)
+        self.alpha = np.append(self.alpha, 1.0)
+        self.beta = np.append(self.beta, 1.0)
+
+        self.n_factors = len(self.mu)
+
         self.save(os.path.join(STATE_DIR, 'meta_learner.npz'))
-    
+
     def compute_dynamic_factor(self, factor_name: str, token: str,
                                token_ci: Dict, token_phon: float,
                                diag: Dict, features_array: np.ndarray,
@@ -966,26 +985,51 @@ class MetaCuriosityLearner:
                 return func(token, token_ci, token_phon, diag, features_array, global_factor_dict)
             except Exception as e:
                 print(f"Error computing dynamic factor '{factor_name}': {e}")
+                print(traceback.format_exc())
                 return 0.0
         return 0.0
 
     def update(self, factors: np.ndarray, information_gain: float):
-        """
-        Update posterior weights given factor values and observed IG.
-        factors must be in the same order as self.factor_names.
-        """
-        if len(factors) != len(self.mu):
-            # Dynamic factor mismatch – pad or truncate
-            if len(factors) > len(self.mu):
-                factors = factors[:len(self.mu)]
-            else:
-                factors = np.pad(factors, (0, len(self.mu) - len(factors)), 'constant')
-        for i, x in enumerate(factors):
+
+        target_dim = len(factors)
+
+        # ---- ensure all parameter arrays match the same size ----
+        def _expand(arr, fill):
+            if len(arr) < target_dim:
+                return np.append(arr, np.full(target_dim - len(arr), fill))
+            return arr
+
+        self.mu = _expand(self.mu, 0.0)
+        self.lambda_ = _expand(self.lambda_, 0.1)
+        self.alpha = _expand(self.alpha, 1.0)
+        self.beta = _expand(self.beta, 1.0)
+
+        # if learner larger than factors → pad factors
+        if len(factors) < len(self.mu):
+            factors = np.pad(factors, (0, len(self.mu) - len(factors)))
+
+        # ---- safe update ----
+        for i in range(len(self.mu)):
+            x = factors[i]
             self.lambda_[i] += x ** 2
-            self.mu[i] = (self.lambda_[i] * self.mu[i] + x * information_gain) / (self.lambda_[i] + x ** 2)    
+            self.mu[i] = (
+                (self.lambda_[i] * self.mu[i] + x * information_gain)
+                / (self.lambda_[i] + x ** 2)
+            )
 
     def predict_curiosity(self, factors: np.ndarray) -> float:
         """Weighted sum of factors using posterior mean weights."""
+        # ---- Auto align dimensionality (dynamic factor safety) ----
+        if len(self.mu) < len(factors):
+            # expand mu
+            pad = np.zeros(len(factors) - len(self.mu))
+            self.mu = np.concatenate([self.mu, pad])
+
+        elif len(self.mu) > len(factors):
+            # pad factors
+            factors = np.pad(factors, (0, len(self.mu) - len(factors)))
+
+        factors = align_factor_vector(factors, len(self.mu))
         return np.dot(self.mu, factors)
 
     def get_weights(self) -> Dict[str, float]:
@@ -2520,7 +2564,7 @@ class StateManager:
                         data = json.load(f)
                     label = data.get("label", fname[:-5])
                     vector = data.get("vector", [])
-                    self.states[label] = np.array(vector)
+                    self.states[label] = self._normalize_vector(np.array(vector))
                 except Exception as e:
                     print(f"Could not load state {fname}: {e}")
         self._update_ref_dim()
@@ -2550,10 +2594,13 @@ class StateManager:
             json.dump(data, f, indent=2)
         os.replace(tmp, path)
 
+        vector = self._normalize_vector(vector)
+
         if is_shadow:
             self.shadow_states[safe_label] = vector
         else:
             self.states[safe_label] = vector
+
         self._update_ref_dim()
         return safe_label
 
@@ -2689,7 +2736,7 @@ class StateManager:
                         data = json.load(f)
                     label = data.get("label", fname[:-5])
                     vector = data.get("vector", [])
-                    self.shadow_states[label] = np.array(vector)
+                    self.shadow_states[label] = self._normalize_vector(np.array(vector))
                 except Exception as e:
                     print(f"Could not load shadow state {fname}: {e}")
 
@@ -2702,7 +2749,7 @@ class StateManager:
         max_len = max(len(v1), len(v2))
         v1_aligned = np.pad(v1, (0, max_len - len(v1)), 'constant') if len(v1) < max_len else v1[:max_len]
         v2_aligned = np.pad(v2, (0, max_len - len(v2)), 'constant') if len(v2) < max_len else v2[:max_len]
-        merged_vector = (v1_aligned + v2_aligned) / 2.0
+        merged_vector = self._normalize_vector((v1_aligned + v2_aligned) / 2.0)
 
         shadow_label = f"shadow_{l1}_{l2}_{int(time.time())}"
         metadata = {
@@ -2811,7 +2858,8 @@ class IdentityManager:
 
         
         aligned = np.zeros_like(self.identity)
-        aligned[:len(factor_vector)] = factor_vector
+        n = min(len(aligned), len(factor_vector))
+        aligned[:n] = factor_vector[:n]
 
         norm = np.linalg.norm(aligned)
         if norm > 1e-12:
@@ -2918,7 +2966,8 @@ class EpisodicMemory:
             "timestamp": time.time(),
             "user_input": user_input,
             "system_response": system_response,
-            "factor_vector": factor_vector,
+            "factor_vector": dict(factor_vector),
+            "factor_dim": len(factor_vector),
             "intrinsic_reward": float(intrinsic_reward),
             "metadata": metadata or {},
         }
@@ -3049,8 +3098,10 @@ class AdaptiveControlSpace:
         for listener in self._listeners:
             try:
                 listener(name, compute_function, metadata)
-            except Exception as e:
-                print(f"Error in listener for new factor '{name}': {e}")
+            except Exception:
+                print(f"[Listener ERROR] factor '{name}'")
+                print(traceback.format_exc())
+
     
     def compute_factor(self, name: str, state: Dict) -> float:
         """Compute the current value of a factor (base or dynamic)."""
@@ -3192,7 +3243,10 @@ class FactorEngine:
         for factor_name in self.control_space.dynamic_factors:
             result[factor_name] = self.control_space.compute_factor(factor_name, state)
             self.control_space.record_value(factor_name, result[factor_name])
-
+        # ensure numeric stability
+        for k, v in result.items():
+            if not isinstance(v, (int, float)) or np.isnan(v) or np.isinf(v):
+                result[k] = 0.0
         return result
 # ------------------------------------------------------------
 # Core Curiosity Engine (Enhanced with Factor Engine & State Learning)
@@ -3395,6 +3449,9 @@ class CuriosityEngine:
             self._max_hypotheses = 5000
             self._max_logic_rules = 2000
 
+    def _align_factor_vector(self, vec: np.ndarray) -> np.ndarray:
+        return align_vector(vec, len(self.meta_learner.factor_names))
+
     def _memory_pressure_backoff(self):
         """Slow cognition when memory is low."""
         try:
@@ -3555,6 +3612,7 @@ class CuriosityEngine:
                 json.dump(data, f, indent=2)
         except Exception as e:
             print(f"Error saving state: {e}. State may be incomplete.")
+            print(traceback.format_exc())
     # ------------------------------------------------------------------
     # Hot‑reload: refresh all components from config file
     # ------------------------------------------------------------------
@@ -3677,6 +3735,7 @@ class CuriosityEngine:
             return CuriosityFactors(factor_dict=factor_dict)
         except Exception as e:
             print(f"Error computing curiosity factors for '{token}': {e}. Returning neutral factors.")
+            print(traceback.format_exc())
             # Return neutral factors to avoid crash
             neutral = {name: 0.5 for name in self.meta_learner.factor_names}
             return CuriosityFactors(factor_dict=neutral)   
@@ -4313,7 +4372,7 @@ class CuriosityEngine:
             })
 
             # Build factor array in the order of meta_learner.factor_names
-            factor_array = factors.as_array(self.meta_learner.factor_names)
+            factor_array = self._align_factor_vector(factors.as_array(self.meta_learner.factor_names))
             self.meta_learner.update(factor_array, igain)
 
             curiosity_score = self.meta_learner.predict_curiosity(factor_array)
@@ -4784,7 +4843,7 @@ class CuriosityEngine:
         for _ in range(num_syn):
             # start with a random known context (first n-1 words)
             contexts = list(ngram_model.keys())
-            start_ctx = np.random.choice(contexts)
+            start_ctx = contexts[np.random.randint(len(contexts))]
             words = list(start_ctx)
             # generate up to 12 words
             for _ in range(12 - n):
@@ -4875,7 +4934,7 @@ class CuriosityEngine:
             # rarity: inverse of frequency of state vector (if available)
             rarity = 0.0
             if 'factor_vector' in ep and ep['factor_vector']:
-                vec = np.array(list(ep['factor_vector'].values()))
+                vec = self._align_factor_vector(np.array(list(ep['factor_vector'].values())))
                 sims = [1.0 - cdist([vec], [s], 'cosine')[0,0]
                         for s in self.state_manager.states.values() if len(s) == len(vec)]
                 if sims:
@@ -4883,7 +4942,7 @@ class CuriosityEngine:
             # identity drift
             drift = 0.0
             if hasattr(self, 'identity_manager') and 'factor_vector' in ep:
-                vec = np.array(list(ep['factor_vector'].values()))
+                vec = self._align_factor_vector(np.array(list(ep['factor_vector'].values())))
                 drift = self.identity_manager.detect_drift(vec)
             # unresolved hypothesis bonus
             hyp_bonus = 0.2 if any(h.get('asked') is False for h in self.reasoner.hypotheses) else 0.0
@@ -4966,7 +5025,8 @@ class CuriosityEngine:
             print(f"   Merged factor '{name_j}' into '{name_i}' (corr={r:.3f})")
         # spawn new factor from residual unexplained variance
         ig_array = np.array(ig_vals)
-        pred_ig = factor_matrix @ self.meta_learner.mu[valid_cols]
+        mu = align_vector(self.meta_learner.mu, factor_matrix.shape[1])
+        pred_ig = factor_matrix @ mu
         residual = ig_array - pred_ig
         if np.var(residual) > 0.01:
             # simple heuristic: new factor = residual itself (for next iteration)
@@ -5100,8 +5160,10 @@ class CuriosityEngine:
         # collect recent identity vectors from episodes with positive reward
         for ep in self.episodic_memory.episodes[-50:]:
             if ep.get('intrinsic_reward', 0) > 0.1 and 'factor_vector' in ep:
-                vec = np.array(list(ep['factor_vector'].values()))
-                self.identity_history.append(self._align_vector_to_emb_dim(vec))
+                vec = self._align_factor_vector(np.array(list(ep['factor_vector'].values())))
+                self.identity_history.append(
+                    self._align_vector_to_emb_dim(self._align_factor_vector(vec))
+                )
         if len(self.identity_history) < 5:
             return
         # keep last 100
@@ -5161,7 +5223,7 @@ class CuriosityEngine:
         pos_pairs = []
         for ep in self.episodic_memory.episodes[-100:]:
             if 'factor_vector' in ep and ep['factor_vector']:
-                state_vec = np.array(list(ep['factor_vector'].values()))
+                state_vec = self._align_factor_vector(np.array(list(ep['factor_vector'].values())))
                 state_vec = self._align_vector_to_emb_dim(state_vec)
                 text = ep.get('user_input', '')
                 text_emb = self.semantic_learner.text_to_embedding(text)
@@ -5216,7 +5278,7 @@ class CuriosityEngine:
         y = []
         for ep in self.episodic_memory.episodes[-200:]:
             if 'factor_vector' in ep and ep['factor_vector'] and 'system_response' in ep:
-                vec = np.array(list(ep['factor_vector'].values()))
+                vec = self._align_factor_vector(np.array(list(ep['factor_vector'].values())))
                 vec = self._normalize_vector(vec)  # use state_manager's normalizer
                 X.append(vec)
                 response = ep['system_response']
@@ -5315,14 +5377,18 @@ class CuriosityEngine:
             if alt_ig > actual_ig + 0.1:
                 # alternative would have been better; increase weight of factors active in this state
                 if 'factor_vector' in ep and ep['factor_vector']:
-                    vec = np.array(list(ep['factor_vector'].values()))
+                    vec = self._align_factor_vector(np.array(list(ep['factor_vector'].values())))
                     # normalize
                     if np.linalg.norm(vec) > 0:
                         vec = vec / np.linalg.norm(vec)
                     # boost meta‑learner weights for factors with high activation
-                    for i, name in enumerate(self.meta_learner.factor_names):
-                        if i < len(vec):
-                            self.meta_learner.mu[i] += 0.01 * vec[i]
+                    n = len(self.meta_learner.factor_names)
+
+                    vec = align_vector(vec, n)
+                    self.meta_learner.mu = align_vector(self.meta_learner.mu, n)
+
+                    for i in range(n):
+                        self.meta_learner.mu[i] += 0.01 * vec[i]
         print(f"   Counterfactual updates applied (processed {max_eps} episodes, throttle={throttle:.2f}).")
 
     def semantic_self_talk(self):
@@ -5362,7 +5428,8 @@ class CuriosityEngine:
             # either pure trigram walk (70%) or crossover (30%)
             if np.random.rand() < 0.7:
                 # trigram walk
-                ctx = np.random.choice(list(trigram.keys()))
+                keys = list(trigram.keys())
+                ctx = keys[np.random.randint(len(keys))]
                 words = list(ctx)
                 for _ in range(np.random.randint(5, 12)):
                     ctx_key = tuple(words[-2:])
@@ -5376,7 +5443,9 @@ class CuriosityEngine:
             else:
                 # crossover: take prefix of one episode, suffix of another
                 if len(episodes) >= 2:
-                    ep1, ep2 = np.random.choice(episodes, 2, replace=False)
+                    idx = np.random.choice(len(episodes), 2, replace=False)
+                    ep1 = episodes[idx[0]]
+                    ep2 = episodes[idx[1]]
                     sent1 = ep1.get('user_input', '')
                     sent2 = ep2.get('user_input', '')
                     tok1 = self._tokenize(sent1)
@@ -5764,10 +5833,12 @@ class CuriosityEngine:
         for task in tasks:
             try:
                 task()
-            except Exception as e:
-                print(f"   Error in {task.__name__}: {e}")
+            except Exception:
+                print(f"   [ERROR in {task.__name__}]")
+                print(traceback.format_exc())
             # Delay between tasks – longer when throttled
             time.sleep(max(0.05, 0.2 * throttle))
+
         print("="*80 + "\n")
 
     def idle_reflection(self) -> str:
@@ -5785,7 +5856,7 @@ class CuriosityEngine:
             last = self.word_history[w][-1]
             factors = last.get('curiosity_factors')
             if factors:
-                farr = factors.as_array(self.meta_learner.factor_names)
+                farr = self._align_factor_vector(factors.as_array(self.meta_learner.factor_names))
                 word_scores[w] = self.meta_learner.predict_curiosity(farr)
         most_curious = max(word_scores, key=word_scores.get, default=None)
 
@@ -6189,8 +6260,9 @@ class IdleReasoner(threading.Thread):
                     except Exception:
                         pass
                     self.long_idle_done = True
-            except Exception as e:
-                print(f"[IdleReasoner ERROR] {e}")
+            except Exception:
+                print("\n[IdleReasoner ERROR — Full Traceback]")
+                print(traceback.format_exc())
                 time.sleep(5)
 
     def reset_long_idle_flag(self):

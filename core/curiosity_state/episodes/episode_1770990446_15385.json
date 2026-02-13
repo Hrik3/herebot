@@ -1,0 +1,11 @@
+{
+  "timestamp": 1770990446.8537767,
+  "user_input": "is form of used",
+  "system_response": "[synthetic]",
+  "factor_vector": {},
+  "factor_dim": 0,
+  "intrinsic_reward": 0.0,
+  "metadata": {
+    "synthetic": true
+  }
+}
