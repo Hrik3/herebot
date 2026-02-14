@@ -1,0 +1,23 @@
+{
+  "timestamp": 1771032915.7658074,
+  "user_input": "hello means hi",
+  "system_response": "What does 'hello' mean? (My uncertainty about this word is 0.01.)",
+  "factor_vector": {
+    "curiosity": 7.411283441808933,
+    "threat": 0.13079573708891543,
+    "trust": 0.7061761224747344,
+    "confidence": 0.7899810469998458,
+    "uncertainty": 0.05253354314850049,
+    "energy": 0.37,
+    "attention": 0.15,
+    "comprehension": 0.3333333333333333,
+    "fluency": 0.7,
+    "cognitive_load": 0.9445,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 1.0041513898851866,
+  "metadata": {
+    "ci_confidence": 0.7899810469998458
+  }
+}

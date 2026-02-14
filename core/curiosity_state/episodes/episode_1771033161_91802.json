@@ -1,0 +1,23 @@
+{
+  "timestamp": 1771033161.5548806,
+  "user_input": "hello is not similar to humans",
+  "system_response": "What does 'hello' mean? (My uncertainty about this word is 0.01.)",
+  "factor_vector": {
+    "curiosity": 54.15020359724336,
+    "threat": 0.14793009948362698,
+    "trust": 0.6443426998029453,
+    "confidence": 0.7652243991200495,
+    "uncertainty": 0.05623581948946741,
+    "energy": 0.372,
+    "attention": 0.3,
+    "comprehension": 0.16666666666666663,
+    "fluency": 0.7,
+    "cognitive_load": 0.8884,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 9.67640659216743,
+  "metadata": {
+    "ci_confidence": 0.7652243991200495
+  }
+}

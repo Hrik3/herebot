@@ -1,0 +1,23 @@
+{
+  "timestamp": 1771033526.9668353,
+  "user_input": "wrong",
+  "system_response": "What does 'wrong' mean? (My uncertainty about this word is 0.01.)",
+  "factor_vector": {
+    "curiosity": 2.789660234794458,
+    "threat": 0.2898788681276584,
+    "trust": 0.6610133202668215,
+    "confidence": 0.5565528296808541,
+    "uncertainty": 0.06171795390916618,
+    "energy": 0.372,
+    "attention": 0.05,
+    "comprehension": 0.5,
+    "fluency": 0.7,
+    "cognitive_load": 0.9814,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.4145702659603441,
+  "metadata": {
+    "ci_confidence": 0.5565528296808541
+  }
+}

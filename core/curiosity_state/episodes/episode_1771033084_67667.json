@@ -1,0 +1,23 @@
+{
+  "timestamp": 1771033084.237649,
+  "user_input": "ocean is blue",
+  "system_response": "What does 'ocean' mean? (My uncertainty about this word is 0.11.)",
+  "factor_vector": {
+    "curiosity": 58.611212052914354,
+    "threat": 0.18525379774569345,
+    "trust": 0.5676804808303277,
+    "confidence": 0.6783229109434858,
+    "uncertainty": 0.05185786750116961,
+    "energy": 0.3390000000000001,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9491499999999999,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 3.283212618507263,
+  "metadata": {
+    "ci_confidence": 0.6783229109434858
+  }
+}

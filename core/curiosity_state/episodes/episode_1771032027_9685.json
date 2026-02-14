@@ -1,0 +1,23 @@
+{
+  "timestamp": 1771032027.8408792,
+  "user_input": "neutral means affirmative",
+  "system_response": "What does 'neutral' mean? (My uncertainty about this word is 0.01.)",
+  "factor_vector": {
+    "curiosity": 8.986775817683789,
+    "threat": 0.18896626183601126,
+    "trust": 0.5565750280742374,
+    "confidence": 0.6531002330205139,
+    "uncertainty": 0.031648623858100175,
+    "energy": 0.3440000000000001,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9484,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 3.584447023802628,
+  "metadata": {
+    "ci_confidence": 0.6531002330205139
+  }
+}

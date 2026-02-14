@@ -1,0 +1,23 @@
+{
+  "timestamp": 1771031805.1994903,
+  "user_input": "is means mean",
+  "system_response": "Perhaps 'is' is similar to 'means' \u2013 they seem to share a definition. Is that right?",
+  "factor_vector": {
+    "curiosity": 8.849032985266177,
+    "threat": 0.19660579930321753,
+    "trust": 0.5543274069275268,
+    "confidence": 0.6462892247974239,
+    "uncertainty": 0.04184941083902511,
+    "energy": 0.375,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.94375,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 3.478566774764659,
+  "metadata": {
+    "ci_confidence": 0.6462892247974239
+  }
+}

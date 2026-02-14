@@ -1,0 +1,23 @@
+{
+  "timestamp": 1771033722.0220542,
+  "user_input": "hi",
+  "system_response": "I understand 'hi' as hi means greeting. Tell me more.",
+  "factor_vector": {
+    "curiosity": 1.1327122398223475,
+    "threat": 0.21765489908770758,
+    "trust": 0.642773493406587,
+    "confidence": 0.534612752280731,
+    "uncertainty": 0.061250894842601114,
+    "energy": 0.377,
+    "attention": 0.05,
+    "comprehension": 0.5,
+    "fluency": 0.7,
+    "cognitive_load": 0.98115,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.4060884688681201,
+  "metadata": {
+    "ci_confidence": 0.534612752280731
+  }
+}

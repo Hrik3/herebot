@@ -1,0 +1,23 @@
+{
+  "timestamp": 1771033370.3402567,
+  "user_input": "can means possible",
+  "system_response": "What does 'can' mean? (My uncertainty about this word is 0.01.)",
+  "factor_vector": {
+    "curiosity": 43.102384645181544,
+    "threat": 0.21249663276295883,
+    "trust": 0.7466601019009942,
+    "confidence": 0.6256324900669891,
+    "uncertainty": 0.05255652874635167,
+    "energy": 0.375,
+    "attention": 0.15,
+    "comprehension": 0.6666666666666666,
+    "fluency": 0.7,
+    "cognitive_load": 0.94375,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 3.3633456983353893,
+  "metadata": {
+    "ci_confidence": 0.6256324900669891
+  }
+}

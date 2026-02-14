@@ -1,0 +1,23 @@
+{
+  "timestamp": 1771032000.8995001,
+  "user_input": "sky blue",
+  "system_response": "What does 'sky' mean? (My uncertainty about this word is 0.13.)",
+  "factor_vector": {
+    "curiosity": 12.281167267646707,
+    "threat": 0.25931270631220754,
+    "trust": 0.5330194717488881,
+    "confidence": 0.596321026511082,
+    "uncertainty": 0.038309123008189,
+    "energy": 0.372,
+    "attention": 0.1,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9628,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 3.193579012632403,
+  "metadata": {
+    "ci_confidence": 0.596321026511082
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "timestamp": 1771033382.9042132,
+  "user_input": "apple means fruit",
+  "system_response": "What does 'apple' mean? (My uncertainty about this word is 0.01.)",
+  "factor_vector": {
+    "curiosity": 41.63592322421227,
+    "threat": 0.20713861477514295,
+    "trust": 0.7498038428781302,
+    "confidence": 0.6338590476453442,
+    "uncertainty": 0.04979007249932226,
+    "energy": 0.375,
+    "attention": 0.15,
+    "comprehension": 0.6666666666666666,
+    "fluency": 0.7,
+    "cognitive_load": 0.94375,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 3.5760098645842615,
+  "metadata": {
+    "ci_confidence": 0.6338590476453442
+  }
+}

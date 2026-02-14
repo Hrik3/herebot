@@ -1,0 +1,23 @@
+{
+  "timestamp": 1771033500.1546988,
+  "user_input": "banana is edible",
+  "system_response": "What does 'banana' mean? (My uncertainty about this word is 0.11.)",
+  "factor_vector": {
+    "curiosity": 38.58877880022255,
+    "threat": 0.18472194644365456,
+    "trust": 0.5600679648350275,
+    "confidence": 0.6626633255412487,
+    "uncertainty": 0.057295483937218825,
+    "energy": 0.372,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9442,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 3.3045291425951673,
+  "metadata": {
+    "ci_confidence": 0.6626633255412487
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "timestamp": 1771032875.8559098,
+  "user_input": "sky means blue",
+  "system_response": "[synthetic]",
+  "factor_vector": {},
+  "factor_dim": 0,
+  "intrinsic_reward": 0.0,
+  "metadata": {
+    "synthetic": true
+  }
+}

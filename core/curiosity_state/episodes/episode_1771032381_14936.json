@@ -1,0 +1,23 @@
+{
+  "timestamp": 1771032381.912395,
+  "user_input": "stop means negative",
+  "system_response": "What does 'stop' mean? (My uncertainty about this word is 0.01.)",
+  "factor_vector": {
+    "curiosity": 8.402170083650223,
+    "threat": 0.20440458885697024,
+    "trust": 0.5501111820498719,
+    "confidence": 0.6374931816769092,
+    "uncertainty": 0.02844907386772679,
+    "energy": 0.375,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.94375,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 3.321224925546435,
+  "metadata": {
+    "ci_confidence": 0.6374931816769092
+  }
+}

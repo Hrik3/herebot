@@ -1,0 +1,23 @@
+{
+  "logic_1771034300_894": [
+    {
+      "rating": "positive",
+      "timestamp": 1771034448.5748467,
+      "context": {
+        "factor_dict": {
+          "curiosity": 1.3008992046423222,
+          "threat": 0.21972327820780668,
+          "trust": 0.639617901986033,
+          "confidence": 0.5294418044804833,
+          "uncertainty": 0.06537453653027672,
+          "energy": 0.378,
+          "attention": 0.05,
+          "comprehension": 0.5,
+          "fluency": 0.7,
+          "cognitive_load": 0.9811,
+          "conscience_active": 0.0
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "timestamp": 1771033111.5443747,
+  "user_input": "ocean means water",
+  "system_response": "Perhaps 'ocean' is similar to 'hello' \u2013 they seem to share a definition. Is that right?",
+  "factor_vector": {
+    "curiosity": 57.629858595487114,
+    "threat": 0.16981032367730525,
+    "trust": 0.668791118968305,
+    "confidence": 0.6891667909755236,
+    "uncertainty": 0.05709288647877968,
+    "energy": 0.358,
+    "attention": 0.15,
+    "comprehension": 0.3333333333333333,
+    "fluency": 0.7,
+    "cognitive_load": 0.9463,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 3.2772496422043105,
+  "metadata": {
+    "ci_confidence": 0.6891667909755236
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "timestamp": 1771033799.0914037,
+  "user_input": "beautiful",
+  "system_response": "That's interesting. Can you tell me more?",
+  "factor_vector": {
+    "curiosity": 27.72846801161249,
+    "threat": 0.15283674068658082,
+    "trust": 0.7244744597901677,
+    "confidence": 0.692109443743911,
+    "uncertainty": 0.06304829043606716,
+    "energy": 0.372,
+    "attention": 0.05,
+    "comprehension": 0.5,
+    "fluency": 0.7,
+    "cognitive_load": 0.9814,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 4.188383563076119,
+  "metadata": {
+    "ci_confidence": 0.692109443743911
+  }
+}

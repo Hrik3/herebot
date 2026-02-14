@@ -1,0 +1,23 @@
+{
+  "timestamp": 1771033329.5117848,
+  "user_input": "edible means can eat",
+  "system_response": "What does 'edible' mean? (My uncertainty about this word is 0.01.)",
+  "factor_vector": {
+    "curiosity": 44.26222759981565,
+    "threat": 0.1954898738206284,
+    "trust": 0.7805134554042331,
+    "confidence": 0.6495417514778187,
+    "uncertainty": 0.05295843052708278,
+    "energy": 0.375,
+    "attention": 0.2,
+    "comprehension": 0.75,
+    "fluency": 0.7,
+    "cognitive_load": 0.925,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 3.7783180589880327,
+  "metadata": {
+    "ci_confidence": 0.6495417514778187
+  }
+}

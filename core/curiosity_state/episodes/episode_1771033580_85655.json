@@ -1,0 +1,23 @@
+{
+  "timestamp": 1771033580.5318277,
+  "user_input": "humans",
+  "system_response": "Perhaps 'negative' is similar to 'humans' \u2013 they seem to share a definition. Is that right?",
+  "factor_vector": {
+    "curiosity": 4.246890486306704,
+    "threat": 0.2021454710492032,
+    "trust": 0.6902776684905748,
+    "confidence": 0.6200919069601937,
+    "uncertainty": 0.059652002353028886,
+    "energy": 0.372,
+    "attention": 0.05,
+    "comprehension": 0.5,
+    "fluency": 0.7,
+    "cognitive_load": 0.9814,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.387224891899553,
+  "metadata": {
+    "ci_confidence": 0.6200919069601937
+  }
+}

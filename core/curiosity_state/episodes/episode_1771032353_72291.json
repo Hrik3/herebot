@@ -1,0 +1,23 @@
+{
+  "timestamp": 1771032353.832764,
+  "user_input": "leave means stop",
+  "system_response": "What does 'leave' mean? (My uncertainty about this word is 0.01.)",
+  "factor_vector": {
+    "curiosity": 9.624327948732548,
+    "threat": 0.20763816772813315,
+    "trust": 0.5496531151232218,
+    "confidence": 0.6359413005244529,
+    "uncertainty": 0.030075996321545236,
+    "energy": 0.375,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.94375,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 3.599430684493546,
+  "metadata": {
+    "ci_confidence": 0.6359413005244529
+  }
+}

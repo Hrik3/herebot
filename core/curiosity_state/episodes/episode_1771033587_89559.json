@@ -1,0 +1,23 @@
+{
+  "timestamp": 1771033587.3458078,
+  "user_input": "humans",
+  "system_response": "Does 'negative' mean 'negative'?",
+  "factor_vector": {
+    "curiosity": 1.957545034549142,
+    "threat": 0.20166025179142183,
+    "trust": 0.6900623676488362,
+    "confidence": 0.6213049551046471,
+    "uncertainty": 0.05934999456929457,
+    "energy": 0.38,
+    "attention": 0.05,
+    "comprehension": 0.5,
+    "fluency": 0.7,
+    "cognitive_load": 0.981,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.19268588045288515,
+  "metadata": {
+    "ci_confidence": 0.6213049551046471
+  }
+}

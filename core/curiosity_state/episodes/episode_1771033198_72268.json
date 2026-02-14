@@ -1,0 +1,23 @@
+{
+  "timestamp": 1771033198.2856386,
+  "user_input": "similar means equal",
+  "system_response": "What does 'similar' mean? (My uncertainty about this word is 0.01.)",
+  "factor_vector": {
+    "curiosity": 47.20650584270131,
+    "threat": 0.1788376509541443,
+    "trust": 0.7612076737033806,
+    "confidence": 0.6612421838584581,
+    "uncertainty": 0.05454277064741393,
+    "energy": 0.37,
+    "attention": 0.15,
+    "comprehension": 0.6666666666666666,
+    "fluency": 0.7,
+    "cognitive_load": 0.9445,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 3.270670806966066,
+  "metadata": {
+    "ci_confidence": 0.6612421838584581
+  }
+}

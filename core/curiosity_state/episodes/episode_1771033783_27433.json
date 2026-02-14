@@ -1,0 +1,23 @@
+{
+  "timestamp": 1771033783.9640434,
+  "user_input": "beautiful sky",
+  "system_response": "I know 'sky' is associated with: blue. Tell me more about it.",
+  "factor_vector": {
+    "curiosity": 4.393517533843524,
+    "threat": 0.22753542062880872,
+    "trust": 0.5491580645873164,
+    "confidence": 0.6370120961581597,
+    "uncertainty": 0.05986571959459811,
+    "energy": 0.372,
+    "attention": 0.1,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9628,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.865703913570629,
+  "metadata": {
+    "ci_confidence": 0.6370120961581597
+  }
+}

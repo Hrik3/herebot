@@ -1,0 +1,23 @@
+{
+  "timestamp": 1771032239.8745456,
+  "user_input": "fish is living",
+  "system_response": "Perhaps 'fish' is similar to 'animal' \u2013 they seem to share a definition. Is that right?",
+  "factor_vector": {
+    "curiosity": 6.174914128627417,
+    "threat": 0.2240790822535823,
+    "trust": 0.5384824260443144,
+    "confidence": 0.6073022943660442,
+    "uncertainty": 0.029200881371155406,
+    "energy": 0.375,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.94375,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.6524632094042264,
+  "metadata": {
+    "ci_confidence": 0.6073022943660442
+  }
+}
