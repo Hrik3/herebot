@@ -33,7 +33,8 @@ from dataclasses import dataclass, field
 import numpy as np
 from scipy.stats import beta as beta_dist, dirichlet, norm, gamma, multivariate_normal
 from scipy.special import digamma, gammaln, rel_entr
-from scipy.spatial.distance import cdist
+from scipy.spatial.distance import cdist, cosine
+import heapq
 from scipy.cluster.vq import kmeans2
 import psutil
 import json
@@ -1053,6 +1054,7 @@ class MetaCuriosityLearner:
         self.lambda_ = np.ones(self.n_factors) * 0.1
         self.alpha = np.ones(self.n_factors) * 1.0
         self.beta = np.ones(self.n_factors) * 1.0
+        self.factor_metadata: Dict[str, dict] = {}   # factor_name -> {energy_cost, recent_usage, predictive_gain, phase, last_used}
         # Dictionary to store compute functions for dynamic curiosity factors
         self.dynamic_compute_functions = {}  # factor_name -> callable
         self._load()
@@ -1087,6 +1089,15 @@ class MetaCuriosityLearner:
 
         self.n_factors = len(self.mu)
 
+        # ---- metabolic metadata ----
+        self.factor_metadata[factor_name] = {
+            'energy_cost': 1.0,
+            'recent_usage': 0.0,
+            'predictive_gain': abs(initial_mu),
+            'phase': 'active',
+            'last_used': None
+        }
+
         self.save(os.path.join(STATE_DIR, 'meta_learner.npz'))
 
     def compute_dynamic_factor(self, factor_name: str, token: str,
@@ -1100,13 +1111,27 @@ class MetaCuriosityLearner:
         if factor_name in self.dynamic_compute_functions:
             func = self.dynamic_compute_functions[factor_name]
             try:
-                return func(token, token_ci, token_phon, diag, features_array, global_factor_dict)
+                val = func(token, token_ci, token_phon, diag, features_array, global_factor_dict)
+                # ---- update metabolic stats ----
+                meta = self.factor_metadata.get(factor_name)
+                if meta:
+                    now = time.time()
+                    if meta['last_used'] is not None:
+                        # decay recent_usage over time
+                        dt = now - meta['last_used']
+                        meta['recent_usage'] *= 0.99 ** dt
+                    meta['recent_usage'] += 0.1   # each usage adds 0.1 (smooth)
+                    meta['last_used'] = now
+                    # predictive_gain could be updated with the absolute value of the factor (or something)
+                    meta['predictive_gain'] = 0.9 * meta['predictive_gain'] + 0.1 * abs(val)
+                # ---------------------------------
+                return val
             except Exception as e:
                 print(f"Error computing dynamic factor '{factor_name}': {e}")
                 print(traceback.format_exc())
                 return 0.0
         return 0.0
-
+    
     def update(self, factors: np.ndarray, information_gain: float):
 
         target_dim = len(factors)
@@ -1176,7 +1201,8 @@ class MetaCuriosityLearner:
                  alpha=self.alpha,
                  beta=self.beta,
                  base_factor_names=self.base_factor_names,
-                 dynamic_factor_names=self.dynamic_factor_names)
+                 dynamic_factor_names=self.dynamic_factor_names,
+                factor_metadata=self.factor_metadata) 
 
     def load(self, path: str):
         """Load weights and factor names."""
@@ -1188,6 +1214,10 @@ class MetaCuriosityLearner:
         self.base_factor_names = list(data['base_factor_names'])
         self.dynamic_factor_names = list(data['dynamic_factor_names'])
         self.n_factors = len(self.mu)
+        if 'factor_metadata' in data:
+            self.factor_metadata = data['factor_metadata'].item()
+        else:
+            self.factor_metadata = {}
     
     def _load(self):
         """Load from default path if exists."""
@@ -1218,9 +1248,12 @@ class BehavioralRule:
     last_tested: Optional[float] = None
     asked: bool = False
     confirmed: bool = False
-
-    def __hash__(self):
-        return hash(self.rule_id)
+    # ---- metabolic attributes ----
+    energy_cost: float = 1.0               # cost per time unit to keep alive
+    recent_usage: float = 0.0               # smoothed usage count
+    predictive_gain: float = 0.0            # estimated contribution to prediction
+    phase: str = "active"                   # active, weak, dormant, archived, deleted
+    last_used: Optional[float] = None       # last time the rule was applied
 
 class BehavioralRuleLearner:
     """
@@ -1249,6 +1282,16 @@ class BehavioralRuleLearner:
                     self.rule_history = data.get('history', [])
             except Exception as e:
                 print(f"Could not load behavioral rules: {e}")
+
+    def record_usage(self, rule_id: str):
+        if rule_id in self.rules:
+            rule = self.rules[rule_id]
+            now = time.time()
+            if rule.last_used:
+                dt = now - rule.last_used
+                rule.recent_usage *= 0.99 ** dt
+            rule.recent_usage += 0.1
+            rule.last_used = now
 
     def save(self):
         path = os.path.join(STATE_DIR, 'behavioral_rules.pkl')
@@ -1308,6 +1351,8 @@ class BehavioralRuleLearner:
             if rule.confidence >= self.test_threshold and not rule.asked:
                 if self._matches_condition(rule, context):
                     testable.append(rule)
+        for rule in testable:
+            self.record_usage(rule.rule_id)
         return testable
 
     def _matches_condition(self, rule: BehavioralRule, context: Dict) -> bool:
@@ -1572,6 +1617,12 @@ class ConscienceBelief:
     added_to_conscience: bool = False   # True when formally integrated
     created: float = field(default_factory=time.time)
     last_updated: Optional[float] = None
+    # ---- metabolic attributes ----
+    energy_cost: float = 1.0
+    recent_usage: float = 0.0
+    predictive_gain: float = 0.0
+    phase: str = "active"
+    last_used: Optional[float] = None
 
     def __hash__(self):
         return hash(self.belief_id)
@@ -1806,6 +1857,11 @@ class LogicInheritanceManager:
         rule['logic_id'] = logic_id
         rule['created'] = time.time()
         rule['confirmed'] = False
+        rule['energy_cost'] = 0.5
+        rule['recent_usage'] = 0.0
+        rule['predictive_gain'] = 0.5
+        rule['phase'] = 'active'
+        rule['last_used'] = None
         with open(filepath, 'w') as f:
             json.dump(rule, f, indent=2)
         return filepath
@@ -1884,6 +1940,9 @@ class LogicInheritanceManager:
             return
         if is_correct:
             self.confirmed_logic[logic_id] = doubt['rule']
+            rule = doubt['rule']
+            rule['last_used'] = time.time()
+            rule['recent_usage'] = rule.get('recent_usage', 0.0) * 0.99 + 0.1
             # ---- NEW: generate code and shadow test ----
             filepath = self.generate_code_for_logic(logic_id)
             if filepath:
@@ -2606,6 +2665,12 @@ class ReasoningEngine:
             'confidence': confidence,
             'text': text,
             'asked': False,
+            # ---- metabolic ----
+            'energy_cost': 0.5,
+            'recent_usage': 0.0,
+            'predictive_gain': confidence,   # initial guess
+            'phase': 'active',
+            'last_used': None,
         }
         self.hypotheses.append(hyp)
 
@@ -2704,6 +2769,12 @@ class ReasoningEngine:
             'similarity': sim,
             'text': f"Perhaps '{word}' is similar to '{best_word}' – they seem to share a definition. Is that right?",
             'asked': False,
+            # ---- metabolic ----
+            'energy_cost': 0.5,
+            'recent_usage': 0.0,
+            'predictive_gain': sim,
+            'phase': 'active',
+            'last_used': None,
         }
         self.hypotheses.append(hypothesis)
         return hypothesis['text']
@@ -2943,10 +3014,27 @@ class StateManager:
         self.shadow_states = {}   # label -> factor_vector (temporary shadow states)
         self._load_conflicts()
         self._load_shadows()
-        
+        self.state_metadata: Dict[str, dict] = {}   # label -> {energy_cost, recent_usage, predictive_gain, phase, last_used, confidence}
         # Dimensionality: all vectors are aligned to the current reference dimension.
         self.ref_dim = None
         self._update_ref_dim()
+        self._load_state_metadata()
+
+    def _load_state_metadata(self):
+        meta_path = os.path.join(STATE_DIR, 'state_metadata.json')
+        if os.path.exists(meta_path):
+            try:
+                with open(meta_path, 'r') as f:
+                    self.state_metadata = json.load(f)
+            except Exception as e:
+                print(f"Could not load state metadata: {e}")
+
+    def _save_state_metadata(self):
+        meta_path = os.path.join(STATE_DIR, 'state_metadata.json')
+        tmp = meta_path + ".tmp"
+        with open(tmp, 'w') as f:
+            json.dump(self.state_metadata, f, indent=2)
+        os.replace(tmp, meta_path)
 
     def _update_ref_dim(self):
         """Set reference dimension to the mode of all stored vectors."""
@@ -3013,11 +3101,19 @@ class StateManager:
             "metadata": metadata or {},
             "is_shadow": is_shadow,
         }
+        # ---- metabolic metadata for new state ----
+        self.state_metadata[safe_label] = {
+            'energy_cost': 1.0,
+            'recent_usage': 0.0,
+            'predictive_gain': 1.0,  # placeholder
+            'phase': 'active',
+            'last_used': time.time(),
+            'confidence': 1.0,        # how well the state represents the underlying pattern
+        }
         tmp = path + ".tmp"
         with open(tmp, "w") as f:
             json.dump(data, f, indent=2)
         os.replace(tmp, path)
-
         vector = self._normalize_vector(vector)
 
         if is_shadow:
@@ -3026,6 +3122,7 @@ class StateManager:
             self.states[safe_label] = vector
 
         self._update_ref_dim()
+        self._save_state_metadata()   # <-- save metadata after change
         return safe_label
 
     def delete_state(self, label: str):
@@ -3037,6 +3134,9 @@ class StateManager:
         for fname in os.listdir(self.state_dir):
             if fname.startswith(label) and fname.endswith(".json"):
                 os.remove(os.path.join(self.state_dir, fname))
+        if label in self.state_metadata:
+            del self.state_metadata[label]
+            self._save_state_metadata()
         self._update_ref_dim()
 
     def find_similar_state(self, vector: np.ndarray, threshold: float = None, include_shadows: bool = False) -> Optional[str]:
@@ -3069,7 +3169,17 @@ class StateManager:
             if sim > best_sim:
                 best_sim = sim
                 best_label = label
-        if best_sim >= threshold:
+        if best_sim >= threshold and best_label:
+            # update usage
+            meta = self.state_metadata.get(best_label)
+            if meta:
+                now = time.time()
+                if meta.get('last_used'):
+                    dt = now - meta['last_used']
+                    meta['recent_usage'] *= 0.99 ** dt
+                meta['recent_usage'] += 0.1
+                meta['last_used'] = now
+                self._save_state_metadata()
             return best_label
         return None
 
@@ -3858,7 +3968,6 @@ class CuriosityEngine:
     # ------------------------------------------------------------------
     # Persistence (now with config_manager passed to .load() methods)
     # ------------------------------------------------------------------
-
     def _update_dynamic_limits(self):
         """Adapt internal limits to available system RAM."""
         try:
@@ -3877,6 +3986,98 @@ class CuriosityEngine:
             self._max_cycles_per_session = 100000
             self._max_hypotheses = 5000
             self._max_logic_rules = 2000
+
+    def _metabolic_maintenance(self):
+        """
+        Apply metabolic cost and phase transitions to all persistent structures.
+        Called during idle introspection.
+        """
+        now = time.time()
+
+        # --- 1. Behavioral rules ---
+        for rule in self.behavioral_learner.rules.values():
+            self._apply_metabolic_to_item(rule, now)
+
+        # --- 2. Conscience beliefs ---
+        for belief in self.conscience_manager.beliefs.values():
+            self._apply_metabolic_to_item(belief, now)
+
+        # --- 3. Hypotheses in reasoner ---
+        for hyp in self.reasoner.hypotheses:
+            self._apply_metabolic_to_dict_item(hyp, now)
+
+        # --- 4. Dynamic curiosity factors ---
+        for factor_name, meta in self.meta_learner.factor_metadata.items():
+            self._apply_metabolic_to_dict_item(meta, now, key_prefix=("factor", factor_name))
+
+        # --- 5. States ---
+        for label, meta in self.state_manager.state_metadata.items():
+            self._apply_metabolic_to_dict_item(meta, now, key_prefix=("state", label))
+
+        # --- 6. Logic rules ---
+        for logic_id, rule in self.logic_inheritance.confirmed_logic.items():
+            self._apply_metabolic_to_dict_item(rule, now, key_prefix=("logic", logic_id))
+        for doubt in self.logic_inheritance.pending_doubts:
+            rule = doubt['rule']
+            self._apply_metabolic_to_dict_item(rule, now, key_prefix=("doubt", doubt['doubt_id']))
+
+    def _apply_metabolic_to_item(self, item, now):
+        """Apply metabolic rules to an object with attributes."""
+        if item.phase == 'deleted':
+            return
+        dt = now - (item.last_used if item.last_used else item.created)
+        # decay recent_usage exponentially
+        decay_factor = 0.99 ** dt
+        item.recent_usage *= decay_factor
+
+        # compute effective predictive_gain (could be based on recent_usage and confidence)
+        effective_gain = item.predictive_gain * item.recent_usage / (1 + dt)
+
+        # maintenance cost (could be type-dependent)
+        cost = item.energy_cost
+
+        if effective_gain < cost:
+            # move to next phase
+            if item.phase == 'active':
+                item.phase = 'weak'
+                print(f"   [Metabolic] {item} moved to weak")
+            elif item.phase == 'weak':
+                item.phase = 'dormant'
+                print(f"   [Metabolic] {item} moved to dormant")
+            elif item.phase == 'dormant':
+                item.phase = 'archived'
+                print(f"   [Metabolic] {item} archived")
+            elif item.phase == 'archived':
+                item.phase = 'deleted'
+                print(f"   [Metabolic] {item} deleted")
+                # actually remove from its container? We'll handle separately.
+
+    def _apply_metabolic_to_dict_item(self, d, now, key_prefix=None):
+        """Apply metabolic rules to a dictionary item."""
+        if d.get('phase') == 'deleted':
+            return
+        last_used = d.get('last_used')
+        created = d.get('created', now - 86400)  # fallback
+        dt = now - (last_used if last_used else created)
+        recent_usage = d.get('recent_usage', 0.0)
+        recent_usage *= (0.99 ** dt)
+        d['recent_usage'] = recent_usage
+
+        predictive_gain = d.get('predictive_gain', 0.0)
+        cost = d.get('energy_cost', 0.5)
+        effective_gain = predictive_gain * recent_usage / (1 + dt)
+
+        if effective_gain < cost:
+            phase = d.get('phase', 'active')
+            if phase == 'active':
+                d['phase'] = 'weak'
+            elif phase == 'weak':
+                d['phase'] = 'dormant'
+            elif phase == 'dormant':
+                d['phase'] = 'archived'
+            elif phase == 'archived':
+                d['phase'] = 'deleted'
+                # Optionally remove from container – we'll leave that for later cleanup.
 
     def _align_factor_vector(self, vec: np.ndarray) -> np.ndarray:
         return align_vector(vec, len(self.meta_learner.factor_names))
@@ -4332,6 +4533,17 @@ class CuriosityEngine:
             return 0.0
         sim = np.dot(state_emb, token_emb) / (norm_state * norm_token)
         # scale from [-1,1] to [0,1]
+        # update state usage
+        if self.current_state_label:
+            meta = self.state_manager.state_metadata.get(self.current_state_label)
+            if meta:
+                now = time.time()
+                if meta.get('last_used'):
+                    dt = now - meta['last_used']
+                    meta['recent_usage'] *= 0.99 ** dt
+                meta['recent_usage'] += 0.05
+                meta['last_used'] = now
+                self.state_manager._save_state_metadata()
         return (sim + 1.0) * 0.5
 
     def _update_state_embedding(self, label: str, vector: np.ndarray):
@@ -5901,6 +6113,8 @@ class CuriosityEngine:
             self.meta_learner.beta = self.meta_learner.beta[keep]
             if name in self.meta_learner.dynamic_compute_functions:
                 del self.meta_learner.dynamic_compute_functions[name]
+            if name in self.meta_learner.factor_metadata:
+                del self.meta_learner.factor_metadata[name]
             print(f"   Removed weak drive: '{name}'")
         # Spawn new drive from residual variance (simplified) – reduce probability when throttled
         spawn_prob = 0.2 * throttle
@@ -6522,6 +6736,7 @@ class CuriosityEngine:
             self.deep_behavioral_pattern_mining,
             self.propagate_word_state_associations,
             self.mine_phrase_relations,
+            self._metabolic_maintenance,
         ]
         for task in tasks:
             try:
@@ -6608,6 +6823,7 @@ class ActionGenerator:
         self.reasoner = reasoner
         self.engine = engine
         self.config_manager = config_manager
+        self.semantic_learner = semantic_learner
         self.guilt_tracker = getattr(engine, 'guilt_tracker', None)
 
     def _matches_conscience_condition(self, belief: ConscienceBelief, user_input: str, state: Dict) -> bool:
@@ -6776,6 +6992,8 @@ class ActionGenerator:
         for hyp in self.reasoner.hypotheses:
             if hyp.get('type') in ('synonym', 'category', 'analogy', 'inference') and not hyp.get('asked', False):
                 hyp['asked'] = True
+                hyp['last_used'] = time.time()
+                hyp['recent_usage'] = hyp.get('recent_usage', 0.0) * 0.99 + 0.1
                 return hyp['text']
 
         # --- 1. Check learned behavioral patterns (conversational_pattern) ---
@@ -6786,15 +7004,16 @@ class ActionGenerator:
                 if 'user_input_pattern' in cond and user_input_lower == cond['user_input_pattern']:
                     # Exact match greeting pattern
                     if 'response_template' in rule.action:
+                        self.engine.behavioral_learner.record_usage(rule.rule_id)
                         resp = rule.action['response_template']
-                        # Replace placeholder if needed (e.g., [name])
                         return resp
                 elif 'question_pattern' in cond and user_input_lower.rstrip('?') == cond['question_pattern']:
                     if 'answer_template' in rule.action:
+                        self.engine.behavioral_learner.record_usage(rule.rule_id)
                         return rule.action['answer_template']
                 elif 'expected_user_input' in cond and user_input_lower == cond['expected_user_input']:
                     # This is a transition pattern; we might use the previous response as a clue
-                    # For now, just acknowledge
+                    self.engine.behavioral_learner.record_usage(rule.rule_id)
                     return f"I see you're continuing the conversation."
 
         # --- 2. Try to understand the user's input using known definitions and relations ---
@@ -6916,6 +7135,8 @@ class ActionGenerator:
         for hyp in self.reasoner.hypotheses:
             if hyp.get('type') in ('synonym', 'category', 'analogy', 'inference') and not hyp.get('asked', False):
                 hyp['asked'] = True
+                hyp['last_used'] = time.time()
+                hyp['recent_usage'] = hyp.get('recent_usage', 0.0) * 0.99 + 0.1
                 return hyp['text']
 
         # --- Priority 3: High curiosity words (unknown words) ---
