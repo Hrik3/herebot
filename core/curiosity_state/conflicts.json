@@ -78,9 +78,10 @@
       "me"
     ],
     "similarity": 0.8751081835749324,
-    "resolved": false,
-    "resolution_label": null,
-    "timestamp": 1771034426.4339414
+    "resolved": true,
+    "resolution_label": "greeting",
+    "timestamp": 1771034426.4339414,
+    "resolution_type": "permanent"
   },
   {
     "labels": [
@@ -88,9 +89,10 @@
       "living beings"
     ],
     "similarity": 0.9818734534157764,
-    "resolved": false,
-    "resolution_label": null,
-    "timestamp": 1771034426.4339495
+    "resolved": true,
+    "resolution_label": "living beings",
+    "timestamp": 1771034426.4339495,
+    "resolution_type": "permanent"
   },
   {
     "labels": [
@@ -98,9 +100,10 @@
       "water bodies"
     ],
     "similarity": 0.9697843124798406,
-    "resolved": false,
-    "resolution_label": null,
-    "timestamp": 1771034426.4339569
+    "resolved": true,
+    "resolution_label": "water bodies",
+    "timestamp": 1771034426.4339569,
+    "resolution_type": "permanent"
   },
   {
     "labels": [

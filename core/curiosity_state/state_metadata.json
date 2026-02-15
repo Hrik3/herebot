@@ -7,14 +7,6 @@
     "last_used": 1771033056.3449464,
     "confidence": 1.0
   },
-  "positive": {
-    "energy_cost": 1.0,
-    "recent_usage": 0.0007843889425899665,
-    "predictive_gain": 1.0,
-    "phase": "weak",
-    "last_used": 1771033783.9633143,
-    "confidence": 1.0
-  },
   "shadow_greeting_positive_1771032946": {
     "energy_cost": 1.0,
     "recent_usage": 0.0,
@@ -41,10 +33,10 @@
   },
   "cautious inquiry": {
     "energy_cost": 1.0,
-    "recent_usage": 0.10000141654995531,
+    "recent_usage": 0.10002594161085544,
     "predictive_gain": 1.0,
     "phase": "weak",
-    "last_used": 1771034368.304227,
+    "last_used": 1771035189.8779013,
     "confidence": 1.0
   },
   "normal state": {
@@ -73,18 +65,10 @@
   },
   "fruits": {
     "energy_cost": 1.0,
-    "recent_usage": 0.0012485673725375656,
+    "recent_usage": 0.10000000053602962,
     "predictive_gain": 1.0,
     "phase": "weak",
-    "last_used": 1771033799.0904388,
-    "confidence": 1.0
-  },
-  "me": {
-    "energy_cost": 1.0,
-    "recent_usage": 0.001360211413486249,
-    "predictive_gain": 1.0,
-    "phase": "weak",
-    "last_used": 1771033744.8568637,
+    "last_used": 1771035257.8549454,
     "confidence": 1.0
   },
   "shadow_greeting_living beings_1771034291": {
@@ -165,6 +149,22 @@
     "predictive_gain": 1.0,
     "phase": "active",
     "last_used": 1771034426.4372735,
+    "confidence": 1.0
+  },
+  "normal": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.1,
+    "predictive_gain": 1.0,
+    "phase": "active",
+    "last_used": 1771035214.3263748,
+    "confidence": 1.0
+  },
+  "confusion": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.1,
+    "predictive_gain": 1.0,
+    "phase": "active",
+    "last_used": 1771035263.0345688,
     "confidence": 1.0
   }
 }
