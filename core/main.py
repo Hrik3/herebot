@@ -3046,15 +3046,25 @@ class StateManager:
 
     def _normalize_vector(self, vector: np.ndarray) -> np.ndarray:
         """Pad or truncate vector to match reference dimension."""
-        if self.ref_dim is None:
-            self._update_ref_dim()
+
+        # --- ensure attribute exists ---
+        if not hasattr(self, "ref_dim") or self.ref_dim is None:
+            if vector is not None and len(vector) > 0:
+                self.ref_dim = len(vector)
+            else:
+                self.ref_dim = 64   # safe fallback default
+
         if vector is None or len(vector) == 0:
             return np.zeros(self.ref_dim)
+
         if len(vector) < self.ref_dim:
             return np.pad(vector, (0, self.ref_dim - len(vector)), 'constant')
-        elif len(vector) > self.ref_dim:
+
+        if len(vector) > self.ref_dim:
             return vector[:self.ref_dim]
+
         return vector
+
 
     def update_parameters_from_config(self):
         """Reload parameters from config (hot reload)."""
@@ -4774,6 +4784,7 @@ class CuriosityEngine:
         """
         self.last_interaction_time = time.time()
 
+        # ----------------- MAINTENANCE -----------------
         self._cycle_counter += 1
         if self._cycle_counter % 250 == 0:
             self._update_dynamic_limits()
@@ -4788,43 +4799,15 @@ class CuriosityEngine:
         # Reset idle reasoner's long-idle flag
         if hasattr(self, '_idle_reasoner'):
             self._idle_reasoner.reset_long_idle_flag()
+
         self.interaction_history.append(text)
         if len(self.interaction_history) > getattr(self, "_max_interaction_history", 200000):
             self.interaction_history = self.interaction_history[-self._max_interaction_history:]
-        # -------------------------------------------------------
-        # HANDLE RESPONSE FEEDBACK (emergent sentiment learning)
-        # -------------------------------------------------------
-        if not self.chat_mode_active and self.expecting_response_feedback:
-            feedback_lower = text.lower()
-            rating = None
-            # Detect rating from user input
-            if any(kw in feedback_lower for kw in ['positive', 'good', 'great', 'yes', 'correct', 'right', '👍']):
-                rating = 'positive'
-            elif any(kw in feedback_lower for kw in ['negative', 'bad', 'wrong', 'no', 'incorrect', '👎']):
-                rating = 'negative'
-            elif any(kw in feedback_lower for kw in ['neutral', 'ok', 'fine', 'average']):
-                rating = 'neutral'
-            # If rating found and we have a pending context
-            if rating is not None and self.pending_feedback_context is not None:
-                entry = self.pending_feedback_context
-                entry.rating = rating
-                entry.metadata['feedback_timestamp'] = time.time()
-                entry.metadata['feedback_text'] = text
-                self.reasoner.add_feedback(entry)
-                print(f"📊 [Feedback Recorded] User rated response as: {rating}")
 
-                if 'positive' in rating and hasattr(self, '_last_factor_vector'):
-                    self._reinforce_identity(self._last_factor_vector, reward_signal=0.2)
+        # ----------------- RESPONSE HANDLING -----------------
+        # If we are in any waiting state, handle the response and return early.
 
-                self.expecting_response_feedback = False
-                self.pending_feedback_context = None
-            else:
-                print(f"🌑 [Feedback] No clear rating detected, ignoring.")
-                self.expecting_response_feedback = False
-                self.pending_feedback_context = None
-        # -------------------------------------------------------
-        # CHAT MODE TRIGGER
-        # -------------------------------------------------------
+        # 1. Chat mode toggle (special command, not a waiting state)
         if text.lower().strip() == self.chat_mode_trigger:
             self.chat_mode_active = not self.chat_mode_active
             if self.chat_mode_active:
@@ -4833,7 +4816,6 @@ class CuriosityEngine:
             else:
                 system_reply = "Chat mode deactivated. Returning to normal learning mode."
             print(f"🤖 AGI> {system_reply}")
-            # Return early – no need to process this as a normal sentence
             return {
                 "ci_report": {},
                 "phon_score": 0,
@@ -4845,9 +4827,47 @@ class CuriosityEngine:
                 "episode_reward": 0.0,
                 "factor_vector": {},
             }
-        # -------------------------------------------------------
-        # HANDLE RULE CONFIRMATION RESPONSE
-        # -------------------------------------------------------
+
+        # 2. Response feedback (emergent sentiment learning)
+        if not self.chat_mode_active and self.expecting_response_feedback:
+            feedback_lower = text.lower()
+            rating = None
+            if any(kw in feedback_lower for kw in ['positive', 'good', 'great', 'yes', 'correct', 'right', '👍']):
+                rating = 'positive'
+            elif any(kw in feedback_lower for kw in ['negative', 'bad', 'wrong', 'no', 'incorrect', '👎']):
+                rating = 'negative'
+            elif any(kw in feedback_lower for kw in ['neutral', 'ok', 'fine', 'average']):
+                rating = 'neutral'
+
+            if rating is not None and self.pending_feedback_context is not None:
+                entry = self.pending_feedback_context
+                entry.rating = rating
+                entry.metadata['feedback_timestamp'] = time.time()
+                entry.metadata['feedback_text'] = text
+                self.reasoner.add_feedback(entry)
+                print(f"📊 [Feedback Recorded] User rated response as: {rating}")
+
+                if 'positive' in rating and hasattr(self, '_last_factor_vector'):
+                    self._reinforce_identity(self._last_factor_vector, reward_signal=0.2)
+            else:
+                print(f"🌑 [Feedback] No clear rating detected, ignoring.")
+
+            self.expecting_response_feedback = False
+            self.pending_feedback_context = None
+            # Return early – feedback handled, no further processing of this input
+            return {
+                "ci_report": {},
+                "phon_score": 0,
+                "diagnostic": {},
+                "token_analyses": [],
+                "curiosity_artifacts": ["Feedback recorded."],
+                "meta_weights": self.meta_learner.get_weights(),
+                "total_intrinsic_reward": self.reward_tracker.total_reward,
+                "episode_reward": 0.0,
+                "factor_vector": {},
+            }
+
+        # 3. Rule confirmation response
         if not self.chat_mode_active and self.expecting_rule_confirmation:
             feedback_lower = text.lower()
             is_positive = any(kw in feedback_lower for kw in ['yes', 'correct', 'right', 'yeah', 'true', 'yep', 'ok', 'sure', 'confirm'])
@@ -4864,21 +4884,31 @@ class CuriosityEngine:
                     else:
                         print(f"❌ [Rule Rejected] User denied rule: {rule_id}")
                         self.behavioral_learner.update_confidence(rule_id, -0.5, feedback=True)
-                self.expecting_rule_confirmation = False
-                self.pending_rule_id = None
             else:
                 print(f"🌑 [Rule Shadow] No clear confirmation for rule: {self.pending_rule_id}")
-                self.behavioral_learner.update_confidence(self.pending_rule_id, -0.1, feedback=False)
-                self.expecting_rule_confirmation = False
-                self.pending_rule_id = None
-    
-        # -------------------------------------------------------
-        # HANDLE LOGIC DOUBT FEEDBACK
-        # -------------------------------------------------------
+                if self.pending_rule_id in self.behavioral_learner.rules:
+                    self.behavioral_learner.update_confidence(self.pending_rule_id, -0.1, feedback=False)
+
+            self.expecting_rule_confirmation = False
+            self.pending_rule_id = None
+            return {
+                "ci_report": {},
+                "phon_score": 0,
+                "diagnostic": {},
+                "token_analyses": [],
+                "curiosity_artifacts": ["Rule confirmation processed."],
+                "meta_weights": self.meta_learner.get_weights(),
+                "total_intrinsic_reward": self.reward_tracker.total_reward,
+                "episode_reward": 0.0,
+                "factor_vector": {},
+            }
+
+        # 4. Logic doubt feedback
         if not self.chat_mode_active and self.expecting_logic_feedback:
             feedback_lower = text.lower()
             is_positive = any(kw in feedback_lower for kw in ['yes', 'correct', 'right', 'yeah', 'true', 'yep', 'ok', 'sure', 'confirm'])
             is_negative = any(kw in feedback_lower for kw in ['no', 'wrong', 'incorrect', 'not', 'nope', 'never'])
+
             if self.pending_logic_doubt:
                 logic_id = self.pending_logic_doubt['logic_id']
                 if is_positive:
@@ -4887,41 +4917,42 @@ class CuriosityEngine:
                 elif is_negative:
                     self.logic_inheritance.confirm_logic(logic_id, is_correct=False)
                     print(f"❌ [Logic Rejected] User denied logic: {logic_id}")
-                # ---- Record feedback for generated code ----
+
                 if is_positive or is_negative:
                     self.generated_code_feedback.add_feedback(
                         logic_id,
                         "positive" if is_positive else "negative",
                         {"factor_dict": self._last_factor_dict.copy() if self._last_factor_dict else {}}
                     )
-                    # ---- Update guilt based on feedback and emotional state ----
                     if self._last_factor_dict is not None:
                         rating = "positive" if is_positive else "negative"
                         self.guilt_tracker.update_guilt(rating, self._last_factor_dict)
                 else:
                     print(f"🌑 [Logic Shadow] No clear confirmation for logic: {logic_id}")
-                self.expecting_logic_feedback = False
-                self.pending_logic_doubt = None
-            else:
-                self.expecting_logic_feedback = False
-        # -------------------------------------------------------
-        # HANDLE PENDING PATTERN LABEL
-        # -------------------------------------------------------
-        if not self.chat_mode_active and getattr(self, "expecting_pattern_label", False):                
-            label = text.strip().lower()
 
-            # store relation: word → category
-            self.reasoner.relations[self.last_asked_word].append(
-                ("category", label, 1.0)
-            )
+            self.expecting_logic_feedback = False
+            self.pending_logic_doubt = None
+            return {
+                "ci_report": {},
+                "phon_score": 0,
+                "diagnostic": {},
+                "token_analyses": [],
+                "curiosity_artifacts": ["Logic feedback processed."],
+                "meta_weights": self.meta_learner.get_weights(),
+                "total_intrinsic_reward": self.reward_tracker.total_reward,
+                "episode_reward": 0.0,
+                "factor_vector": {},
+            }
+
+        # 5. Pattern label response
+        if not self.chat_mode_active and getattr(self, "expecting_pattern_label", False):
+            label = text.strip().lower()
+            self.reasoner.relations[self.last_asked_word].append(("category", label, 1.0))
             if self.last_asked_word not in self.semantic_learner.word_embeddings:
                 self.semantic_learner.initialize_word(self.last_asked_word)
-
             print(f"📘 [Pattern Learning] '{self.last_asked_word}' categorized as '{label}'")
-
             self.expecting_pattern_label = False
             self.last_asked_word = None
-
             return {
                 "ci_report": {},
                 "phon_score": 0,
@@ -4934,6 +4965,96 @@ class CuriosityEngine:
                 "factor_vector": {},
             }
 
+        # 6. Trust feedback (from earlier attempt)
+        if not self.chat_mode_active and self.expecting_feedback:
+            feedback_lower = text.lower()
+            is_positive = any(kw in feedback_lower for kw in ['yes', 'correct', 'right', 'yeah', 'true', 'yep'])
+            is_negative = any(kw in feedback_lower for kw in ['no', 'wrong', 'incorrect', 'not', 'nope'])
+
+            if is_positive or is_negative:
+                if is_positive:
+                    print(f"✅ [Positive Feedback] User confirmed my attempt: '{self.feedback_attempt_response}'")
+                    if hasattr(self, '_last_factor_vector'):
+                        self._reinforce_identity(self._last_factor_vector, reward_signal=0.4)
+                else:
+                    print(f"❌ [Negative Feedback] User corrected my attempt: '{self.feedback_attempt_response}'")
+            else:
+                print(f"🌑 [Shadow Attempt] No feedback given for: '{self.feedback_attempt_response}'")
+                if self.feedback_attempt_response:
+                    hyp = {
+                        'key': f"shadow_trust_{int(time.time())}",
+                        'type': 'shadow_trust',
+                        'utterance': self.feedback_attempt_response,
+                        'timestamp': self.feedback_timestamp,
+                    }
+                    if len(self.reasoner.hypotheses) < getattr(self, "_max_hypotheses", 5000):
+                        self.reasoner.hypotheses.append(hyp)
+
+            self.expecting_feedback = False
+            self.feedback_attempt_word = None
+            self.feedback_attempt_response = None
+            self.feedback_timestamp = None
+            return {
+                "ci_report": {},
+                "phon_score": 0,
+                "diagnostic": {},
+                "token_analyses": [],
+                "curiosity_artifacts": ["Feedback processed."],
+                "meta_weights": self.meta_learner.get_weights(),
+                "total_intrinsic_reward": self.reward_tracker.total_reward,
+                "episode_reward": 0.0,
+                "factor_vector": {},
+            }
+
+        # 7. Definition response (when last_asked_word is set and user provides a definition)
+        handled_definition = False
+        if not self.chat_mode_active and self.last_asked_word is not None:
+            if "means" in text.lower() or "is" in text.lower() or "refers to" in text.lower():
+                is_phrase = ' ' in self.last_asked_word
+                if is_phrase:
+                    phrase = self.last_asked_word
+                    definition = text
+                    phrase_tokens = phrase.split()
+                    known_embs = [self.semantic_learner.word_embeddings[t] for t in phrase_tokens if t in self.semantic_learner.word_embeddings]
+                    phrase_emb = np.mean(known_embs, axis=0) if known_embs else None
+                    self.reasoner.phrase_definitions[phrase] = definition
+                    if phrase_emb is not None:
+                        self.reasoner.phrase_embeddings[phrase] = phrase_emb
+                    print(f"📘 [Phrase Definition] Learned about '{phrase}': {definition}")
+                    self._derive_inferences_from_definition(phrase, definition)
+                else:
+                    word = self.last_asked_word
+                    if word not in self.semantic_learner.word_embeddings:
+                        self.semantic_learner.initialize_word(word)
+                    self.semantic_learner.observe_definition(word, text)
+                    def_emb = self.semantic_learner.text_to_embedding(text)
+                    if def_emb is not None:
+                        self.reasoner.store_definition(word, text, def_emb)
+                        self.concept_model.register_definition_event(word)
+                    if word in self.word_history:
+                        for rec in self.word_history[word][-3:]:
+                            rec['curiosity_factors'].gp_uncertainty *= 0.3
+                            rec['curiosity_factors'].bayesian_surprise *= 0.3
+                        if hasattr(self.concept_model, 'word_concept_counts') and word in self.concept_model.word_concept_counts:
+                            counts = self.concept_model.word_concept_counts[word]
+                            if counts:
+                                dominant = max(counts, key=counts.get)
+                                new_counts = Counter({dominant: 100})
+                                self.concept_model.word_concept_counts[word] = new_counts
+                        hypothesis = self.reasoner.generate_synonym_hypothesis(word)
+                        if hypothesis:
+                            print(f"💡 [Semantic Hypothesis] {hypothesis}")
+                    print(f"📘 [Definition Learning] Learned about '{word}': {text}")
+                    self._derive_inferences_from_definition(word, text)
+
+                if hasattr(self, '_last_factor_vector'):
+                    self._reinforce_identity(self._last_factor_vector, reward_signal=0.3)
+                self.last_asked_word = None
+                handled_definition = True
+                # Fall through to main processing so the sentence is still analyzed
+
+        # ----------------- MAIN PROCESSING -----------------
+        # If we reach here, we are not in a waiting state (or we handled a definition and continue).
         self.interaction_counter += 1
 
         # 1. Memory ingestion
@@ -4944,162 +5065,11 @@ class CuriosityEngine:
         phon_score, phon_diagnostics = self.phon_engine.score_text(text)
         diag_explanation = self.diag_engine.explain(ci_report, phon_score)
 
-        # ---- Detect if user is defining a previously asked word/phrase ----
-        if not self.chat_mode_active and self.last_asked_word is not None:
-            if "means" in text.lower() or "is" in text.lower() or "refers to" in text.lower():
-
-                is_phrase = ' ' in self.last_asked_word  # phrase contains space
-
-                if is_phrase:
-                    # Handle phrase definition
-                    phrase = self.last_asked_word
-                    definition = text
-                    # Compute embedding for the phrase (average of its word embeddings)
-                    phrase_tokens = phrase.split()
-                    known_embs = [self.semantic_learner.word_embeddings[t] for t in phrase_tokens if t in self.semantic_learner.word_embeddings]
-                    if known_embs:
-                        phrase_emb = np.mean(known_embs, axis=0)
-                    else:
-                        phrase_emb = None
-                    # Store in reasoner
-                    self.reasoner.phrase_definitions[phrase] = definition
-                    if phrase_emb is not None:
-                        self.reasoner.phrase_embeddings[phrase] = phrase_emb
-                    print(f"📘 [Phrase Definition] Learned about '{phrase}': {definition}")
-                    # Derive inferences from this definition
-                    self._derive_inferences_from_definition(phrase, definition)
-
-                else:
-                    # Original word definition handling
-                    if self.last_asked_word not in self.semantic_learner.word_embeddings:
-                        self.semantic_learner.initialize_word(self.last_asked_word)
-
-                    self.semantic_learner.observe_definition(self.last_asked_word, text)
-
-                    def_emb = self.semantic_learner.text_to_embedding(text)
-                    if def_emb is not None:
-                        self.reasoner.store_definition(self.last_asked_word, text, def_emb)
-                        self.concept_model.register_definition_event(self.last_asked_word)
-
-                    self.concept_model.register_definition_event(self.last_asked_word)
-
-                    if self.last_asked_word in self.word_history:
-                        for rec in self.word_history[self.last_asked_word][-3:]:
-                            rec['curiosity_factors'].gp_uncertainty *= 0.3
-                            rec['curiosity_factors'].bayesian_surprise *= 0.3
-                        # Also force entropy to near zero in concept model
-                        if hasattr(self.concept_model, 'word_concept_counts') and self.last_asked_word in self.concept_model.word_concept_counts:
-                            # Set all counts to concentrate on one concept
-                            counts = self.concept_model.word_concept_counts[self.last_asked_word]
-                            if counts:
-                                dominant = max(counts, key=counts.get)
-                                new_counts = Counter({dominant: 100})
-                                self.concept_model.word_concept_counts[self.last_asked_word] = new_counts
-                        hypothesis = self.reasoner.generate_synonym_hypothesis(self.last_asked_word)
-                        if hypothesis:
-                            print(f"💡 [Semantic Hypothesis] {hypothesis}")
-                    print(f"📘 [Definition Learning] Learned about '{self.last_asked_word}': {text}")
-                    # Derive inferences from word definition (simple)
-                    self._derive_inferences_from_definition(self.last_asked_word, text)
-
-                # Reinforce identity with positive reward
-                if hasattr(self, '_last_factor_vector'):
-                    self._reinforce_identity(self._last_factor_vector, reward_signal=0.3)
-                self.last_asked_word = None  # reset
-
-        # ---- Handle feedback from trust-based utterances ----
-        if not self.chat_mode_active and self.expecting_feedback:
-            feedback_lower = text.lower()
-            is_positive = any(kw in feedback_lower for kw in ['yes', 'correct', 'right', 'yeah', 'true', 'yep'])
-            is_negative = any(kw in feedback_lower for kw in ['no', 'wrong', 'incorrect', 'not', 'nope'])
-            
-            if is_positive or is_negative:
-                # Process feedback
-                if is_positive:
-                    print(f"✅ [Positive Feedback] User confirmed my attempt: '{self.feedback_attempt_response}'")
-                    # Reinforce identity with positive reward
-                    if hasattr(self, '_last_factor_vector'):
-                        self._reinforce_identity(self._last_factor_vector, reward_signal=0.4)
-                    # Store this successful interaction in reasoner? Could add as a positive example.
-                else:
-                    print(f"❌ [Negative Feedback] User corrected my attempt: '{self.feedback_attempt_response}'")
-                    # Could store this as a negative example to avoid similar mistakes
-                
-                # Clear feedback state
-                self.expecting_feedback = False
-                self.feedback_attempt_word = None
-                self.feedback_attempt_response = None
-                self.feedback_timestamp = None
-            else:
-                # Not feedback, mark the attempt as shadow and continue
-                print(f"🌑 [Shadow Attempt] No feedback given for: '{self.feedback_attempt_response}'")
-                # Optionally store as shadow in reasoner for later reflection
-                if self.feedback_attempt_response:
-                    # Add to hypotheses as unresolved?
-                    hyp = {
-                        'key': f"shadow_trust_{int(time.time())}",
-                        'type': 'shadow_trust',
-                        'utterance': self.feedback_attempt_response,
-                        'timestamp': self.feedback_timestamp,
-                    }
-                    if len(self.reasoner.hypotheses) < getattr(self, "_max_hypotheses", 5000):
-                        self.reasoner.hypotheses.append(hyp)
-                self.expecting_feedback = False
-                self.feedback_attempt_word = None
-                self.feedback_attempt_response = None
-                self.feedback_timestamp = None
-
-        # 3. Token analysiss
+        # 3. Token analysis
         tokens = self._tokenize(text)
         self.reasoner.observe_sentence(text, tokens)
         self.reward_tracker.reset_episode()
-        # -------------------------------------------------------
-        # PENDING LOGIC DOUBT (highest priority)
-        # -------------------------------------------------------
-        if not self.chat_mode_active:
-            doubt = self.logic_inheritance.get_next_doubt()
-            if doubt:
-                rule = doubt['rule']
-                description = rule.get('description', f"I wrote a logical rule: {rule}")
-                query = f"I have a doubt about some logic I wrote: {description} Is this correct?"
-                print(f"\n🧠 [Logic Doubt] {query}")
-                print(f"🤖 AGI> {query}")
-                self.expecting_logic_feedback = True
-                self.pending_logic_doubt = doubt
-                return {
-                    "ci_report": {},
-                    "phon_score": 0,
-                    "diagnostic": {},
-                    "token_analyses": [],
-                    "curiosity_artifacts": ["Logic doubt – awaiting confirmation."],
-                    "meta_weights": self.meta_learner.get_weights(),
-                    "total_intrinsic_reward": self.reward_tracker.total_reward,
-                    "episode_reward": 0.0,
-                    "factor_vector": {},
-                }
-        # -------------------------------------------------------
-        # UNKNOWN WORD DETECTION (prevents early greeting collapse)
-        # -------------------------------------------------------
-        if not self.chat_mode_active:
-            unknown_tokens = [t for t in tokens if t not in self.semantic_learner.word_embeddings]
-            unknown_ratio = len(unknown_tokens) / max(len(tokens), 1)
-            if unknown_ratio > 0.5:
-                target = unknown_tokens[0]
-                self.last_asked_word = target
-                system_reply = f"What does '{target}' mean?"
-                print(f"\n🧠 [Knowledge Gap] {system_reply}")
-                print(f"🤖 AGI> {system_reply}")
-                return {
-                    "ci_report": ci_report,
-                    "phon_score": phon_score,
-                    "diagnostic": diag_explanation,
-                    "token_analyses": [],
-                    "curiosity_artifacts": ["Knowledge gap detected — waiting for definition."],
-                    "meta_weights": self.meta_learner.get_weights(),
-                    "total_intrinsic_reward": self.reward_tracker.total_reward,
-                    "episode_reward": 0.0,
-                    "factor_vector": {},
-                }
+
         token_analyses = []
         for token in tokens:
             token_ci = self.ci_engine.evaluate(token)
@@ -5111,16 +5081,14 @@ class CuriosityEngine:
 
             factors = self._compute_curiosity_factors(
                 token, token_ci, token_phon, diag_explanation, features_array,
-                global_factor_dict=self._last_factor_dict  # from previous interaction
+                global_factor_dict=self._last_factor_dict
             )
 
             new_entropy = self.concept_model.entropy_word(token)
             igain = self._information_gain(token, new_entropy)
 
-            # bootstrap curiosity when entropy history is short
             if igain == 0.0:
                 igain = 0.25 * factors.bayesian_surprise + 0.25 * factors.gp_uncertainty
-
 
             self.gp_model.update(features_array, token_ci['confidence'])
 
@@ -5137,7 +5105,6 @@ class CuriosityEngine:
                 'intrinsic_reward': reward,
             })
 
-            # Build factor array in the order of meta_learner.factor_names
             factor_array = self._align_factor_vector(factors.as_array(self.meta_learner.factor_names))
             self.meta_learner.update(factor_array, igain)
 
@@ -5154,12 +5121,62 @@ class CuriosityEngine:
                 'gp_uncertainty': factors.gp_uncertainty,
                 'bayesian_surprise': factors.bayesian_surprise,
             })
-        # ---- Sentence-level reasoning (only if all tokens known) ----
+
+        # ---- Sentence-level reasoning (if all tokens known) ----
         if self._all_tokens_known(tokens):
             sentence_emb = self.semantic_learner.text_to_embedding(text)
             if sentence_emb is not None:
-                self._process_sentence_reasoning(text, tokens, token_analyses, sentence_emb)        
-        # ---- Pattern-based semantic emergence ----
+                self._process_sentence_reasoning(text, tokens, token_analyses, sentence_emb)
+
+        # ----------------- DECIDE WHETHER TO ASK A QUESTION -----------------
+        # These checks are in priority order; the first that triggers will ask and return early.
+
+        # 4. Logic doubt (ask about a generated logic rule)
+        if not self.chat_mode_active:
+            doubt = self.logic_inheritance.get_next_doubt()
+            if doubt:
+                rule = doubt['rule']
+                description = rule.get('description', f"I wrote a logical rule: {rule}")
+                query = f"I have a doubt about some logic I wrote: {description} Is this correct?"
+                print(f"\n🧠 [Logic Doubt] {query}")
+                print(f"🤖 AGI> {query}")
+                self.expecting_logic_feedback = True
+                self.pending_logic_doubt = doubt
+                return {
+                    "ci_report": ci_report,
+                    "phon_score": phon_score,
+                    "diagnostic": diag_explanation,
+                    "token_analyses": token_analyses,
+                    "curiosity_artifacts": ["Logic doubt – awaiting confirmation."],
+                    "meta_weights": self.meta_learner.get_weights(),
+                    "total_intrinsic_reward": self.reward_tracker.total_reward,
+                    "episode_reward": 0.0,
+                    "factor_vector": {},
+                }
+
+        # 5. Unknown word detection
+        if not self.chat_mode_active:
+            unknown_tokens = [t for t in tokens if t not in self.semantic_learner.word_embeddings]
+            unknown_ratio = len(unknown_tokens) / max(len(tokens), 1)
+            if unknown_ratio > 0.5:
+                target = unknown_tokens[0]
+                self.last_asked_word = target
+                system_reply = f"What does '{target}' mean?"
+                print(f"\n🧠 [Knowledge Gap] {system_reply}")
+                print(f"🤖 AGI> {system_reply}")
+                return {
+                    "ci_report": ci_report,
+                    "phon_score": phon_score,
+                    "diagnostic": diag_explanation,
+                    "token_analyses": token_analyses,
+                    "curiosity_artifacts": ["Knowledge gap detected — waiting for definition."],
+                    "meta_weights": self.meta_learner.get_weights(),
+                    "total_intrinsic_reward": self.reward_tracker.total_reward,
+                    "episode_reward": 0.0,
+                    "factor_vector": {},
+                }
+
+        # 6. Pattern discovery (ask for category label)
         if not self.chat_mode_active:
             for token in set(tokens):
                 pattern_query = self.reasoner.detect_pattern_and_query(token)
@@ -5180,111 +5197,64 @@ class CuriosityEngine:
                         "factor_vector": {},
                     }
 
-
-        # ---- Factor computation & state learning ----
-        factor_dict = self.factor_engine.compute(
-            token_analyses, ci_report, phon_score, diag_explanation,
-            self.concept_model, self.meta_learner, self.reward_tracker.total_reward,
-            self.semantic_learner
-        )
-
-        if not isinstance(factor_dict, dict):
-            factor_dict = {}
-
-        # ---- Conscience influence on control signals ----
-        factor_dict = self.conscience_manager.apply_ethical_influence(factor_dict)
-
-        if not isinstance(factor_dict, dict):
-            factor_dict = {}
-
-        # Build factor vector safely – missing factors become 0.5
-        factor_vector_list = []
-        for k in self.control_space.all_factors:
-            if k in factor_dict:
-                factor_vector_list.append(factor_dict[k])
-            else:
-                factor_vector_list.append(0.5)
-        factor_vector = np.array(factor_vector_list)
-        self._last_factor_vector = factor_vector   # store for self‑reconfiguration
-        self._last_factor_dict = factor_dict       # store for dynamic curiosity factors
-        metadata = {
-            "input_text": text,
-            "timestamp": time.time(),
-            "ci_confidence": ci_report.get("confidence"),
-            "phon_score": phon_score,
-        }
-        #-------------------------------------------------------
-        # STATE LEARNING GATE — requires minimal knowledge maturity
-        # -------------------------------------------------------
-        if not self.chat_mode_active:
-            known_vocab_size = len(self.semantic_learner.word_embeddings)
-            if known_vocab_size > 20:  # adjustable
-                self._handle_state_learning(factor_vector, metadata)
-
-        # ---------------------------------------------------
-        # ---- Check for unresolved conflicts and ask user ----
+        # 7. Conflict resolution (interactive – not a waiting state)
         if not self.chat_mode_active:
             unresolved = self.state_manager.get_unresolved_conflicts()
             if unresolved:
                 print("\n🧠 [Conflict Resolution] I have some unresolved state conflicts from previous idle introspection.")
-            for conflict in unresolved[:2]:  # handle up to 2 per interaction
-                l1, l2 = conflict["labels"]
-                sim = conflict["similarity"]
-                shadow_label = conflict.get("resolution_label")
-                print(f"    Conflict: '{l1}' ↔ '{l2}' (similarity={sim:.3f})")
-                print(f"    I created a temporary shadow state '{shadow_label}'.")
-                print("    How would you like to resolve this?")
-                print("      1. Keep both (no change)")
-                print("      2. Keep only one (specify which)")
-                print("      3. Rename and keep both")
-                print("      4. Accept shadow state as permanent")
-                choice = input("    Your choice (1/2/3/4): ").strip()
+                for conflict in unresolved[:2]:
+                    l1, l2 = conflict["labels"]
+                    sim = conflict["similarity"]
+                    shadow_label = conflict.get("resolution_label")
+                    print(f"    Conflict: '{l1}' ↔ '{l2}' (similarity={sim:.3f})")
+                    print(f"    I created a temporary shadow state '{shadow_label}'.")
+                    print("    How would you like to resolve this?")
+                    print("      1. Keep both (no change)")
+                    print("      2. Keep only one (specify which)")
+                    print("      3. Rename and keep both")
+                    print("      4. Accept shadow state as permanent")
+                    choice = input("    Your choice (1/2/3/4): ").strip()
 
-                if choice == "2":
-                    winner = input(f"    Which label do you want to keep? ({l1}/{l2}): ").strip()
-                    if winner in [l1, l2]:
-                        self.state_manager.resolve_conflict_permanently(conflict, winner, delete_other=True)
-                        print(f"    ✅ Resolved: keeping '{winner}', deleted the other.")
-                elif choice == "3":
-                    new_label1 = input(f"    New label for '{l1}': ").strip() or l1
-                    new_label2 = input(f"    New label for '{l2}': ").strip() or l2
-                    # Rename by saving new and deleting old
-                    vec1 = self.state_manager.states[l1]
-                    vec2 = self.state_manager.states[l2]
-                    self.state_manager.save_state(new_label1, vec1)
-                    self.state_manager.save_state(new_label2, vec2)
-                    self.state_manager.delete_state(l1)
-                    self.state_manager.delete_state(l2)
-                    # Update conflict: mark as resolved and set resolution label
-                    conflict["resolved"] = True
-                    conflict["resolution_label"] = f"{new_label1},{new_label2}"
-                    # Also update any other conflicts that might reference these labels
-                    for c in self.state_manager.conflicts:
-                        if l1 in c["labels"] or l2 in c["labels"]:
-                            c["resolved"] = True
-                            c["resolution_label"] = "renamed"
-                    print(f"    ✅ States renamed and kept.")
-                elif choice == "4" and shadow_label:
-                    # Promote shadow to permanent
-                    vec = self.state_manager.shadow_states.get(shadow_label)
-                    if vec is not None:
-                        perm_label = input(f"    Permanent name for this merged state: ").strip() or f"merged_{l1}_{l2}"
-                        self.state_manager.save_state(perm_label, vec, is_shadow=False)
-                        self.state_manager.delete_state(shadow_label)
-                        self.state_manager.resolve_conflict_permanently(conflict, perm_label, delete_other=True)
-                        print(f"    ✅ Shadow state promoted to '{perm_label}', both originals deleted.")
-                else:
-                    print("    No action taken; conflict remains unresolved.")
+                    if choice == "2":
+                        winner = input(f"    Which label do you want to keep? ({l1}/{l2}): ").strip()
+                        if winner in [l1, l2]:
+                            self.state_manager.resolve_conflict_permanently(conflict, winner, delete_other=True)
+                            print(f"    ✅ Resolved: keeping '{winner}', deleted the other.")
+                    elif choice == "3":
+                        new_label1 = input(f"    New label for '{l1}': ").strip() or l1
+                        new_label2 = input(f"    New label for '{l2}': ").strip() or l2
+                        vec1 = self.state_manager.states[l1]
+                        vec2 = self.state_manager.states[l2]
+                        self.state_manager.save_state(new_label1, vec1)
+                        self.state_manager.save_state(new_label2, vec2)
+                        self.state_manager.delete_state(l1)
+                        self.state_manager.delete_state(l2)
+                        conflict["resolved"] = True
+                        conflict["resolution_label"] = f"{new_label1},{new_label2}"
+                        for c in self.state_manager.conflicts:
+                            if l1 in c["labels"] or l2 in c["labels"]:
+                                c["resolved"] = True
+                                c["resolution_label"] = "renamed"
+                        print(f"    ✅ States renamed and kept.")
+                    elif choice == "4" and shadow_label:
+                        vec = self.state_manager.shadow_states.get(shadow_label)
+                        if vec is not None:
+                            perm_label = input(f"    Permanent name for this merged state: ").strip() or f"merged_{l1}_{l2}"
+                            self.state_manager.save_state(perm_label, vec, is_shadow=False)
+                            self.state_manager.delete_state(shadow_label)
+                            self.state_manager.resolve_conflict_permanently(conflict, perm_label, delete_other=True)
+                            print(f"    ✅ Shadow state promoted to '{perm_label}', both originals deleted.")
+                    else:
+                        print("    No action taken; conflict remains unresolved.")
+                self.state_manager._save_conflicts()
 
-            # Save after handling
-            self.state_manager._save_conflicts()
-        # ---- Behavioral rule testing (ask user to confirm hypotheses) ----
+        # 8. Behavioral rule testing (ask for confirmation)
         if not self.chat_mode_active:
             context = {
                 'user_input': text,
                 'tokens': tokens,
                 'token_analyses': token_analyses,
-                'factor_dict': factor_dict,
+                'factor_dict': factor_dict if 'factor_dict' in locals() else {},
                 'state': self.current_state_label
             }
             testable = self.behavioral_learner.get_testable_rules(context)
@@ -5313,22 +5283,59 @@ class CuriosityEngine:
                     "meta_weights": self.meta_learner.get_weights(),
                     "total_intrinsic_reward": self.reward_tracker.total_reward,
                     "episode_reward": self.reward_tracker.episode_reward,
-                    "factor_vector": factor_dict if isinstance(factor_dict, dict) else {},
+                    "factor_vector": factor_dict if 'factor_dict' in locals() and isinstance(factor_dict, dict) else {},
                 }
 
-        # 4. Generate advanced artifacts (now including factor info)
-        # ---- Semantic relation discovery ----
+        # ----------------- NORMAL RESPONSE GENERATION -----------------
+        # If no question was asked, compute factors and generate a normal reply.
+
+        # Factor computation & state learning
+        factor_dict = self.factor_engine.compute(
+            token_analyses, ci_report, phon_score, diag_explanation,
+            self.concept_model, self.meta_learner, self.reward_tracker.total_reward,
+            self.semantic_learner
+        )
+        if not isinstance(factor_dict, dict):
+            factor_dict = {}
+
+        # Conscience influence
+        factor_dict = self.conscience_manager.apply_ethical_influence(factor_dict)
+        if not isinstance(factor_dict, dict):
+            factor_dict = {}
+
+        # Build factor vector
+        factor_vector_list = []
+        for k in self.control_space.all_factors:
+            factor_vector_list.append(factor_dict.get(k, 0.5))
+        factor_vector = np.array(factor_vector_list)
+        self._last_factor_vector = factor_vector
+        self._last_factor_dict = factor_dict
+
+        metadata = {
+            "input_text": text,
+            "timestamp": time.time(),
+            "ci_confidence": ci_report.get("confidence"),
+            "phon_score": phon_score,
+        }
+
+        # State learning gate
+        if not self.chat_mode_active and len(self.semantic_learner.word_embeddings) > 20:
+            self._handle_state_learning(factor_vector, metadata)
+
+        # Semantic relation discovery
         self._detect_semantic_relations(tokens, token_analyses)
+
+        # Generate artifacts
         artifacts = self._generate_artifacts(
             tokens, token_analyses, ci_report, phon_score, diag_explanation,
-            factor_dict  # <-- pass factor dict
+            factor_dict
         )
-        # ---- Generate system response ----
+
+        # Generate system reply
         system_reply = self.action_generator.generate_reply(text, {
             'token_analyses': token_analyses,
             'factor_vector': factor_dict,
         })
-        # If we asked about a word, record it
         if "What does" in system_reply and "'" in system_reply:
             import re
             match = re.search(r"'([^']+)'", system_reply)
@@ -5336,15 +5343,13 @@ class CuriosityEngine:
                 self.last_asked_word = match.group(1)
         print(f"🤖 AGI> {system_reply}")
 
-        # ---- Ask for user feedback on the response (emergent learning) ----
+        # Possibly ask for feedback
         if not self.chat_mode_active and not self.expecting_response_feedback and not self.expecting_feedback and not self.expecting_rule_confirmation and not self.expecting_logic_feedback:
-            # Determine a template ID for this response (simple hash of the response text)
             template_id = f"resp_{hash(system_reply) % 10000:04x}"
             self.reasoner.register_response_template(template_id, system_reply)
             if self._should_ask_feedback(tokens, factor_dict, template_id):
                 feedback_question = self._generate_feedback_question()
                 print(f"🤖 AGI> {feedback_question}")
-                # Prepare feedback entry to be filled later
                 entry = FeedbackEntry(
                     timestamp=time.time(),
                     user_input=text,
@@ -5358,18 +5363,15 @@ class CuriosityEngine:
                 self.pending_feedback_context = entry
                 self.expecting_response_feedback = True
 
-        # ---- Dynamic reward multiplier for chat mode ----
+        # Chat mode reward multiplier
         if self.chat_mode_active:
             multiplier = self._compute_chat_reward_multiplier(factor_dict)
             original_reward = self.reward_tracker.episode_reward
             self.reward_tracker.episode_reward *= multiplier
             print(f"🤖 [Chat Mode] Reward multiplier: {multiplier:.2f} (original: {original_reward:.3f} → boosted: {self.reward_tracker.episode_reward:.3f})")
 
-        safe_factor_dict = (
-            factor_dict if isinstance(factor_dict, dict)
-            else {}
-        )
-
+        # Store episode
+        safe_factor_dict = factor_dict if isinstance(factor_dict, dict) else {}
         self.episodic_memory.add_episode(
             user_input=text,
             system_response=system_reply,
@@ -5378,15 +5380,13 @@ class CuriosityEngine:
             metadata={'ci_confidence': ci_report.get('confidence')}
         )
 
-        # ---- Store in chat history if chat mode is active ----
         if self.chat_mode_active:
             self.chat_history.append((text, system_reply))
             if len(self.chat_history) > 20:
                 self.chat_history.pop(0)
-        # 5. Save state
+
         self._save_state()
 
-        # ---- Self‑reconfiguration trigger ----
         if self.interaction_counter % self.reconfigure_interval == 0:
             self._maybe_reconfigure()
 
@@ -5399,7 +5399,7 @@ class CuriosityEngine:
             'meta_weights': self.meta_learner.get_weights(),
             'total_intrinsic_reward': self.reward_tracker.total_reward,
             'episode_reward': self.reward_tracker.episode_reward,
-            'factor_vector': factor_dict,   # <-- also return for inspection
+            'factor_vector': factor_dict,
         }
 
     @staticmethod

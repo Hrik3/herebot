@@ -176,7 +176,7 @@ temporal_context:
 
 ---
 
-# 9. Optional advanced signals (future ready)
+# 9.advanced signals (future ready)
 
 You don't need them immediately, but reserve keys:
 
@@ -190,7 +190,7 @@ semantic_hypotheses
 
 ---
 
-# 10. Streaming method (recommended)
+# 10. Streaming method 
 
 vision.py should continuously:
 
