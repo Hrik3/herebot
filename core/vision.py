@@ -4,7 +4,8 @@ from sklearn.cluster import DBSCAN
 import time
 import os
 import urllib.request
-
+import sys
+import argparse
 # ------------------------------------------------------------
 # 1. Download and load MiDaS v2.1 small model (ONNX)
 # ------------------------------------------------------------
@@ -32,34 +33,6 @@ principal_y = 240.0
 # ------------------------------------------------------------
 # 3. Voxel filter and volume functions
 # ------------------------------------------------------------
-def voxel_filter(points, colors, voxel_size=0.03):   # finer voxel (3 cm)
-    if len(points) == 0:
-        return points, colors
-    indices = np.floor(points / voxel_size).astype(int)
-    unique_keys, inverse = np.unique(indices, axis=0, return_inverse=True)
-    down_points = np.zeros((len(unique_keys), 3))
-    down_colors = np.zeros((len(unique_keys), 3))
-    for i in range(len(unique_keys)):
-        mask = inverse == i
-        down_points[i] = points[mask].mean(axis=0)
-        down_colors[i] = colors[mask].mean(axis=0)
-    return down_points, down_colors
-
-def oriented_bbox_volume(points):
-    if len(points) < 4:
-        return 0.0
-    mean = np.mean(points, axis=0)
-    centered = points - mean
-    cov = np.cov(centered.T)
-    evals, evecs = np.linalg.eigh(cov)
-    order = np.argsort(evals)[::-1]
-    evecs = evecs[:, order]
-    projected = centered @ evecs
-    min_vals = projected.min(axis=0)
-    max_vals = projected.max(axis=0)
-    extents = max_vals - min_vals
-    return extents[0] * extents[1] * extents[2]
-
 # ------------------------------------------------------------
 # 4. Guided depth upsampling (requires opencv-contrib-python)
 # ------------------------------------------------------------
@@ -84,9 +57,55 @@ def guided_depth_upsample(depth_low, color_high, low_size=(256,256)):
     return depth_up
 
 # ------------------------------------------------------------
-# 5. Main loop
+# Depth objectness helper functions
 # ------------------------------------------------------------
-cap = cv2.VideoCapture("/dev/video1", cv2.CAP_V4L2)
+def compute_depth_contrast(depth_map, cnt):
+    mask = np.zeros(depth_map.shape, dtype=np.uint8)
+    cv2.drawContours(mask, [cnt], -1, 255, -1)
+
+    inside = cv2.mean(depth_map, mask=mask)[0]
+
+    kernel = np.ones((15,15), np.uint8)
+    border = cv2.dilate(mask, kernel, iterations=1)
+    border = cv2.subtract(border, mask)
+
+    border_val = cv2.mean(depth_map, mask=border)[0]
+
+    return inside - border_val
+
+
+def compute_depth_variation(depth_map, cnt):
+    mask = np.zeros(depth_map.shape, dtype=np.uint8)
+    cv2.drawContours(mask, [cnt], -1, 255, -1)
+
+    pixels = depth_map[mask > 0]
+    if len(pixels) == 0:
+        return 0
+    return np.std(pixels)
+
+# ------------------------------------------------------------
+# 5. Argument parsing and IPC setup
+# ------------------------------------------------------------
+parser = argparse.ArgumentParser()
+parser.add_argument('--run', action='store_true',
+                    help='Enable IPC via named pipe (/tmp/vision_pipe)')
+args = parser.parse_args()
+
+pipe_path = '/tmp/vision_pipe'
+pipe_out = None
+if args.run:
+    # Create the named pipe if it doesn't exist
+    if not os.path.exists(pipe_path):
+        os.mkfifo(pipe_path)
+    # Open the pipe for writing (blocks until a reader connects)
+    print(f"Waiting for reader on {pipe_path}...", file=sys.stderr)
+    pipe_out = open(pipe_path, 'w')
+    print("Reader connected.", file=sys.stderr)
+
+# ------------------------------------------------------------
+# 6. Main loop (camera)
+# ------------------------------------------------------------
+cap = cv2.VideoCapture("/dev/video10", cv2.CAP_V4L2)
 cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
 cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
 cap.set(cv2.CAP_PROP_FPS, 30)
@@ -139,6 +158,15 @@ while True:
     depth_map = depth_smooth
     prev_gray = gray_now.copy()
 
+    # ---- Compute depth gradient magnitude for edge/object discrimination ----
+    depth_float = depth_map.astype(np.float32)
+    grad_x = cv2.Sobel(depth_float, cv2.CV_32F, 1, 0, ksize=3)
+    grad_y = cv2.Sobel(depth_float, cv2.CV_32F, 0, 1, ksize=3)
+    grad_mag = cv2.magnitude(grad_x, grad_y)
+    # Normalize gradient to [0,1] for thresholding
+    max_grad = np.max(grad_mag) + 1e-6
+    grad_norm = grad_mag / max_grad
+
     depth_disp = cv2.normalize(depth_map, None, 0, 255,
                                cv2.NORM_MINMAX, dtype=cv2.CV_8U)
     # --------- Detect nearest object directly from depth ----------
@@ -154,25 +182,104 @@ while True:
                                 cv2.RETR_EXTERNAL,
                                 cv2.CHAIN_APPROX_SIMPLE)
 
-    nearest_box = None
+    detected_boxes = []
+    depth_gradient_threshold = 0.05   # fraction of max gradient; adjust as needed
+
     if contours:
-        cnt = max(contours, key=cv2.contourArea)
-        if cv2.contourArea(cnt) > 300:
+        # sort contours by mean depth brightness (nearest first)
+        contour_depth = []
+        for cnt in contours:
+            if cv2.contourArea(cnt) < 300:
+                continue
+            # ---- Depth gradient consistency check ----
+            # Sample gradient along contour
+            contour_points = cnt.squeeze().reshape(-1,2)
+            if len(contour_points.shape) < 2:  # single point
+                continue
+            # Take up to 30 sample points
+            if len(contour_points) > 30:
+                indices = np.linspace(0, len(contour_points)-1, 30, dtype=int)
+                sample_pts = contour_points[indices]
+            else:
+                sample_pts = contour_points
+            grad_vals = []
+            for pt in sample_pts:
+                px, py = int(pt[0]), int(pt[1])
+                if 0 <= px < w and 0 <= py < h:
+                    grad_vals.append(grad_norm[py, px])
+            if len(grad_vals) == 0:
+                continue
+            avg_grad = np.mean(grad_vals)
+            if avg_grad < depth_gradient_threshold:
+                continue   # likely a shadow or flat region
+
+            # If passed gradient check, compute mean depth for sorting
+            mask = np.zeros_like(depth_disp)
+            cv2.drawContours(mask, [cnt], -1, 255, -1)
+            mean_val = cv2.mean(depth_disp, mask=mask)[0]
+            contour_depth.append((mean_val, cnt))
+
+        # ---------------------------------------------------
+        # Professional objectness scoring (depth-object score)
+        # ---------------------------------------------------
+        scored_contours = []
+
+        for mean_val, cnt in contour_depth:
+
+            # proximity (normalized)
+            depth_score = mean_val / 255.0
+
+            # depth contrast vs surroundings
+            contrast = compute_depth_contrast(depth_disp, cnt)
+            contrast_score = np.clip(contrast / 25.0, 0, 1)
+
+            # internal depth variation
+            variation = compute_depth_variation(depth_disp, cnt)
+            variation_score = np.clip(variation / 20.0, 0, 1)
+
+            # boundary strength from depth gradient
+            mask = np.zeros_like(depth_disp)
+            cv2.drawContours(mask, [cnt], -1, 255, 1)
+            boundary_strength = cv2.mean(grad_norm, mask=mask)[0]
+            boundary_score = np.clip(boundary_strength * 2.0, 0, 1)
+
+            # final objectness score
+            object_score = (
+                0.35 * depth_score +
+                0.25 * contrast_score +
+                0.20 * variation_score +
+                0.20 * boundary_score
+            )
+
+            scored_contours.append((object_score, cnt))
+
+        scored_contours.sort(key=lambda x: x[0], reverse=True)
+
+        for i, (_, cnt) in enumerate(scored_contours[:3]):
             x,y,wc,hc = cv2.boundingRect(cnt)
-            nearest_box = (x,y,wc,hc)
+            detected_boxes.append((i, x, y, wc, hc))
+
+
+    else:
+        print("DEBUG: no contours in near_mask", file=sys.stderr)
 
     # ---------- draw depth detected object immediately ----------
     overlay = frame.copy()
 
-    if nearest_box is not None:
-        x,y,wc,hc = nearest_box
+    for assigned_id, x, y, wc, hc in detected_boxes:
+
         centroid = (x+wc//2, y+hc//2)
+        object_memory[assigned_id] = centroid
 
-        assigned_id = 0
-        object_memory = {0: centroid}
+        cv2.rectangle(overlay,(x,y),(x+wc,y+hc),(0,0,255),2)
 
-
-        cv2.rectangle(overlay,(x,y),(x+wc,y+hc),(0,0,255),3)
+        # Output the four corners of the bounding box
+        if args.run and pipe_out:
+            pipe_out.write(f"{x} {y} {x+wc} {y} {x+wc} {y+hc} {x} {y+hc}\n")
+            pipe_out.flush()
+        else:
+            print(f"{x} {y} {x+wc} {y} {x+wc} {y+hc} {x} {y+hc}")
+            sys.stdout.flush()
         cv2.putText(overlay,f"ID {assigned_id}",
                     (x,y-10),
                     cv2.FONT_HERSHEY_SIMPLEX,
@@ -181,154 +288,6 @@ while True:
                     2)
 
     frame = cv2.addWeighted(frame, 0.7, overlay, 0.3, 0)
-
-    # --------------------------------------------------------
-    # Generate 3D point cloud with color (subsampled)
-    # --------------------------------------------------------
-    step = 2
-    u = np.arange(0, w, step, dtype=np.float32)
-    v = np.arange(0, h, step, dtype=np.float32)
-    u_grid, v_grid = np.meshgrid(u, v)
-    Z = depth_map[::step, ::step]
-    scale = 5.0
-    Z = scale / (Z + 1e-6)
-    Z = np.clip(Z, 0, 10.0)
-
-    X = (u_grid - principal_x) * Z / focal_length_x
-    Y = (v_grid - principal_y) * Z / focal_length_y
-    points = np.stack((X, Y, Z), axis=-1).reshape(-1, 3)
-
-    frame_lab = cv2.cvtColor(frame, cv2.COLOR_BGR2LAB).astype(np.float32)[::step, ::step]
-    L = frame_lab[:,:,0] / 100.0
-    a = frame_lab[:,:,1] / 127.0
-    b = frame_lab[:,:,2] / 127.0
-    colors = np.stack((L, a, b), axis=-1).reshape(-1, 3)
-
-    valid_mask = (Z.flatten() > 0.1) & (Z.flatten() < 10.0)
-    points = points[valid_mask]
-    colors = colors[valid_mask]
-
-    # --------------------------------------------------------
-    # Downsample and cluster
-    # --------------------------------------------------------
-    if len(points) > 0:
-        points_down, colors_down = voxel_filter(points, colors, voxel_size=0.03)
-
-        if len(points_down) > 50:
-            color_weight = 0.8
-            features = np.hstack((points_down, colors_down * color_weight))
-            clustering = DBSCAN(eps=0.25, min_samples=10).fit(features)
-            labels = clustering.labels_
-
-            # ----------------------------------------------------
-            # Find the nearest cluster (smallest mean Z)
-            # ----------------------------------------------------
-            nearest_label = None
-            min_dist = float('inf')
-            for label in set(labels):
-                if label == -1:
-                    continue
-                cluster_pts = points_down[labels == label]
-                if len(cluster_pts) < 20:
-                    continue
-                mean_z = np.mean(cluster_pts[:, 2])
-                if mean_z < min_dist:
-                    min_dist = mean_z
-                    nearest_label = label
-
-            overlay = frame.copy()
-            nearest_box = (x,y,wc,hc)
-
-            # ---------- draw depth detected nearest object (ALWAYS) ----------
-            if nearest_box is not None:
-                x,y,wc,hc = nearest_box
-                centroid = (x+wc//2, y+hc//2)
-
-                assigned_id = 0
-                object_memory = {0: centroid}
-
-
-                cv2.rectangle(overlay,(x,y),(x+wc,y+hc),(0,0,255),3)
-                cv2.putText(overlay,f"ID {assigned_id}",
-                            (x,y-10),
-                            cv2.FONT_HERSHEY_SIMPLEX,
-                            0.6,
-                            (0,0,255),
-                            2)
-
-
-            for label in set(labels):
-                if label == -1:
-                    continue
-                cluster_pts = points_down[labels == label]
-                if len(cluster_pts) < 20:
-                    continue
-
-                vol = oriented_bbox_volume(cluster_pts)
-
-                # Project all cluster points back to 2D
-                xs, ys = [], []
-                for pt in cluster_pts:
-                    Xc, Yc, Zc = pt
-                    if Zc > 0.1:
-                        u_ = int(Xc * focal_length_x / Zc + principal_x)
-                        v_ = int(Yc * focal_length_y / Zc + principal_y)
-                        if 0 <= u_ < w and 0 <= v_ < h:
-                            xs.append(u_)
-                            ys.append(v_)
-
-                if len(xs) >= 3:
-                    pts_2d = np.column_stack((xs, ys)).astype(np.int32)
-                    hull = cv2.convexHull(pts_2d)
-
-                    if label == nearest_label:
-
-                        # -------- compute bounding box ----------
-                        x_min, x_max = min(xs), max(xs)
-                        y_min, y_max = min(ys), max(ys)
-
-                        centroid = (int(np.mean(xs)), int(np.mean(ys)))
-
-                        # -------- ID assignment ----------
-                        assigned_id = None
-                        for oid, (px, py) in object_memory.items():
-                            if np.hypot(px-centroid[0], py-centroid[1]) < 80:
-                                assigned_id = oid
-                                break
-
-                        if assigned_id is None:
-                            assigned_id = next_object_id
-                            next_object_id += 1
-
-                        object_memory = {assigned_id: centroid}
-
-                        # -------- draw bounding box ----------
-                        cv2.rectangle(overlay,
-                                    (x_min, y_min),
-                                    (x_max, y_max),
-                                    (0,0,255),
-                                    3)
-
-                        cv2.putText(overlay,
-                                    f"ID {assigned_id}  {min_dist:.2f}m",
-                                    (x_min, y_min-10),
-                                    cv2.FONT_HERSHEY_SIMPLEX,
-                                    0.6,
-                                    (0,0,255),
-                                    2)
-
-                    else:
-                        # Normal objects
-                        np.random.seed(label)
-                        color = tuple(np.random.randint(0, 255, 3).tolist())
-                        cv2.drawContours(overlay, [hull], -1, color, 2)
-                        cx = int(np.mean(xs))
-                        cy = int(np.mean(ys))
-                        cv2.putText(overlay, f"{vol:.2f} m3", (cx+10, cy),
-                                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
-
-            # Blend overlay
-            frame = cv2.addWeighted(frame, 0.7, overlay, 0.3, 0)
 
     # --------------------------------------------------------
     # Display FPS
@@ -345,6 +304,9 @@ while True:
 
     if cv2.waitKey(1) & 0xFF == 27:
         break
+
+if pipe_out:
+    pipe_out.close()
 
 cap.release()
 cv2.destroyAllWindows()
