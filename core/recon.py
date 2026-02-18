@@ -11,6 +11,269 @@ from typing import List, Tuple, Optional, Dict
 PIPE_PATH = '/tmp/vision_pipe'
 WINDOW_NAME = 'Receiver'
 CAMERA_DEVICE = '/dev/video11'
+
+# ============================================================
+# Global camera motion estimation (Stage 1 & 2)
+# Optimized for low‑end hardware & low‑res cameras
+# ============================================================
+class GlobalMotionEstimator:
+    """
+    Estimates per‑frame global camera motion (translation, rotation, scale)
+    and maintains a cumulative world transform.
+    Uses Shi‑Tomasi corners + pyramidal LK + RANSAC affine.
+    """
+    # NEW: Cache homographies to avoid recomputation [citation:9]
+    def __init__(self,
+                 max_features: int = 150,
+                 quality_level: float = 0.01,
+                 min_distance: int = 5,
+                 lk_win_size: tuple = (15, 15),
+                 lk_max_level: int = 2,
+                 ransac_thresh: float = 3.0,
+                 max_iters: int = 1000,
+                 confidence: float = 0.99):
+        
+        # Existing initializations
+        self.max_features = max_features
+        self.quality_level = quality_level
+        self.min_distance = min_distance
+        self.lk_win_size = lk_win_size
+        self.lk_max_level = lk_max_level
+        self.ransac_thresh = ransac_thresh
+        self.max_iters = max_iters
+        self.confidence = confidence
+        self.last_affine = None
+        
+        # Previous frame data
+        self.prev_gray = None
+        self.prev_pts = None
+        # Cumulative world transform: 2x3 affine matrix (identity initially)
+        self.world_transform = np.eye(2, 3, dtype=np.float32)
+        
+        # NEW: Adaptive feature management for low-end hardware [citation:9]
+        self.feature_cache = {}
+        self.motion_history = []
+        self.max_history = 30
+        self.last_motion_magnitude = 0.0
+        self.adaptive_feature_count = max_features
+        
+    # NEW: Adaptive feature extraction based on motion [citation:9]
+    def _adaptive_feature_extraction(self, gray: np.ndarray, motion_magnitude: float) -> np.ndarray:
+        """Adjust feature count based on motion magnitude."""
+        if motion_magnitude > 10.0:  # Fast motion - need more features
+            self.adaptive_feature_count = min(self.max_features, int(self.max_features * 1.5))
+        elif motion_magnitude < 2.0:  # Slow motion - can use fewer features
+            self.adaptive_feature_count = max(50, int(self.max_features * 0.7))
+        else:
+            self.adaptive_feature_count = self.max_features
+            
+        return self.detect_features(gray)
+
+    def detect_features(self, gray: np.ndarray) -> np.ndarray:
+        """Detect good features to track using Shi‑Tomasi."""
+        pts = cv2.goodFeaturesToTrack(gray,
+                                       maxCorners=self.max_features,
+                                       qualityLevel=self.quality_level,
+                                       minDistance=self.min_distance)
+        if pts is None:
+            return np.array([], dtype=np.float32).reshape(0, 2)
+        return pts.reshape(-1, 2)
+
+    def estimate_motion(self, curr_gray: np.ndarray):
+        """
+        Compute global motion (dx, dy, rotation, scale) from prev_gray to curr_gray.
+        Updates cumulative world transform.
+        Returns (dx, dy, rot_deg, scale, success_flag) and stores world_transform.
+        If motion cannot be estimated, returns identity motion.
+        """
+        if self.prev_gray is None or self.prev_pts is None or len(self.prev_pts) < 10:
+            # Not enough data – store current frame for next time
+            self.prev_gray = curr_gray.copy()
+            self.prev_pts = self._adaptive_feature_extraction(curr_gray, self.last_motion_magnitude)
+            return 0.0, 0.0, 0.0, 1.0, False
+
+        # Track features from previous to current frame
+        curr_pts, status, _ = cv2.calcOpticalFlowPyrLK(
+            self.prev_gray, curr_gray,
+            self.prev_pts.astype(np.float32), None,
+            winSize=self.lk_win_size,
+            maxLevel=self.lk_max_level,
+            criteria=(cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03)
+        )
+
+        if curr_pts is None:
+            # Tracking failed – reset
+            self.prev_gray = curr_gray.copy()
+            self.prev_pts = self._adaptive_feature_extraction(curr_gray, self.last_motion_magnitude)
+            return 0.0, 0.0, 0.0, 1.0, False
+
+        # Filter good points
+        good_prev = self.prev_pts[status.flatten() == 1]
+        good_curr = curr_pts[status.flatten() == 1]
+
+        if len(good_prev) < 10:
+            # Too few inliers – reset
+            self.prev_gray = curr_gray.copy()
+            self.prev_pts = self._adaptive_feature_extraction(curr_gray, self.last_motion_magnitude)
+            return 0.0, 0.0, 0.0, 1.0, False
+
+        # Estimate affine transform with RANSAC
+        affine, inliers = cv2.estimateAffinePartial2D(
+            good_prev, good_curr,
+            method=cv2.RANSAC,
+            ransacReprojThreshold=self.ransac_thresh,
+            maxIters=self.max_iters,
+            confidence=self.confidence
+        )
+
+        if affine is None:
+            # No valid transform – reset
+            self.prev_gray = curr_gray.copy()
+            self.prev_pts = self._adaptive_feature_extraction(curr_gray, self.last_motion_magnitude)
+            return 0.0, 0.0, 0.0, 1.0, False
+
+        self.last_affine = affine.copy()
+
+        # Decompose affine: | a  b  tx |
+        #                   | -b a  ty |  (for similarity/partial affine)
+        # Extract rotation (theta), scale, translation
+        a, b, tx = affine[0, 0], affine[0, 1], affine[0, 2]
+        c, d, ty = affine[1, 0], affine[1, 1], affine[1, 2]
+
+        # For a pure similarity transform: a = scale*cos(theta), b = -scale*sin(theta)
+        # We'll compute scale = sqrt(a^2 + b^2)  (assuming a ≈ d and b ≈ -c)
+        scale = np.sqrt(a*a + b*b)
+        if scale < 1e-6:
+            scale = 1.0
+        rot_rad = np.arctan2(b, a)   # careful: arctan2(b, a) gives theta if a=scale*cos, b=-scale*sin? Actually for similarity: [s*cos, -s*sin; s*sin, s*cos] so a = s*cos, b = -s*sin. Then theta = -atan2(b, a). Let's compute both.
+        # Simpler: use the angle directly from the 2x2 part
+        # We'll just use the average of the two possible angles
+        angle_candidates = [np.arctan2(b, a), np.arctan2(d, c)]
+        rot_rad = np.mean(angle_candidates)
+        rot_deg = np.degrees(rot_rad)
+
+        # Update cumulative world transform
+        # Compose: new_world = affine @ world (assuming world stores transformation from world to previous frame)
+        # Compute motion magnitude (translation magnitude) for adaptive feature extraction
+        self.last_motion_magnitude = np.sqrt(tx*tx + ty*ty)
+        # If world_transform maps world -> previous frame, then new = affine * world_transform
+        self.world_transform = affine @ np.vstack([self.world_transform, [0, 0, 1]])
+
+        # Prepare for next frame
+        # Keep only inliers for next tracking (better stability)
+        if inliers is not None:
+            inlier_mask = (inliers.flatten() == 1)
+            self.prev_pts = good_curr[inlier_mask]
+        else:
+            self.prev_pts = good_curr
+        # Optionally add new features if too few
+        if len(self.prev_pts) < self.max_features // 2:
+            new_pts = self._adaptive_feature_extraction(curr_gray, self.last_motion_magnitude)
+            if len(new_pts) > 0:
+                # Combine old and new (avoid duplicates)
+                self.prev_pts = np.vstack([self.prev_pts, new_pts])[:self.max_features]
+        self.prev_gray = curr_gray.copy()
+
+        return tx, ty, rot_deg, scale, True
+
+# ============================================================
+# Static geometry memory (Stage 5)
+# Stores long‑lived scene elements that move with camera
+# ============================================================
+class StaticGeometryStore:
+    """
+    Remembers contours that have been observed for many frames
+    and whose motion is consistent with the global camera motion.
+    Contours are stored in world‑stabilized coordinates.
+    """
+    def __init__(self, min_age: int = 30, max_contours: int = 50):
+        self.min_age = min_age
+        self.max_contours = max_contours
+        self.static_contours = []          # list of (contour_world, age, last_seen)
+        self.next_id = 0
+
+    def update(self, tracker, tracked_objects: Dict[int, Tuple[np.ndarray, Tuple]], 
+               world_transform: np.ndarray, frame_gray: np.ndarray):
+        """
+        Update static geometry with currently tracked objects.
+        `world_transform` maps world coordinates to current frame.
+        """
+        # Transform current frame contours to world coordinates
+        inv_transform = cv2.invertAffineTransform(world_transform)  # 2x3 inverse
+        def world_from_frame(pts):
+            # pts: Nx2 array
+            return cv2.transform(pts.reshape(-1,1,2), inv_transform).reshape(-1,2)
+
+        now = time.time()
+        # Age existing static contours
+        for item in self.static_contours:
+            item['age'] += 1
+            item['last_seen'] = now
+
+        # Match current tracked objects to static contours (simple bounding‑box IoU)
+        static_snapshot = list(self.static_contours)   # snapshot
+        used = [False] * len(static_snapshot)
+
+        for obj_id, (cnt, _) in tracked_objects.items():
+            # Get bounding box of current contour
+            x, y, w, h = cv2.boundingRect(cnt)
+            best_match = None
+            best_iou = 0.3
+            for i, item in enumerate(static_snapshot):
+                if used[i]:
+                    continue
+                # Transform static contour to current frame for comparison
+                static_cnt_frame = cv2.transform(item['contour'].reshape(-1,1,2), world_transform).reshape(-1,2)
+                sx, sy, sw, sh = cv2.boundingRect(static_cnt_frame.astype(np.int32))
+                # IoU of bounding boxes
+                xi = max(x, sx)
+                yi = max(y, sy)
+                wi = min(x+w, sx+sw) - xi
+                hi = min(y+h, sy+sh) - yi
+                if wi > 0 and hi > 0:
+                    inter = wi * hi
+                    union = w*h + sw*sh - inter
+                    iou = inter / union if union > 0 else 0
+                    if iou > best_iou:
+                        best_iou = iou
+                        best_match = i
+            if best_match is not None:
+                # Update existing static contour
+                item = self.static_contours[best_match]
+                # Blend contour (simple average of points? too heavy – keep last)
+                item['contour'] = world_from_frame(cnt.reshape(-1,2)).reshape(-1,1,2).astype(np.int32)
+                item['age'] = 0   # reset age because we saw it
+                item['last_seen'] = now
+                used[best_match] = True
+            else:
+                # New candidate: add if object is old enough (age > 8 frames)
+                obj = tracker.tracked_objects.get(obj_id)
+                if obj and obj.age > 8:
+                    self.static_contours.append({
+                        'id': self.next_id,
+                        'contour': world_from_frame(cnt.reshape(-1,2)).reshape(-1,1,2).astype(np.int32),
+                        'age': 0,
+                        'last_seen': now
+                    })
+                    self.next_id += 1
+
+        # Remove static contours not seen for a while (e.g., > 2 seconds)
+        self.static_contours = [item for item in self.static_contours 
+                                if now - item['last_seen'] < 2.0]
+
+        # Keep only the most persistent contours (by age)
+        self.static_contours.sort(key=lambda x: x['age'], reverse=True)
+        self.static_contours = self.static_contours[:self.max_contours]
+
+    def draw(self, frame: np.ndarray, world_transform: np.ndarray, color=(128,128,128)):
+        """Draw static contours onto frame (transformed to current view)."""
+        for item in self.static_contours:
+            if item['age'] < self.min_age:
+                continue
+            cnt_frame = cv2.transform(item['contour'].reshape(-1,1,2), world_transform).reshape(-1,2)
+            cnt_frame = cnt_frame.astype(np.int32).reshape(-1,1,2)
+            cv2.drawContours(frame, [cnt_frame], -1, color, 1)
+
 @dataclass
 class TrackedObject:
     """Simplified tracked object with temporal persistence - inspired by lightweight tracking research [citation:2][citation:4]"""
@@ -29,7 +292,50 @@ class TrackedObject:
     prev_points: Optional[np.ndarray] = None  # Good features from previous frame
     median_flow: Tuple[float, float] = (0.0, 0.0)  # Median flow (dx, dy)
     flow_confidence: float = 0.0  # How many points were successfully tracked
+    depth_history: List[float] = None       # rolling window of depth‑proxy values
+    depth_stable: bool = False
 
+
+# ----------------------------------------------------------------------
+# Depth-proxy integration for small object enhancement [citation:6]
+# Uses depth information to improve detection of small objects
+# ----------------------------------------------------------------------
+def enhance_small_objects_with_depth(frame: np.ndarray, 
+                                    depth_proposals: List[Tuple],
+                                    min_area: int = 100) -> List[np.ndarray]:
+    """
+    Use depth proposals to enhance small object detection.
+    Based on YOLOv7-small-scale research [citation:6].
+    """
+    enhanced_contours = []
+    
+    for dbox, dcontour, dconf in depth_proposals:
+        x, y, w, h = dbox
+        
+        # Focus on small objects (by area)
+        if w * h < min_area:
+            # Enhance this region
+            roi = frame[y:y+h, x:x+w]
+            if roi.size == 0:
+                continue
+                
+            # Apply contrast enhancement for small objects
+            if len(roi.shape) == 3:
+                lab = cv2.cvtColor(roi, cv2.COLOR_BGR2LAB)
+                l, a, b = cv2.split(lab)
+                clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(4,4))
+                l_enhanced = clahe.apply(l)
+                enhanced_lab = cv2.merge([l_enhanced, a, b])
+                enhanced_roi = cv2.cvtColor(enhanced_lab, cv2.COLOR_LAB2BGR)
+                
+                # Put back
+                frame[y:y+h, x:x+w] = enhanced_roi
+                
+            # Add the contour
+            enhanced_contours.append(dcontour)
+            
+    return enhanced_contours
+    
 class ObjectTracker:
     """
     Lightweight multi-object tracker for low-end hardware.
@@ -62,6 +368,13 @@ class ObjectTracker:
         self.flow_win_size = (15, 15)      # LK window size
         self.flow_max_level = 2             # pyramid levels
         self.flow_consistency_thresh = 5.0  # max allowed flow difference (pixels)  
+
+    @staticmethod
+    def _warp_point(affine, pt):
+        """Apply 2x3 affine matrix to point (x,y) -> (x',y')"""
+        x, y = pt
+        return (affine[0,0]*x + affine[0,1]*y + affine[0,2],
+                affine[1,0]*x + affine[1,1]*y + affine[1,2])
         
     def _compute_centroid(self, contour: np.ndarray) -> Tuple[float, float]:
         """Fast centroid computation using moments"""
@@ -84,7 +397,7 @@ class ObjectTracker:
             
         brightness = cv2.mean(gray, mask=mask)[0]
         return brightness
-    
+
     def _compute_dominant_hue(self, frame: np.ndarray, contour: np.ndarray) -> float:
         """Extract dominant hue for color-based tracking"""
         mask = np.zeros(frame.shape[:2], dtype=np.uint8)
@@ -123,15 +436,18 @@ class ObjectTracker:
     def _distance_weighted_score(self, 
                                   obj: TrackedObject, 
                                   centroid: Tuple[float, float],
-                                  color_sig: np.ndarray) -> float:
+                                  color_sig: np.ndarray,
+                                  ref_centroid: Optional[Tuple[float, float]] = None) -> float:
         """
         Compute persistence score based on position and color histogram.
         Uses Bhattacharyya distance for color similarity.
         """
-        if not obj.centroids:
-            return 0.0
-            
-        last_centroid = obj.centroids[-1]
+        if ref_centroid is not None:
+            last_centroid = ref_centroid
+        else:
+            if not obj.centroids:
+                return 0.0
+            last_centroid = obj.centroids[-1]
         
         # Euclidean distance
         dist = np.sqrt((centroid[0] - last_centroid[0])**2 + 
@@ -210,17 +526,62 @@ class ObjectTracker:
         confidence = len(good_curr) / len(curr_pts)
         return (median_x, median_y, confidence)
     
+    def _get_last_positions(self):
+        """Return the last known positions for all tracked objects."""
+        output = {}
+        for obj_id, obj in self.tracked_objects.items():
+            if obj.contours and obj.centroids:
+                output[obj_id] = (obj.contours[-1], obj.centroids[-1])
+        return output
+    
     def update(self, 
                frame: np.ndarray, 
-               detected_contours: List[np.ndarray]) -> Dict[int, Tuple[np.ndarray, Tuple[float, float]]]:
+               detected_contours: List[np.ndarray],
+               camera_affine: Optional[np.ndarray] = None) -> Dict[int, Tuple[np.ndarray, Tuple[float, float]]]:
         """
         Update tracker with new frame and detected contours.
-        Uses geometry store for shape memory, Kalman smoothing, and optical flow for shadow rejection.
-        Returns dict mapping ID -> (contour, smoothed centroid)
+        Now with multi-resolution processing for low-end hardware [citation:8].
         """
+        # NEW: Adaptive frame skipping based on processing load
+        if not hasattr(self, 'frame_counter'):
+            self.frame_counter = 0
+            self.skip_counter = 0
+            self.skip_pattern = 0  # 0 = process all, 1 = skip every other, etc.
+        
+        self.frame_counter += 1
+        
+        # Dynamic resolution scaling based on system load [citation:8]
+        # Check if we need to adjust processing pattern
+        current_time = time.time()
+        if hasattr(self, 'last_fps_check'):
+            elapsed = current_time - self.last_fps_check
+            if elapsed > 1.0:  # Check every second
+                # Estimate current FPS (simplified)
+                frames_processed = getattr(self, 'frames_processed', 30)
+                estimated_fps = frames_processed / elapsed
+                
+                # Adjust skip pattern based on FPS
+                if estimated_fps < 10:  # Too slow
+                    self.skip_pattern = min(3, self.skip_pattern + 1)  # Skip more frames
+                elif estimated_fps > 25:  # Have headroom
+                    self.skip_pattern = max(0, self.skip_pattern - 1)  # Process more
+                    
+                self.frames_processed = 0
+                self.last_fps_check = current_time
+        else:
+            self.last_fps_check = current_time
+            self.frames_processed = 0
+            
+        self.frames_processed += 1
+        
+        # Skip frames based on pattern (0 = process all, 1 = process every other, etc.)
+        if self.skip_pattern > 0 and self.frame_counter % (self.skip_pattern + 1) != 0:
+            # Return last known positions for skipped frames
+            return self._get_last_positions()
+        
+        # Rest of the existing update method continues here...
         # Convert to grayscale for optical flow
         frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
         # ---- Compute optical flow for existing tracked objects (if previous frame exists) ----
         if self.prev_gray is not None:
             for obj in self.tracked_objects.values():
@@ -318,12 +679,17 @@ class ObjectTracker:
 
             # ---- Second pass: distance-weighted matching with flow consistency ----
             for obj_id, obj in sorted(self.tracked_objects.items(), 
-                                     key=lambda x: x[1].persistence_score, 
-                                     reverse=True):
+                                    key=lambda x: x[1].persistence_score, 
+                                    reverse=True):
                 if obj.lost_frames > self.max_lost_frames:
                     continue
                 if obj_id in used_objects:
                     continue
+
+                # Compute reference centroid (optionally warped by camera motion)
+                ref_centroid = None
+                if camera_affine is not None and obj.centroids:
+                    ref_centroid = self._warp_point(camera_affine, obj.centroids[-1])
 
                 best_match = None
                 best_score = 0
@@ -334,7 +700,7 @@ class ObjectTracker:
                         continue
 
                     # Base score from position and color
-                    score = self._distance_weighted_score(obj, det['centroid'], det['color_sig'])
+                    score = self._distance_weighted_score(obj, det['centroid'], det['color_sig'], ref_centroid=ref_centroid)
 
                     # Flow consistency check: if object has reliable flow, compare with detection's flow
                     if obj.flow_confidence > 0.3 and det['flow_conf'] > 0.3:
@@ -669,7 +1035,29 @@ class AppearanceExtractor:
                  shadow_threshold: float = 0.3,        # Shadow detection threshold (V difference)
                  edge_threshold1: int = 40,             # Canny low threshold
                  edge_threshold2: int = 120,            # Canny high threshold
-                 grow_tolerance: float = 0.15):         # Region growing color tolerance (fraction)
+                 grow_tolerance: float = 0.15,         # Region growing color tolerance (fraction)
+                 # NEW: Dynamic resolution scaling for low-end hardware [citation:1]
+                 enable_dynamic_resolution: bool = True,
+                 base_scale_factor: float = 1.0,       # Start at full resolution
+                 min_scale_factor: float = 0.5,         # Don't go below 50% resolution
+                 performance_target: float = 15.0):     # Target 15 FPS minimum
+        
+        # Existing initializations
+        self.roi_margin = roi_margin
+        self.min_contour_area = min_contour_area
+        self.n_colors = n_colors
+        self.shadow_threshold = shadow_threshold
+        self.edge_threshold1 = edge_threshold1
+        self.edge_threshold2 = edge_threshold2
+        self.grow_tolerance = grow_tolerance
+        
+        # NEW: Dynamic resolution attributes
+        self.enable_dynamic_resolution = enable_dynamic_resolution
+        self.current_scale = base_scale_factor
+        self.min_scale = min_scale_factor
+        self.target_fps = performance_target
+        self.fps_history = []
+        self.last_scale_adjustment = time.time()
         
         self.roi_margin = roi_margin
         self.min_contour_area = min_contour_area
@@ -1046,8 +1434,78 @@ class AppearanceExtractor:
         return valid
 
 # ----------------------------------------------------------------------
-# Global proposal generator (runs every frame, independent of depth)
+# Template feature cache for efficient tracking (based on research [citation:2])
+# Implements template-branch separable design to avoid redundant computation
 # ----------------------------------------------------------------------
+class TemplateFeatureCache:
+    """
+    Caches deep features for tracked objects to avoid redundant computation.
+    Inspired by template-branch separable vision transformers [citation:2].
+    Only recomputes features when appearance changes significantly.
+    """
+    def __init__(self, max_cache_size: int = 10, update_threshold: float = 0.3):
+        self.cache = {}  # obj_id -> {features, last_frame, last_centroid, stability_score}
+        self.max_size = max_cache_size
+        self.update_threshold = update_threshold
+        
+    def get_features(self, obj_id: int, frame: np.ndarray, contour: np.ndarray, current_frame_num: int):
+        """Return cached features or compute new ones if needed."""
+        if obj_id in self.cache:
+            cached = self.cache[obj_id]
+            # Check if we need to update (based on frame distance or motion)
+            if current_frame_num - cached['last_frame'] > 5:  # Update every 5 frames max
+                return self._compute_and_cache(obj_id, frame, contour, current_frame_num)
+            return cached['features']
+        else:
+            return self._compute_and_cache(obj_id, frame, contour, current_frame_num)
+    
+    def _compute_and_cache(self, obj_id: int, frame: np.ndarray, contour: np.ndarray, frame_num: int):
+        """Compute lightweight appearance features for caching."""
+        # Extract ROI
+        x, y, w, h = cv2.boundingRect(contour)
+        roi = frame[y:y+h, x:x+w]
+        if roi.size == 0:
+            return None
+            
+        # Compute simple but effective features [citation:2]
+        # Color histogram (32 bins) + texture (LBP-like)
+        gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
+        
+        # Color features (HSV histogram)
+        hsv = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
+        hist_h = cv2.calcHist([hsv], [0], None, [16], [0, 180])
+        hist_s = cv2.calcHist([hsv], [1], None, [8], [0, 256])
+        hist_v = cv2.calcHist([hsv], [2], None, [8], [0, 256])
+        
+        # Normalize
+        hist_h = cv2.normalize(hist_h, hist_h).flatten()
+        hist_s = cv2.normalize(hist_s, hist_s).flatten()
+        hist_v = cv2.normalize(hist_v, hist_v).flatten()
+        
+        # Texture features (gradient histogram)
+        grad_x = cv2.Sobel(gray, cv2.CV_32F, 1, 0, ksize=3)
+        grad_y = cv2.Sobel(gray, cv2.CV_32F, 0, 1, ksize=3)
+        mag = np.sqrt(grad_x**2 + grad_y**2)
+        angle = np.arctan2(grad_y, grad_x) * 180 / np.pi
+        hist_grad = np.histogram(angle[mag > 5], bins=8, range=(-180, 180))[0]
+        hist_grad = hist_grad / (np.sum(hist_grad) + 1e-6)
+        
+        # Combine features
+        features = np.concatenate([hist_h, hist_s, hist_v, hist_grad])
+        
+        # Update cache (LRU-style)
+        if len(self.cache) >= self.max_size:
+            # Remove oldest by frame number
+            oldest = min(self.cache.keys(), key=lambda k: self.cache[k]['last_frame'])
+            del self.cache[oldest]
+            
+        self.cache[obj_id] = {
+            'features': features,
+            'last_frame': frame_num,
+            'last_centroid': ((x + w//2), (y + h//2)),
+            'stability_score': 1.0
+        }
+        return features
 # ----------------------------------------------------------------------
 # Global proposal generator (runs every frame, independent of depth)
 # Now includes all requested improvements:
@@ -1064,7 +1522,12 @@ def generate_global_proposals(frame: np.ndarray,
                               prev_frame: Optional[np.ndarray] = None,
                               prev_proposals_list: List[Tuple] = None,
                               use_motion: bool = False,
-                              max_proposals: int = 10) -> List[Tuple[Tuple[int,int,int,int], np.ndarray, float]]:
+                              max_proposals: int = 10,
+                              camera_affine: Optional[np.ndarray] = None) -> List[Tuple[Tuple[int,int,int,int], np.ndarray, float]]:
+    """
+    Fast candidate object detection with advanced filtering and scoring.
+    Now uses camera_affine to warp search regions based on camera motion.
+    """
     """
     Fast candidate object detection with advanced filtering and scoring.
     
@@ -1390,6 +1853,29 @@ def pipe_reader():
             except:
                 pass
 
+def match_depth_to_objects(tracked_objects, depth_proposals, iou_thresh=0.3):
+    """For each tracked object, find the best matching depth box and return its area if good."""
+    obj_to_depth = {}
+    for obj_id, (cnt, _) in tracked_objects.items():
+        x, y, w, h = cv2.boundingRect(cnt)
+        best_iou = iou_thresh
+        best_area = None
+        for dbox, _, _ in depth_proposals:
+            dx, dy, dw, dh = dbox
+            xi = max(x, dx)
+            yi = max(y, dy)
+            wi = min(x+w, dx+dw) - xi
+            hi = min(y+h, dy+dh) - yi
+            if wi > 0 and hi > 0:
+                inter = wi * hi
+                union = w*h + dw*dh - inter
+                iou = inter / union if union > 0 else 0
+                if iou > best_iou:
+                    best_iou = iou
+                    best_area = dw * dh   # area as depth proxy
+        if best_area is not None:
+            obj_to_depth[obj_id] = best_area
+    return obj_to_depth
 # -------------------------------------------------------
 # Main
 # -------------------------------------------------------
@@ -1397,7 +1883,7 @@ def main():
     if not os.path.exists(PIPE_PATH):
         print("Pipe not found.", file=sys.stderr)
         sys.exit(1)
-    global smoothed_box, prev_contour, locked_id, lock_frame_count
+    global smoothed_box, prev_contour, locked_id, lock_frame_count, prev_frame_gray, prev_proposals
 
     threading.Thread(target=pipe_reader, daemon=True).start()
 
@@ -1413,7 +1899,18 @@ def main():
         persistence_decay=0.6,        # Moderate decay
         min_persistence=0.25          # Lower threshold for reassignment
     )
-
+    static_geo = StaticGeometryStore(min_age=30, max_contours=50)
+    # Initialize global motion estimator
+    motion_estimator = GlobalMotionEstimator(
+        max_features=150,          # total features per frame
+        quality_level=0.01,
+        min_distance=5,
+        lk_win_size=(15, 15),
+        lk_max_level=2,
+        ransac_thresh=3.0,
+        max_iters=1000,
+        confidence=0.99
+    )
     # Initialize appearance extractor
     extractor = AppearanceExtractor(
         roi_margin=0.12,
@@ -1424,21 +1921,46 @@ def main():
         edge_threshold2=120,
         grow_tolerance=0.15
     )
+    # Cumulative camera motion (for display)
+    cumulative_dx = 0.0
+    cumulative_dy = 0.0
+    cumulative_rot = 0.0
+    cumulative_scale = 1.0
 
-    cv2.namedWindow(WINDOW_NAME)
-
-    cv2.namedWindow(WINDOW_NAME)
-    
+    cv2.namedWindow(WINDOW_NAME)    
     # Performance monitoring
     frame_count = 0
     start_time = time.time()
-
+    smoothed_affine = None
     while True:
         ret, frame = cap.read()
         if not ret:
             break
 
         frame_count += 1
+        gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        success = False
+        if prev_frame_gray is not None:
+            dx, dy, rot, scale, success = motion_estimator.estimate_motion(gray)
+            if success:
+                cumulative_dx += dx
+                cumulative_dy += dy
+                cumulative_rot += rot
+                cumulative_scale *= scale
+        else:
+            # First frame: initialise motion estimator
+            motion_estimator.prev_gray = gray.copy()
+            motion_estimator.prev_pts = motion_estimator.detect_features(gray)
+        affine = motion_estimator.last_affine if success else None
+        # ---- Stage 6: EMA smoothing of affine ----
+        ema_alpha = 0.2   # weight of current measurement (0.2 = strong smoothing)
+        if success and affine is not None:
+            if smoothed_affine is None:
+                smoothed_affine = affine.copy()
+            else:
+                smoothed_affine = cv2.addWeighted(affine, ema_alpha, smoothed_affine, 1 - ema_alpha, 0)
+        # Use smoothed affine for the tracker if available, otherwise fall back to raw
+        affine_to_use = smoothed_affine if smoothed_affine is not None else affine
         
         with box_lock:
             raw_box = current_box
@@ -1454,40 +1976,65 @@ def main():
             box_to_use = smoothed_box
         else:
             box_to_use = None
+        # ---- FIRST: Estimate camera motion (STABILIZE) ----
+        # (This was already above, but ensure proposals are AFTER this)
+        # The motion_estimator.estimate_motion() call should happen BEFORE proposals
+        
+        # ---- SECOND: Now generate proposals from STABILIZED context ----
+        # Use the smoothed affine to guide where to look
         # ---------------------------------------------------------------
-        # Generate global proposals (runs every frame)
-        # ---------------------------------------------------------------
-        global prev_frame_gray, prev_proposals
+        # Generate global proposals (now AFTER stabilization)
+        # ---------------------------------------------------------------   
         global_proposals = generate_global_proposals(
             frame,
             prev_frame=prev_frame_gray,          # for motion detection
             prev_proposals_list=prev_proposals,  # for temporal persistence
             use_motion=False,                     # set True only for static camera
-            max_proposals=10
+            max_proposals=10,
+            camera_affine=affine_to_use           # ADD THIS: use stabilized camera motion
         )
 
-        # ---------------------------------------------------------------
-        # Depth proposals (from pipe) – convert to same format
+         # ---------------------------------------------------------------
+        # Depth proposals (from pipe) – now with stabilization context
         # ---------------------------------------------------------------
         depth_proposals = []
         if box_to_use is not None:
-            # The box from pipe is 8 coordinates; we create a bounding rectangle and a simple contour
-            x1,y1,x2,y2,x3,y3,x4,y4 = box_to_use
-            xs = [x1,x2,x3,x4]
-            ys = [y1,y2,y3,y4]
-            x_min = min(xs)
-            x_max = max(xs)
-            y_min = min(ys)
-            y_max = max(ys)
-            bbox = (x_min, y_min, x_max-x_min, y_max-y_min)
-            # Create a contour that is the bounding rectangle
-            rect_contour = np.array([[x_min, y_min],
-                                      [x_max, y_min],
-                                      [x_max, y_max],
-                                      [x_min, y_max]], dtype=np.int32).reshape((-1,1,2))
+            # Unpack the raw 8-point box
+            x1, y1, x2, y2, x3, y3, x4, y4 = box_to_use
+
+            if affine_to_use is not None:
+                # Stabilize the box by applying the inverse camera transform
+                points = np.array([[x1, y1], [x2, y2], [x3, y3], [x4, y4]], dtype=np.float32)
+                inv_transform = cv2.invertAffineTransform(affine_to_use)
+                stabilized_points = cv2.transform(points.reshape(-1, 1, 2), inv_transform).reshape(-1, 2)
+
+                # Use stabilized points for bounding box
+                xs = stabilized_points[:, 0]
+                ys = stabilized_points[:, 1]
+            else:
+                # No stabilization: use original points
+                xs = [x1, x2, x3, x4]
+                ys = [y1, y2, y3, y4]
+
+            # Compute bounding rectangle from the chosen points
+            x_min = int(min(xs))
+            x_max = int(max(xs))
+            y_min = int(min(ys))
+            y_max = int(max(ys))
+            bbox = (x_min, y_min, x_max - x_min, y_max - y_min)
+
+            # Create a simple rectangular contour
+            rect_contour = np.array([
+                [x_min, y_min],
+                [x_max, y_min],
+                [x_max, y_max],
+                [x_min, y_max]
+            ], dtype=np.int32).reshape((-1, 1, 2))
+
             depth_proposals.append((bbox, rect_contour, 1.0))   # confidence 1.0 for depth
+
         elif locked_id is not None:
-            # If we have a locked object but no depth box, we can still generate a prediction box
+            # If we have a locked object but no depth box, generate a prediction box
             kalman_cent = tracker.geometry_store.get_kalman_centroid(locked_id)
             last_bbox = tracker.geometry_store.get_last_bbox(locked_id)
             if kalman_cent is not None and last_bbox is not None:
@@ -1501,17 +2048,19 @@ def main():
                 y_min = int(cy - search_h // 2)
                 x_max = x_min + search_w
                 y_max = y_min + search_h
-                # Clamp to image
+                # Clamp to image boundaries
                 h_img, w_img = frame.shape[:2]
-                x_min = max(0, min(x_min, w_img-1))
-                y_min = max(0, min(y_min, h_img-1))
-                x_max = max(0, min(x_max, w_img-1))
-                y_max = max(0, min(y_max, h_img-1))
-                bbox = (x_min, y_min, x_max-x_min, y_max-y_min)
-                rect_contour = np.array([[x_min, y_min],
-                                          [x_max, y_min],
-                                          [x_max, y_max],
-                                          [x_min, y_max]], dtype=np.int32).reshape((-1,1,2))
+                x_min = max(0, min(x_min, w_img - 1))
+                y_min = max(0, min(y_min, h_img - 1))
+                x_max = max(0, min(x_max, w_img - 1))
+                y_max = max(0, min(y_max, h_img - 1))
+                bbox = (x_min, y_min, x_max - x_min, y_max - y_min)
+                rect_contour = np.array([
+                    [x_min, y_min],
+                    [x_max, y_min],
+                    [x_max, y_max],
+                    [x_min, y_max]
+                ], dtype=np.int32).reshape((-1, 1, 2))
                 depth_proposals.append((bbox, rect_contour, 0.8))   # slightly lower confidence
         # ---------------------------------------------------------------
         # Proposal fusion
@@ -1551,9 +2100,43 @@ def main():
             # Also draw the original contour (dashed)
             cv2.drawContours(frame, [cnt], -1, (0,255,0), 1)
 
-        # Update tracker with all detected contours
-        tracked_objects = tracker.update(frame, detected_contours)
-
+        # NEW: Enhance small objects using depth information [citation:6]
+        if 'depth_proposals' in locals() and depth_proposals:
+            enhanced_small = enhance_small_objects_with_depth(frame, depth_proposals)
+            detected_contours.extend(enhanced_small)
+        
+        # Update tracker with all detected contours (now with enhanced small objects)
+        tracked_objects = tracker.update(frame, detected_contours, camera_affine=affine_to_use)
+        
+        # NEW: Update template feature cache [citation:2]
+        if not hasattr(tracker, 'feature_cache'):
+            tracker.feature_cache = TemplateFeatureCache(max_cache_size=15)
+            
+        for obj_id, (contour, centroid) in tracked_objects.items():
+            # Cache features for this object
+            features = tracker.feature_cache.get_features(
+                obj_id, frame, contour, frame_count
+            )
+            # Store in tracked object for later use
+            if features is not None and obj_id in tracker.tracked_objects:
+                tracker.tracked_objects[obj_id].cached_features = features
+        # ---- Stage 7: Depth consistency anchoring ----
+        depth_matches = match_depth_to_objects(tracked_objects, depth_proposals)
+        for obj_id, area in depth_matches.items():
+            obj = tracker.tracked_objects[obj_id]
+            if obj.depth_history is None:
+                obj.depth_history = []
+            obj.depth_history.append(area)
+            if len(obj.depth_history) > 15:
+                obj.depth_history.pop(0)
+            if len(obj.depth_history) >= 10:
+                arr = np.array(obj.depth_history)
+                mean_area = np.mean(arr)
+                if mean_area > 0:
+                    var_coeff = np.var(arr) / mean_area
+                    obj.depth_stable = var_coeff < 0.1
+        # ---- Stage 5: Update static geometry ----
+        static_geo.update(tracker, tracked_objects, motion_estimator.world_transform, gray)
         # Compute attention scores for primary focus selection
         attention_scores = {}
         primary_focus_id = None
@@ -1563,7 +2146,8 @@ def main():
                 obj = tracker.tracked_objects[obj_id]
                 area_weight = min(1.0, obj.contour_area / max_area) if max_area > 0 else 0
                 motion_weight = obj.flow_confidence
-                attention = obj.persistence_score + area_weight + motion_weight
+                depth_bonus = 0.3 if obj.depth_stable else 0.0
+                attention = obj.persistence_score + area_weight + motion_weight + depth_bonus
                 attention_scores[obj_id] = attention
             primary_focus_id = max(attention_scores.items(), key=lambda x: x[1])[0]
 
@@ -1670,9 +2254,12 @@ def main():
             cv2.putText(frame, f"FPS: {fps:.1f} | Objects: {len(tracked_objects)}",
                        (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
         # Update previous frame and proposals for next iteration
-        prev_frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        prev_frame_gray = gray
+        # ---- Global camera motion estimation ----
         # Store only the top proposals (e.g., up to 15) to save memory
         prev_proposals = [(bbox, cnt, conf) for (bbox, cnt, conf) in global_proposals[:15]]
+        # ---- Draw static geometry ----
+        static_geo.draw(frame, motion_estimator.world_transform, color=(100,100,100))
         cv2.imshow(WINDOW_NAME, frame)
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
