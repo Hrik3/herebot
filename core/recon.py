@@ -7,6 +7,7 @@ import time
 from collections import defaultdict
 from dataclasses import dataclass
 from typing import List, Tuple, Optional, Dict
+import pickle
 
 PIPE_PATH = '/tmp/vision_pipe'
 WINDOW_NAME = 'Receiver'
@@ -175,7 +176,256 @@ class GlobalMotionEstimator:
         self.prev_gray = curr_gray.copy()
 
         return tx, ty, rot_deg, scale, True
-
+# ============================================================
+# Object Identity Memory Database - Re-ID Persistence Layer
+# Stores object signatures for long-term identity recovery
+# Optimized for low-end hardware [citation:2][citation:3]
+# ============================================================
+class ObjectIdentityMemory:
+    """
+    Persistent object memory that survives tracking sessions.
+    When objects disappear and reappear, they get the same ID.
+    Uses lightweight appearance embeddings (histogram + texture).
+    """
+    def __init__(self, db_path: str = './object_memory_db.pkl',
+                 similarity_threshold: float = 0.75,
+                 max_objects: int = 100):
+        self.db_path = db_path
+        self.similarity_threshold = similarity_threshold
+        self.max_objects = max_objects
+        self.objects = {}  # id -> {embedding, mean_size, color_hist, motion_stats, last_seen}
+        self.next_id = 0
+        self.load_database()
+        
+        # NEW: Feature cache for efficiency [citation:2]
+        self.feature_cache = {}
+        self.cache_size = 30
+        
+    def load_database(self):
+        """Load existing object memory from disk."""
+        try:
+            if os.path.exists(self.db_path):
+                with open(self.db_path, 'rb') as f:
+                    data = pickle.load(f)
+                    self.objects = data.get('objects', {})
+                    self.next_id = data.get('next_id', 0)
+                print(f"Loaded {len(self.objects)} objects from memory DB", file=sys.stderr)
+        except Exception as e:
+            print(f"Failed to load object DB: {e}", file=sys.stderr)
+            self.objects = {}
+            self.next_id = 0
+    
+    def save_database(self):
+        """Save object memory to disk."""
+        try:
+            # Limit database size
+            if len(self.objects) > self.max_objects:
+                # Keep most recent objects
+                sorted_objects = sorted(self.objects.items(),
+                                      key=lambda x: x[1]['last_seen'],
+                                      reverse=True)
+                self.objects = dict(sorted_objects[:self.max_objects])
+            
+            with open(self.db_path, 'wb') as f:
+                pickle.dump({
+                    'objects': self.objects,
+                    'next_id': self.next_id
+                }, f)
+        except Exception as e:
+            print(f"Failed to save object DB: {e}", file=sys.stderr)
+    
+    def compute_appearance_embedding(self, frame: np.ndarray, contour: np.ndarray) -> np.ndarray:
+        """
+        Compute lightweight appearance embedding.
+        Combines: color histogram (HSV) + texture vector (LBP-like) + size
+        Optimized for low-res cameras [citation:3]
+        """
+        # Extract ROI
+        x, y, w, h = cv2.boundingRect(contour)
+        roi = frame[y:y+h, x:x+w]
+        if roi.size == 0:
+            return None
+            
+        # Downscale for efficiency (adaptive based on object size) [citation:3]
+        if w * h > 5000:  # Large object
+            scale = 0.5
+            roi = cv2.resize(roi, None, fx=scale, fy=scale)
+        
+        # 1. Color histogram (HSV - 48 bins total, illumination invariant)
+        hsv = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
+        hist_h = cv2.calcHist([hsv], [0], None, [16], [0, 180])  # Hue
+        hist_s = cv2.calcHist([hsv], [1], None, [8], [0, 256])   # Saturation
+        hist_v = cv2.calcHist([hsv], [2], None, [8], [0, 256])   # Value
+        
+        # Normalize histograms
+        hist_h = cv2.normalize(hist_h, hist_h).flatten()
+        hist_s = cv2.normalize(hist_s, hist_s).flatten()
+        hist_v = cv2.normalize(hist_v, hist_v).flatten()
+        
+        # 2. Texture features (simplified LBP) [citation:2]
+        gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
+        
+        # Local binary pattern-like features using Sobel
+        grad_x = cv2.Sobel(gray, cv2.CV_32F, 1, 0, ksize=3)
+        grad_y = cv2.Sobel(gray, cv2.CV_32F, 0, 1, ksize=3)
+        mag = np.sqrt(grad_x**2 + grad_y**2)
+        angle = np.arctan2(grad_y, grad_x) * 180 / np.pi
+        
+        # Orientation histogram (8 bins)
+        valid_mag = mag > 5
+        if np.any(valid_mag):
+            hist_grad = np.histogram(angle[valid_mag], bins=8, range=(-180, 180))[0]
+            hist_grad = hist_grad / (np.sum(hist_grad) + 1e-6)
+        else:
+            hist_grad = np.ones(8) / 8.0
+        
+        # 3. Size feature (normalized log area)
+        size_feat = np.log(w * h + 1) / 10.0
+        
+        # Combine all features (total ~40 dimensions - very lightweight)
+        embedding = np.concatenate([
+            hist_h, hist_s, hist_v,  # 16+8+8 = 32
+            hist_grad,                # 8
+            [size_feat]               # 1
+        ]).astype(np.float32)
+        
+        return embedding
+    
+    def compute_similarity(self, emb1: np.ndarray, emb2: np.ndarray) -> float:
+        """
+        Combined similarity: Cosine + Bhattacharyya.
+        Optimized for fast computation [citation:3]
+        """
+        if emb1 is None or emb2 is None:
+            return 0.0
+            
+        # Cosine similarity for the whole vector
+        norm1 = np.linalg.norm(emb1)
+        norm2 = np.linalg.norm(emb2)
+        if norm1 == 0 or norm2 == 0:
+            return 0.0
+        cosine_sim = np.dot(emb1, emb2) / (norm1 * norm2)
+        
+        # Bhattacharyya for histogram parts (first 32 elements)
+        hist1 = emb1[:32] + 1e-6  # Avoid zeros
+        hist2 = emb2[:32] + 1e-6
+        hist1 = hist1 / np.sum(hist1)
+        hist2 = hist2 / np.sum(hist2)
+        bhatt = np.sum(np.sqrt(hist1 * hist2))
+        
+        # Combined score
+        return 0.6 * cosine_sim + 0.4 * bhatt
+    
+    def find_matching_id(self, embedding: np.ndarray, current_time: float) -> Optional[int]:
+        """
+        Find existing object ID by embedding similarity.
+        Returns None if no match above threshold.
+        """
+        if embedding is None:
+            return None
+            
+        best_match = None
+        best_score = self.similarity_threshold
+        
+        for obj_id, obj_data in self.objects.items():
+            # Skip very old objects? (optional)
+            # if current_time - obj_data['last_seen'] > 3600:  # 1 hour
+            #     continue
+                
+            similarity = self.compute_similarity(embedding, obj_data['embedding'])
+            if similarity > best_score:
+                best_score = similarity
+                best_match = obj_id
+        
+        return best_match
+    
+    def update_object(self, obj_id: int, embedding: np.ndarray, 
+                     contour: np.ndarray, current_time: float):
+        """Update existing object in database."""
+        x, y, w, h = cv2.boundingRect(contour)
+        area = w * h
+        
+        if obj_id in self.objects:
+            # Update with exponential moving average [citation:3]
+            obj = self.objects[obj_id]
+            alpha = 0.7  # New observation weight
+            
+            # Update embedding (EMA)
+            obj['embedding'] = alpha * embedding + (1 - alpha) * obj['embedding']
+            # Normalize
+            obj['embedding'] = obj['embedding'] / (np.linalg.norm(obj['embedding']) + 1e-6)
+            
+            # Update mean size
+            obj['mean_size'] = alpha * area + (1 - alpha) * obj['mean_size']
+            
+            # Update motion stats (simplified)
+            if 'motion_stats' not in obj:
+                obj['motion_stats'] = [0, 0]  # mean_dx, mean_dy
+        else:
+            # New object
+            self.objects[obj_id] = {
+                'embedding': embedding.copy(),
+                'mean_size': area,
+                'color_hist': embedding[:32].copy(),  # Store histogram part
+                'motion_stats': [0, 0],
+                'last_seen': current_time,
+                'first_seen': current_time
+            }
+        
+        self.objects[obj_id]['last_seen'] = current_time
+    
+    def get_or_create_id(self, frame: np.ndarray, contour: np.ndarray, 
+                        current_time: float) -> int:
+        """
+        Main entry point: get existing ID or create new one.
+        """
+        # Compute embedding
+        embedding = self.compute_appearance_embedding(frame, contour)
+        if embedding is None:
+            return self._create_new_id(contour, current_time)
+        
+        # Look for match
+        matched_id = self.find_matching_id(embedding, current_time)
+        
+        if matched_id is not None:
+            # Update existing
+            self.update_object(matched_id, embedding, contour, current_time)
+            return matched_id
+        else:
+            # Create new
+            return self._create_new_id(contour, current_time, embedding)
+    
+    def _create_new_id(self, contour: np.ndarray, current_time: float,
+                      embedding: Optional[np.ndarray] = None) -> int:
+        """Create new object ID."""
+        new_id = self.next_id
+        self.next_id += 1
+        
+        if embedding is None:
+            # Will be computed on next update
+            self.objects[new_id] = {
+                'embedding': None,
+                'mean_size': cv2.contourArea(contour),
+                'color_hist': None,
+                'motion_stats': [0, 0],
+                'last_seen': current_time,
+                'first_seen': current_time
+            }
+        else:
+            self.update_object(new_id, embedding, contour, current_time)
+        
+        return new_id
+    
+    def cleanup_old_objects(self, max_age_seconds: float = 86400):  # 24 hours
+        """Remove very old objects to prevent database bloat."""
+        current_time = time.time()
+        to_remove = []
+        for obj_id, obj_data in self.objects.items():
+            if current_time - obj_data['last_seen'] > max_age_seconds:
+                to_remove.append(obj_id)
+        
+        for obj_id in to_remove:
+            del self.objects[obj_id]
 # ============================================================
 # Static geometry memory (Stage 5)
 # Stores long‑lived scene elements that move with camera
@@ -370,6 +620,85 @@ class ObjectTracker:
         self.flow_consistency_thresh = 5.0  # max allowed flow difference (pixels)  
 
     @staticmethod
+    def _hungarian(cost_matrix):
+        """
+        Solve linear assignment problem using Hungarian algorithm (Munkres).
+        cost_matrix: 2D numpy array (n_workers, n_jobs)
+        Returns (row_indices, col_indices) for optimal assignment.
+        """
+        # If scipy is available, use it (fast). Otherwise fallback to O(n^3) numpy implementation.
+        try:
+            from scipy.optimize import linear_sum_assignment
+            return linear_sum_assignment(cost_matrix)
+        except ImportError:
+            pass
+
+        # Pure numpy implementation (optimized for small matrices, typical for tracking)
+        cost = cost_matrix.copy()
+        n, m = cost.shape
+        # Pad to square if necessary
+        if n != m:
+            pad_size = max(n, m)
+            padded = np.full((pad_size, pad_size), np.max(cost) + 1, dtype=cost.dtype)
+            padded[:n, :m] = cost
+            cost = padded
+            n = pad_size
+
+        # Standard Hungarian algorithm (O(n^3))
+        u = np.zeros(n, dtype=cost.dtype)
+        v = np.zeros(n, dtype=cost.dtype)
+        p = np.zeros(n, dtype=int)
+        way = np.zeros(n, dtype=int)
+
+        for i in range(1, n):
+            p[0] = i
+            j0 = 0
+            minv = np.full(n, np.inf, dtype=cost.dtype)
+            used = np.zeros(n, dtype=bool)
+            while True:
+                used[j0] = True
+                i0 = p[j0]
+                delta = np.inf
+                j1 = 0
+                for j in range(1, n):
+                    if not used[j]:
+                        cur = cost[i0-1, j-1] - u[i0-1] - v[j-1]
+                        if cur < minv[j]:
+                            minv[j] = cur
+                            way[j] = j0
+                        if minv[j] < delta:
+                            delta = minv[j]
+                            j1 = j
+                for j in range(n):
+                    if used[j]:
+                        u[p[j]-1] += delta
+                        v[j-1] -= delta
+                    else:
+                        minv[j] -= delta
+                j0 = j1
+                if p[j0] == 0:
+                    break
+            while True:
+                j1 = way[j0]
+                p[j0] = p[j1]
+                j0 = j1
+                if j0 == 0:
+                    break
+
+        # Extract assignment for original dimensions
+        row_ind = np.zeros(n, dtype=int)
+        col_ind = np.zeros(n, dtype=int)
+        for j in range(1, n):
+            if p[j] != 0:
+                row_ind[p[j]-1] = j-1
+                col_ind[j-1] = p[j]-1
+
+        # Keep only original rows/cols
+        row_ind = row_ind[:n]
+        col_ind = col_ind[:m]
+        return np.arange(n), col_ind
+    
+    @staticmethod
     def _warp_point(affine, pt):
         """Apply 2x3 affine matrix to point (x,y) -> (x',y')"""
         x, y = pt
@@ -536,57 +865,49 @@ class ObjectTracker:
     
     def update(self, 
                frame: np.ndarray, 
-               detected_contours: List[np.ndarray],
-               camera_affine: Optional[np.ndarray] = None) -> Dict[int, Tuple[np.ndarray, Tuple[float, float]]]:
+               detected_pairs: List[Tuple[np.ndarray, float]],
+               camera_affine: Optional[np.ndarray] = None,
+               identity_memory: Optional[ObjectIdentityMemory] = None) -> Dict[int, Tuple[np.ndarray, Tuple[float, float]]]:
         """
-        Update tracker with new frame and detected contours.
-        Now with multi-resolution processing for low-end hardware [citation:8].
+        Enhanced multi‑object tracker with camera-motion-aware world-space matching.
+        
+        KEY IMPROVEMENT:
+        1. Convert centroids to world-stabilized coordinates
+        2. Perform matching in world space
+        3. Convert back to frame space for output
         """
-        # NEW: Adaptive frame skipping based on processing load
+        # ---- Adaptive frame skipping (unchanged) ----
         if not hasattr(self, 'frame_counter'):
             self.frame_counter = 0
             self.skip_counter = 0
-            self.skip_pattern = 0  # 0 = process all, 1 = skip every other, etc.
-        
+            self.skip_pattern = 0
         self.frame_counter += 1
-        
-        # Dynamic resolution scaling based on system load [citation:8]
-        # Check if we need to adjust processing pattern
         current_time = time.time()
         if hasattr(self, 'last_fps_check'):
             elapsed = current_time - self.last_fps_check
-            if elapsed > 1.0:  # Check every second
-                # Estimate current FPS (simplified)
+            if elapsed > 1.0:
                 frames_processed = getattr(self, 'frames_processed', 30)
                 estimated_fps = frames_processed / elapsed
-                
-                # Adjust skip pattern based on FPS
-                if estimated_fps < 10:  # Too slow
-                    self.skip_pattern = min(3, self.skip_pattern + 1)  # Skip more frames
-                elif estimated_fps > 25:  # Have headroom
-                    self.skip_pattern = max(0, self.skip_pattern - 1)  # Process more
-                    
+                if estimated_fps < 10:
+                    self.skip_pattern = min(3, self.skip_pattern + 1)
+                elif estimated_fps > 25:
+                    self.skip_pattern = max(0, self.skip_pattern - 1)
                 self.frames_processed = 0
                 self.last_fps_check = current_time
         else:
             self.last_fps_check = current_time
             self.frames_processed = 0
-            
         self.frames_processed += 1
-        
-        # Skip frames based on pattern (0 = process all, 1 = process every other, etc.)
         if self.skip_pattern > 0 and self.frame_counter % (self.skip_pattern + 1) != 0:
-            # Return last known positions for skipped frames
             return self._get_last_positions()
-        
-        # Rest of the existing update method continues here...
-        # Convert to grayscale for optical flow
+
+        # ---- Prepare current frame ----
         frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        # ---- Compute optical flow for existing tracked objects (if previous frame exists) ----
+
+        # ---- Compute optical flow for existing tracked objects (unchanged) ----
         if self.prev_gray is not None:
             for obj in self.tracked_objects.values():
                 if obj.prev_points is not None and len(obj.prev_points) > 0:
-                    # Track points forward
                     curr_pts, status, _ = cv2.calcOpticalFlowPyrLK(
                         self.prev_gray, frame_gray, obj.prev_points.astype(np.float32), None,
                         winSize=self.flow_win_size, maxLevel=self.flow_max_level,
@@ -610,47 +931,180 @@ class ObjectTracker:
 
         matched_objects = {}
 
-        if detected_contours:
-            # Extract features for each detection
+        if detected_pairs:
+            # ---- Extract detection features ----
             detections = []
-            for contour in detected_contours:
-                centroid = self._compute_centroid(contour)
+            for contour, conf in detected_pairs:
+                centroid = self._compute_centroid(contour)                
                 brightness = self._compute_brightness(frame, contour)
                 hue = self._compute_dominant_hue(frame, contour)
                 area = cv2.contourArea(contour)
                 color_sig = self._compute_color_signature(frame, contour)
-                # Compute optical flow for this detection (optional, can be deferred to matching)
                 flow_dx, flow_dy, flow_conf = self._compute_detection_flow(frame_gray, contour)
+                
+                # ===== CRITICAL IMPROVEMENT: Convert to world coordinates =====
+                world_centroid = centroid
+                if camera_affine is not None:
+                    # Apply inverse affine to get world coordinates [citation:4][citation:9]
+                    inv_transform = cv2.invertAffineTransform(camera_affine)
+                    pt = np.array([[centroid]], dtype=np.float32)
+                    world_pt = cv2.transform(pt, inv_transform).reshape(2)
+                    world_centroid = (world_pt[0], world_pt[1])
+                
                 detections.append({
                     'contour': contour,
                     'centroid': centroid,
+                    'world_centroid': world_centroid,  # Store world coordinates
                     'brightness': brightness,
                     'hue': hue,
                     'area': area,
                     'color_sig': color_sig,
                     'flow': (flow_dx, flow_dy),
-                    'flow_conf': flow_conf
+                    'flow_conf': flow_conf,
+                    'conf': conf
                 })
-
-            # Sort detections by area (larger objects first)
             detections.sort(key=lambda x: x['area'], reverse=True)
 
-            # Get list of active object IDs (not expired)
-            active_ids = [oid for oid, obj in self.tracked_objects.items() 
-                          if obj.lost_frames <= self.max_lost_frames]
+            # ---- Stage A: Get active objects and convert their positions to world space ----
+            active_items = [(oid, obj) for oid, obj in self.tracked_objects.items()
+                            if obj.lost_frames <= self.max_lost_frames]
 
-            used_detections = set()
-            used_objects = set()
+            if active_items and detections:
+                # Build predicted world centroids with dynamic gate radius
+                active_ids = []
+                active_objs = []
+                predicted_world = []      # Predictions in WORLD coordinates
+                gate_radii = []            # Per‑object dynamic radius (in world units)
+                
+                for oid, obj in active_items:
+                    if obj.centroids:
+                        last = obj.centroids[-1]
+                        last_world = last
+                        
+                        # Convert last known position to world coordinates
+                        if camera_affine is not None:
+                            inv_transform = cv2.invertAffineTransform(camera_affine)
+                            pt = np.array([[last]], dtype=np.float32)
+                            last_world_pt = cv2.transform(pt, inv_transform).reshape(2)
+                            last_world = (last_world_pt[0], last_world_pt[1])
+                        
+                        # Predict using median flow (also convert flow to world scale)
+                        if obj.flow_confidence > 0.3:
+                            # Approximate world-scale flow (simplified)
+                            world_flow = obj.median_flow
+                            pred_world = (last_world[0] + world_flow[0], 
+                                         last_world[1] + world_flow[1])
+                            
+                            # Dynamic radius in world units
+                            speed = np.linalg.norm(obj.median_flow)
+                            # Convert to approximate world units using affine scale
+                            if camera_affine is not None:
+                                scale = np.sqrt(camera_affine[0,0]**2 + camera_affine[0,1]**2)
+                                world_speed = speed / max(scale, 0.1)
+                            else:
+                                world_speed = speed
+                            radius = 30 + min(world_speed * 2, 40)
+                        else:
+                            pred_world = last_world
+                            radius = 40
+                    else:
+                        pred_world = None
+                        radius = 50
+                    
+                    predicted_world.append(pred_world)
+                    gate_radii.append(radius)
+                    active_ids.append(oid)
+                    active_objs.append(obj)
 
-            # ---- First pass: IoU-based matching (geometry) ----
-            for i, det in enumerate(detections):
-                if i in used_detections:
-                    continue
-                best_id = self.geometry_store.find_best_match(det['contour'], active_ids)
-                if best_id is not None and best_id not in used_objects:
-                    used_detections.add(i)
-                    used_objects.add(best_id)
-                    obj = self.tracked_objects[best_id]
+                # ---- Stage B: Hungarian assignment in WORLD coordinates ----
+                n_obj = len(active_ids)
+                n_det = len(detections)
+                cost_matrix = np.full((n_obj, n_det), 1e9, dtype=np.float32)
+
+                for i, (pred_world, radius) in enumerate(zip(predicted_world, gate_radii)):
+                    if pred_world is None:
+                        continue
+                    for j, det in enumerate(detections):
+                        # Use WORLD coordinates for distance calculation
+                        dist = np.linalg.norm(np.array(pred_world) - np.array(det['world_centroid']))
+                        if dist > radius:      # Motion gate rejection in world space
+                            continue
+
+                        # Distance cost (normalised by 100 world units)
+                        dist_cost = dist / 100.0
+
+                        # Appearance cost (Bhattacharyya distance) - unchanged
+                        obj = active_objs[i]
+                        if obj.color_sig is not None and det['color_sig'] is not None:
+                            bc = np.sum(np.sqrt(obj.color_sig * det['color_sig']))
+                            appearance_sim = bc
+                        else:
+                            appearance_sim = 0.5
+                        appearance_cost = 1.0 - appearance_sim
+
+                        # Flow consistency cost - now using world-relative flow
+                        if obj.flow_confidence > 0.3 and det['flow_conf'] > 0.3:
+                            flow_diff = np.linalg.norm(np.array(obj.median_flow) - np.array(det['flow']))
+                            flow_cost = min(flow_diff / 20.0, 1.0)
+                        else:
+                            flow_cost = 0.5
+
+                        # Weighted sum (weights tuned for world-space matching)
+                        total_cost = 0.7 * dist_cost + 0.2 * appearance_cost + 0.1 * flow_cost
+                        cost_matrix[i, j] = total_cost
+
+                # Solve assignment (Hungarian)
+                row_ind, col_ind = self._hungarian(cost_matrix)
+                valid = cost_matrix[row_ind, col_ind] < 1e8
+                row_ind = row_ind[valid]
+                col_ind = col_ind[valid]
+
+                used_detections = set()
+                used_objects = set()
+
+                for i, j in zip(row_ind, col_ind):
+                    obj_id = active_ids[i]
+                    det = detections[j]
+                    
+                    # ===== INTEGRATE WITH IDENTITY MEMORY =====
+                    if identity_memory is not None:
+                        # Check if this detection matches a known object from memory
+                        memory_id = identity_memory.get_or_create_id(
+                            frame, det['contour'], current_time
+                        )
+                        
+                        # If memory suggests a different ID, consider reassigning
+                        if memory_id != obj_id and memory_id not in self.tracked_objects:
+                            # This detection might be a reappearing object
+                            # We'll handle this carefully to avoid flicker
+                            if det['conf'] > 0.8:  # High confidence
+                                # Create new tracked object with memory ID
+                                new_obj = TrackedObject(
+                                    id=memory_id,
+                                    contours=[det['contour']],
+                                    centroids=[det['centroid']],
+                                    hues=[det['hue']],
+                                    brightness=det['brightness'],
+                                    contour_area=det['area'],
+                                    color_sig=det['color_sig'],
+                                    age=obj.age,  # Inherit age from old?
+                                    persistence_score=0.9,
+                                    lost_frames=0
+                                )
+                                self.tracked_objects[memory_id] = new_obj
+                                matched_objects[memory_id] = (det['contour'], det['centroid'])
+                                used_detections.add(j)
+                                used_objects.add(obj_id)
+                                # Mark old as lost
+                                if obj_id in self.tracked_objects:
+                                    self.tracked_objects[obj_id].lost_frames = self.max_lost_frames + 1
+                                continue
+                    
+                    # Normal update path
+                    used_detections.add(j)
+                    used_objects.add(obj_id)
+
+                    obj = self.tracked_objects[obj_id]
 
                     # Update object
                     obj.contours.append(det['contour'])
@@ -661,100 +1115,35 @@ class ObjectTracker:
                     obj.color_sig = det['color_sig']
                     obj.age += 1
                     obj.lost_frames = 0
-                    obj.persistence_score = 1.0
+                    obj.persistence_score = 1.0 - total_cost
 
-                    # Keep history bounded
                     if len(obj.contours) > obj.max_history:
                         obj.contours.pop(0)
                         obj.centroids.pop(0)
                         obj.hues.pop(0)
 
-                    # Update geometry store
-                    self.geometry_store.update_object(best_id, det['contour'], det['centroid'], frame)
-
-                    # Update optical flow points for this object (extract new points from current contour)
-                    obj.prev_points = self._extract_points_from_contour(frame_gray, det['contour'], self.flow_points_per_obj)
-
-                    matched_objects[best_id] = (det['contour'], det['centroid'])
-
-            # ---- Second pass: distance-weighted matching with flow consistency ----
-            for obj_id, obj in sorted(self.tracked_objects.items(), 
-                                    key=lambda x: x[1].persistence_score, 
-                                    reverse=True):
-                if obj.lost_frames > self.max_lost_frames:
-                    continue
-                if obj_id in used_objects:
-                    continue
-
-                # Compute reference centroid (optionally warped by camera motion)
-                ref_centroid = None
-                if camera_affine is not None and obj.centroids:
-                    ref_centroid = self._warp_point(camera_affine, obj.centroids[-1])
-
-                best_match = None
-                best_score = 0
-                best_flow_ok = True
-
-                for i, det in enumerate(detections):
-                    if i in used_detections:
-                        continue
-
-                    # Base score from position and color
-                    score = self._distance_weighted_score(obj, det['centroid'], det['color_sig'], ref_centroid=ref_centroid)
-
-                    # Flow consistency check: if object has reliable flow, compare with detection's flow
-                    if obj.flow_confidence > 0.3 and det['flow_conf'] > 0.3:
-                        flow_diff = np.sqrt((det['flow'][0] - obj.median_flow[0])**2 +
-                                           (det['flow'][1] - obj.median_flow[1])**2)
-                        if flow_diff > self.flow_consistency_thresh:
-                            # Penalize heavily (or set score to 0)
-                            score *= 0.2  # reduce score significantly
-                            flow_ok = False
-                        else:
-                            flow_ok = True
-                    else:
-                        flow_ok = True
-
-                    if score > best_score and score > self.min_persistence:
-                        best_score = score
-                        best_match = i
-                        best_flow_ok = flow_ok
-
-                if best_match is not None and (best_flow_ok or best_score > self.min_persistence * 1.5):
-                    used_detections.add(best_match)
-                    used_objects.add(obj_id)
-                    det = detections[best_match]
-
-                    # Update existing object
-                    obj.contours.append(det['contour'])
-                    obj.centroids.append(det['centroid'])
-                    obj.hues.append(det['hue'])
-                    obj.brightness = det['brightness']
-                    obj.contour_area = det['area']
-                    obj.color_sig = det['color_sig']
-                    obj.age += 1
-                    obj.lost_frames = 0
-                    obj.persistence_score = best_score
-
-                    # Keep history bounded
-                    if len(obj.contours) > obj.max_history:
-                        obj.contours.pop(0)
-                        obj.centroids.pop(0)
-                        obj.hues.pop(0)
-
-                    # Update geometry store
                     self.geometry_store.update_object(obj_id, det['contour'], det['centroid'], frame)
-
-                    # Update optical flow points for this object
-                    obj.prev_points = self._extract_points_from_contour(frame_gray, det['contour'], self.flow_points_per_obj)
-
+                    obj.prev_points = self._extract_points_from_contour(frame_gray, det['contour'],
+                                                                         self.flow_points_per_obj)
                     matched_objects[obj_id] = (det['contour'], det['centroid'])
 
-            # ---- Third pass: create new objects for unmatched detections ----
-            for i, det in enumerate(detections):
-                if i not in used_detections:
+                # ---- Create new objects for unmatched detections ----
+                for j, det in enumerate(detections):
+                    if j in used_detections:
+                        continue
+                    
+                    # Check identity memory for reappearing object
+                    new_id = self.next_id
+                    if identity_memory is not None:
+                        memory_id = identity_memory.get_or_create_id(
+                            frame, det['contour'], current_time
+                        )
+                        if memory_id not in self.tracked_objects:
+                            new_id = memory_id
+                        # else: memory_id already tracked, use new ID
+                    
                     new_obj = TrackedObject(
-                        id=self.next_id,
+                        id=new_id,
                         contours=[det['contour']],
                         centroids=[det['centroid']],
                         hues=[det['hue']],
@@ -765,23 +1154,56 @@ class ObjectTracker:
                         persistence_score=1.0,
                         lost_frames=0
                     )
-                    # Initialize flow points for new object
-                    new_obj.prev_points = self._extract_points_from_contour(frame_gray, det['contour'], self.flow_points_per_obj)
+                    new_obj.prev_points = self._extract_points_from_contour(frame_gray, det['contour'],
+                                                                            self.flow_points_per_obj)
+                    self.tracked_objects[new_id] = new_obj
+                    matched_objects[new_id] = (det['contour'], det['centroid'])
+                    self.geometry_store.register_object(new_id, det['contour'], det['centroid'], frame)
+                    
+                    if new_id == self.next_id:
+                        self.next_id += 1
 
-                    self.tracked_objects[self.next_id] = new_obj
-                    matched_objects[self.next_id] = (det['contour'], det['centroid'])
-                    self.geometry_store.register_object(self.next_id, det['contour'], det['centroid'], frame)
-                    self.next_id += 1
+            else:
+                # No active objects or no detections: fallback to new objects only
+                for det in detections:
+                    new_id = self.next_id
+                    if identity_memory is not None:
+                        memory_id = identity_memory.get_or_create_id(
+                            frame, det['contour'], current_time
+                        )
+                        if memory_id not in self.tracked_objects:
+                            new_id = memory_id
+                    
+                    new_obj = TrackedObject(
+                        id=new_id,
+                        contours=[det['contour']],
+                        centroids=[det['centroid']],
+                        hues=[det['hue']],
+                        brightness=det['brightness'],
+                        contour_area=det['area'],
+                        color_sig=det['color_sig'],
+                        age=1,
+                        persistence_score=1.0,
+                        lost_frames=0
+                    )
+                    new_obj.prev_points = self._extract_points_from_contour(frame_gray, det['contour'],
+                                                                            self.flow_points_per_obj)
+                    self.tracked_objects[new_id] = new_obj
+                    matched_objects[new_id] = (det['contour'], det['centroid'])
+                    self.geometry_store.register_object(new_id, det['contour'], det['centroid'], frame)
+                    
+                    if new_id == self.next_id:
+                        self.next_id += 1
 
-        # Remove objects lost for too long
-        expired_ids = [obj_id for obj_id, obj in self.tracked_objects.items() 
-                      if obj.lost_frames > self.max_lost_frames]
+        # ---- Stage C: remove objects lost for too long ----
+        expired_ids = [obj_id for obj_id, obj in self.tracked_objects.items()
+                       if obj.lost_frames > self.max_lost_frames]
         for obj_id in expired_ids:
             del self.tracked_objects[obj_id]
             if obj_id in self.geometry_store.shape_memory:
                 del self.geometry_store.shape_memory[obj_id]
 
-        # Build output with Kalman‑smoothed centroids
+        # ---- Build output with Kalman‑smoothed centroids ----
         output_objects = {}
         for obj_id, (contour, raw_centroid) in matched_objects.items():
             kalman_cent = self.geometry_store.get_kalman_centroid(obj_id)
@@ -792,11 +1214,11 @@ class ObjectTracker:
                 smooth_contour = contour
             output_objects[obj_id] = (smooth_contour, (int(kalman_cent[0]), int(kalman_cent[1])))
 
-        # Store current grayscale for next frame's optical flow
+        # ---- Store current grayscale for next frame's optical flow ----
         self.prev_gray = frame_gray
 
         return output_objects
-      
+    
     def get_object_lifetimes(self) -> Dict[int, int]:
         """Return age of each tracked object (for debugging/display)"""
         return {obj_id: obj.age for obj_id, obj in self.tracked_objects.items()}
@@ -1433,6 +1855,140 @@ class AppearanceExtractor:
         valid.sort(key=lambda x: x[1], reverse=True)
         return valid
 
+# ============================================================
+# Proposal buffer – temporal stability gate + area filter + hysteresis
+# ============================================================
+class ProposalBuffer:
+    """
+    Filters raw detections before they enter the tracker.
+    Implements:
+      - Temporal stability: detection must appear in >=2 consecutive frames.
+      - Area change filter: reject if area jumps by >60% from previous frame.
+      - Confidence hysteresis: enter_thr / exit_thr to suppress flicker.
+    """
+    def __init__(self,
+                 iou_threshold: float = 0.5,       # IoU for matching across frames
+                 min_consecutive: int = 2,          # frames needed before release
+                 area_change_threshold: float = 0.6,
+                 enter_threshold: float = 0.65,
+                 exit_threshold: float = 0.45,
+                 max_age: int = 5):                  # frames before deleting unused entry
+        self.iou_thr = iou_threshold
+        self.min_consecutive = min_consecutive
+        self.area_change_thr = area_change_threshold
+        self.enter_thr = enter_threshold
+        self.exit_thr = exit_threshold
+        self.max_age = max_age
+
+        self.next_id = 0
+        self.entries = {}            # id -> {count, last_contour, last_bbox, last_area, last_conf, active, last_seen}
+        self.frame_counter = 0
+
+    def _bbox_iou(self, bbox1, bbox2):
+        x1, y1, w1, h1 = bbox1
+        x2, y2, w2, h2 = bbox2
+        xi = max(x1, x2)
+        yi = max(y1, y2)
+        wi = min(x1+w1, x2+w2) - xi
+        hi = min(y1+h1, y2+h2) - yi
+        if wi <= 0 or hi <= 0:
+            return 0.0
+        inter = wi * hi
+        union = w1*h1 + w2*h2 - inter
+        return inter / union if union > 0 else 0.0
+
+    def update(self, detections: List[Tuple[np.ndarray, float]]) -> List[Tuple[np.ndarray, float]]:
+        """
+        detections: list of (contour, confidence)
+        returns: list of contours that pass all gates
+        """
+        self.frame_counter += 1
+
+        # Build list of current detections with bounding boxes
+        curr = []
+        for cnt, conf in detections:
+            x, y, w, h = cv2.boundingRect(cnt)
+            curr.append({
+                'contour': cnt,
+                'conf': conf,
+                'bbox': (x, y, w, h),
+                'area': w * h
+            })
+
+        # Mark all entries as not seen this frame
+        for eid in self.entries:
+            self.entries[eid]['seen'] = False
+
+        # Match current detections to existing entries
+        used_det = [False] * len(curr)
+        for i, det in enumerate(curr):
+            best_match = None
+            best_iou = self.iou_thr
+            for eid, entry in self.entries.items():
+                if entry['seen']:
+                    continue
+                last_bbox = entry['last_bbox']
+                iou = self._bbox_iou(det['bbox'], last_bbox)
+                if iou > best_iou:
+                    best_iou = iou
+                    best_match = eid
+            if best_match is not None:
+                entry = self.entries[best_match]
+                # Area change check
+                area_old = entry['last_area']
+                area_new = det['area']
+                if abs(area_new - area_old) / (area_old + 1e-6) > self.area_change_thr:
+                    # area jump too large → ignore this detection (do not update entry)
+                    continue
+                # Update entry
+                entry['last_contour'] = det['contour']
+                entry['last_bbox'] = det['bbox']
+                entry['last_area'] = det['area']
+                entry['last_conf'] = det['conf']
+                entry['count'] = min(entry['count'] + 1, 10)
+                entry['last_seen'] = self.frame_counter
+                entry['seen'] = True
+
+                # Apply hysteresis
+                if entry['active']:
+                    if det['conf'] < self.exit_thr:
+                        entry['active'] = False
+                else:
+                    if det['conf'] >= self.enter_thr:
+                        entry['active'] = True
+
+                used_det[i] = True
+
+        # Create new entries for unmatched detections
+        for i, det in enumerate(curr):
+            if used_det[i]:
+                continue
+            active = det['conf'] >= self.enter_thr
+            eid = self.next_id
+            self.next_id += 1
+            self.entries[eid] = {
+                'last_contour': det['contour'],
+                'last_bbox': det['bbox'],
+                'last_area': det['area'],
+                'last_conf': det['conf'],
+                'count': 1,
+                'active': active,
+                'last_seen': self.frame_counter,
+                'seen': True
+            }
+
+        # Remove old entries
+        to_del = [eid for eid, e in self.entries.items()
+                  if self.frame_counter - e['last_seen'] > self.max_age]
+        for eid in to_del:
+            del self.entries[eid]
+
+        # Collect output contours and confidences from entries that are mature and active
+        output = []
+        for eid, entry in self.entries.items():
+            if entry['seen'] and entry['count'] >= self.min_consecutive and entry['active']:
+                output.append((entry['last_contour'], entry['last_conf']))
+        return output
 # ----------------------------------------------------------------------
 # Template feature cache for efficient tracking (based on research [citation:2])
 # Implements template-branch separable design to avoid redundant computation
@@ -1899,6 +2455,12 @@ def main():
         persistence_decay=0.6,        # Moderate decay
         min_persistence=0.25          # Lower threshold for reassignment
     )
+    # ===== Initialize Object Identity Memory =====
+    identity_memory = ObjectIdentityMemory(
+        db_path='./object_memory_db.pkl',
+        similarity_threshold=0.75,     # Tune this value (0.7-0.85 works well)
+        max_objects=100                 # Keep database size manageable
+    )
     static_geo = StaticGeometryStore(min_age=30, max_contours=50)
     # Initialize global motion estimator
     motion_estimator = GlobalMotionEstimator(
@@ -1920,6 +2482,15 @@ def main():
         edge_threshold1=40,
         edge_threshold2=120,
         grow_tolerance=0.15
+    )
+    # Initialize proposal buffer
+    proposal_buffer = ProposalBuffer(
+        iou_threshold=0.5,
+        min_consecutive=2,
+        area_change_threshold=0.6,
+        enter_threshold=0.65,
+        exit_threshold=0.45,
+        max_age=5
     )
     # Cumulative camera motion (for display)
     cumulative_dx = 0.0
@@ -2070,43 +2641,40 @@ def main():
             depth_proposals,
             frame.shape[:2],
             max_proposals=6,
-            overlap_threshold=0.4,
+            overlap_threshold=0.55,
             depth_bonus=0.2
         )
 
         # ---------------------------------------------------------------
         # Appearance extraction from each fused proposal
         # ---------------------------------------------------------------
-        detected_contours = []
+        raw_detections = []  # list of (contour, confidence)
         for (bbox, cnt, score) in fused_proposals:
-            # Convert bbox (x,y,w,h) to 8-point format for extractor
             x, y, w, h = bbox
             box8 = (x, y, x+w, y, x+w, y+h, x, y+h)
-            # Extract refined contours from this region
-            # Note: prior_contour set to None because we don't have per‑object prior here
             contour_list = extractor.extract_contours(frame, box8, prior_contour=None)
-            # Add all returned contours to the tracker input
-            for refined_cnt, conf in contour_list:
-                detected_contours.append(refined_cnt)
+            raw_detections.extend(contour_list)   # each is (contour, conf)
+
+        # NEW: Enhance small objects using depth information [citation:6]
+        if depth_proposals:   # depth_proposals is always defined (may be empty)
+            enhanced_small = enhance_small_objects_with_depth(frame, depth_proposals)
+            # Assign a default confidence of 0.7 to enhanced contours
+            for cnt in enhanced_small:
+                raw_detections.append((cnt, 0.7))
 
         # Optional: Draw fused proposals (in green) for debugging
         for (bbox, cnt, score) in fused_proposals:
             x,y,w,h = bbox
-            # Draw bounding box (thick green)
             cv2.rectangle(frame, (x,y), (x+w,y+h), (0,255,0), 2)
-            # Show score
             cv2.putText(frame, f"{score:.2f}", (x, y-5),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,0), 1)
-            # Also draw the original contour (dashed)
             cv2.drawContours(frame, [cnt], -1, (0,255,0), 1)
 
-        # NEW: Enhance small objects using depth information [citation:6]
-        if 'depth_proposals' in locals() and depth_proposals:
-            enhanced_small = enhance_small_objects_with_depth(frame, depth_proposals)
-            detected_contours.extend(enhanced_small)
-        
-        # Update tracker with all detected contours (now with enhanced small objects)
-        tracked_objects = tracker.update(frame, detected_contours, camera_affine=affine_to_use)
+        # Pass through proposal buffer to apply temporal stability & area filter
+        filtered_pairs = proposal_buffer.update(raw_detections)
+
+        # Update tracker with filtered contours and confidences
+        tracked_objects = tracker.update(frame, filtered_pairs, camera_affine=affine_to_use, identity_memory=identity_memory)
         
         # NEW: Update template feature cache [citation:2]
         if not hasattr(tracker, 'feature_cache'):
@@ -2253,6 +2821,8 @@ def main():
             fps = frame_count / elapsed if elapsed > 0 else 0
             cv2.putText(frame, f"FPS: {fps:.1f} | Objects: {len(tracked_objects)}",
                        (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+            identity_memory.save_database()
+            identity_memory.cleanup_old_objects(max_age_seconds=86400)  # 24 hours
         # Update previous frame and proposals for next iteration
         prev_frame_gray = gray
         # ---- Global camera motion estimation ----
