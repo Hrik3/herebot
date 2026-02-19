@@ -1,244 +1,152 @@
-Good — now you are reaching the **real tracking problem** (not detection):
-**ID persistence + noise collapse**.
-Your system is already 70% there; instability is coming from a few structural gaps.
+Good — **focus shifting** is exactly the right next step.
+Right now your system already computes attention-like signals (persistence, motion, area), but selection is still mostly **winner-takes-all per frame**. What you want next is **temporal attention control**, not just instantaneous scoring.
 
-Below is a **precise change plan (no code)** used in professional trackers (SORT / DeepSORT / SLAM trackers).
-
----
-
-# Change Plan — Stabilize IDs + Remove Noise
-
-## Phase 1 — Detection noise reduction (MOST IMPORTANT FIRST)
-
-Right now **too many raw contours enter tracker**, causing:
-
-• ID switching
-• ghost boxes
-• tracker overload
-
-### Changes
-
-1. **Add proposal temporal stability gate**
-
-   * A detection must appear **2–3 consecutive frames** before entering tracker.
-   * Maintain `proposal_buffer[id_hash] → count`.
-   * Only pass to tracker if `count >= 2`.
-
-2. **Area change filter**
-   Reject detection if:
-
-```
-abs(area_now - area_prev) / area_prev > 0.6
-```
-
-This removes flicker edges.
-
-3. **Confidence hysteresis**
-   Instead of:
-
-```
-if score > threshold
-```
-
-use:
-
-```
-enter_threshold = 0.65
-exit_threshold = 0.45
-```
-
-This prevents rapid appear/disappear switching.
-
-4. **Stronger NMS**
-   Current IoU merge ~0.4 → increase to **0.55–0.6**.
+Here is a **practical implementation change-list** (not over-engineered, plug-in ready).
 
 ---
 
-## Phase 2 — ID stability core (critical)
+# Focus Shifting Module — Implementation Plan
 
-Current matching is mostly centroid distance → insufficient.
+## Segment 1 — Introduce attention state (global controller)
 
-Add **3-stage matching pipeline**:
+Add a small controller structure:
 
-### Stage A — motion prediction gate
+**New state variables**
 
-Before matching, **predict centroid using Kalman or optical flow**:
+* `current_focus_id`
+* `focus_hold_frames`  — how long the current focus has been held
+* `focus_min_hold` — minimum frames before switching allowed (e.g., 8–15)
+* `focus_switch_margin` — score improvement required to switch (e.g., 1.25×)
+* `last_switch_time` (optional)
 
-```
-predicted_pos = obj.last_pos + obj.velocity
-```
-
-Only consider detections within **prediction radius**.
-
-This alone reduces ID switching massively.
+Purpose: prevents jitter and rapid focus hopping.
 
 ---
 
-### Stage B — Hungarian assignment instead of greedy matching
+## Segment 2 — Compute stable attention score per object
 
-Currently objects match sequentially → unstable.
+You already compute:
 
-Use:
+* persistence_score
+* contour_area
+* flow_confidence
 
-```
-cost = 0.6 * distance
-     + 0.25 * appearance_distance
-     + 0.15 * flow_difference
-```
+Convert to **smoothed attention score**:
 
-Solve assignment globally → prevents swaps.
+Change list:
 
----
+* Maintain `obj.attention_score_ema`
+* Update per frame:
 
-### Stage C — ID hold time
+  ```
+  attention_raw = persistence + area_weight + motion_weight
+  obj.attention_score_ema =
+      0.6 * obj.attention_score_ema +
+      0.4 * attention_raw
+  ```
 
-When object disappears:
-
-```
-keep track alive for 30–60 frames
-```
-
-Currently you delete too early (8 frames).
-This is the biggest reason IDs change when camera moves.
-
-Recommended:
-
-```
-max_lost_frames = 45
-```
+This makes attention **temporal**, not frame-noisy.
 
 ---
 
-## Phase 3 — Re-identification memory (disk-stored memory like you asked)
+## Segment 3 — Focus hold rule (very important)
 
-Yes — this is exactly how **professional surveillance trackers** work.
+When deciding focus:
 
-### Add Object Identity Memory DB
+1. If `current_focus_id` still exists:
 
-For each confirmed object store:
+   * Do NOT switch unless:
 
-```
-ID
-appearance embedding (histogram + texture vector)
-mean size
-color histogram
-motion statistics
-last_seen_timestamp
-```
+     ```
+     best_other_score >
+     current_focus_score * focus_switch_margin
+     AND
+     focus_hold_frames >= focus_min_hold
+     ```
+2. Otherwise keep current focus.
 
-Store to:
-
-```
-/object_memory_db.pkl
-```
-
-### When new object appears:
-
-1. compute appearance embedding
-2. compare to DB using cosine / Bhattacharyya
-3. if similarity > threshold → **reuse old ID**
-
-This allows:
-
-> camera loses object → comes back later → SAME ID restored
-
-This is called **Re-ID persistence layer**.
+This creates **human-like stable gaze behavior**.
 
 ---
 
-## Phase 4 — Camera-motion-aware identity anchoring
+## Segment 4 — Curiosity / novelty trigger (optional but powerful)
 
-Currently tracker matches in frame space.
-Instead:
+Allow focus switching earlier if:
 
-1. convert centroids to **world stabilized coordinates**
-2. perform matching in world space
-3. convert back to frame
+* new object appears with:
 
-This alone reduces **camera pan ID switching ~70%**.
+  * high motion
+  * sudden area increase
+  * very high confidence
 
-You already have `world_transform` — just move matching to world coordinates.
-
----
-
-## Phase 5 — Track maturity system (huge improvement)
-
-Add track states:
+Example rule:
 
 ```
-TENTATIVE (first 3 frames)
-CONFIRMED (after 5 stable matches)
-ARCHIVED (lost but remembered)
+if new_object and motion_weight > 0.8:
+    allow immediate switch
 ```
 
-Only CONFIRMED tracks can get permanent IDs.
-
-This eliminates short-lived noise tracks.
+This creates **event-driven attention** (important later for AGI learning signals).
 
 ---
 
-## Phase 6 — Aggressive noise suppression knobs (tuning)
+## Segment 5 — Focus decay (prevents dead focus)
 
-Immediately change these:
-
-| Parameter                   | Current | Recommended |
-| --------------------------- | ------- | ----------- |
-| max_lost_frames             | 8       | 45          |
-| distance_threshold          | 40      | 25          |
-| min_persistence             | 0.25    | 0.4         |
-| proposal NMS                | 0.4     | 0.6         |
-| detection age before static | 8       | 20          |
-
----
-
-## Phase 7 — Long-term persistent identity memory (AGI-level)
-
-Later upgrade:
-
-Store object identity using:
+If focused object becomes weak:
 
 ```
-appearance embedding
-3D size estimate (from depth)
-temporal frequency of appearance
-location heatmap
+if current_focus.persistence < 0.3:
+    release focus
 ```
 
-Then system can recognize:
-
-> "this object seen 2 hours ago is the same object"
-
-This becomes **semantic scene memory**, not just tracking.
+Then reselect.
 
 ---
 
-# Why IDs are switching aggressively right now
+## Segment 6 — Output signal (important for AGI integration)
 
-Main causes in your current pipeline:
+Expose:
 
-1. Tracks deleted too early
-2. Matching not global (greedy)
-3. No appearance re-identification memory
-4. Matching done in camera frame not world frame
-5. Too many noisy detections entering tracker
+```
+focus_id
+focus_confidence
+focus_duration
+focus_switch_event (bool)
+```
 
-Fixing these will make IDs **almost rock-solid even under camera shake**.
+Your future cognitive engine will use this directly as:
 
----
-
-# Very important insight (core architecture truth)
-
-Detection accuracy is only ~40% of tracking quality.
-
-**Track lifecycle + memory + motion prediction = 60% of stability**
-
-This is exactly where your system is now evolving from "detector" → "persistent scene cognition".
+* curiosity signal
+* learning priority
+* memory importance weighting
 
 ---
 
-# If you want (recommended next step)
+# Minimal Result of These Changes
 
-I can next give you the **professional-grade upgrade blueprint**:
+After adding only these segments:
 
-**DeepSORT-class identity persistence architecture adapted to your low-compute AGI vision stack**
-(which will make IDs survive even after **minutes of disappearance**).
+Your perception system will move from:
+
+**Object Tracking System**
+→ to
+**Attention-driven Perception System**
+
+That is a major architectural transition.
+
+---
+
+# Very important insight (you are approaching this stage)
+
+Once focus shifting exists, the next natural layer becomes:
+
+**drive-controlled attention allocation**
+(curiosity, uncertainty, goal relevance)
+
+which connects directly to the **AA-matrix learning signals** you described earlier.
+
+At that point your perception stack is no longer just CV — it becomes a **cognitive perception substrate**, which is exactly what early AGI prototypes require.
+
+---
+
+If you want, next I can show you the **3-layer attention hierarchy** (reflex focus → stable focus → goal-directed focus) that makes the system feel “alive” without heavy compute.
