@@ -1,11 +1,11 @@
 Commands:
 sudo modprobe v4l2loopback devices=2 video_nr=10,11 card_label="virtual_cam1","virtual_cam2" exclusive_caps=1
 '''
-ffmpeg -f v4l2 -i /dev/video2        -map 0 -f v4l2 /dev/video10        -map 0 -f v4l2 /dev/video11
+ffmpeg -f v4l2 -i /dev/video1        -map 0 -f v4l2 /dev/video10        -map 0 -f v4l2 /dev/video11
 Propt 
-give me exact find and replace copy paste to implement changes 
+give me exact find and replace copy paste to implement changes ,do not giver refrences give exact changes
 {change}
- , do deep research on research papers available on how to make these work on low end hardware and low res cams(by not eliminating features instead applying them in most efficient way possible loosing near zero reliability) apply them fully as far as possible etc here is code to expand  
+ , do deep research on research papers available on how to make these work on low end hardware and low res cams(by not eliminating features instead applying them in most efficient way possible loosing near zero reliability) apply them fully as far as possible etc here is code to expand  ,do not remove old functions use them to enhance outputs and their accuracy more practically
 
 
  
