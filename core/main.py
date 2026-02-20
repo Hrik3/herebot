@@ -1533,7 +1533,6 @@ class BehavioralRuleLearner:
         if rule_id in self.rules:
             self.rules[rule_id].confidence = 1.0
             self.save()
-
 # ------------------------------------------------------------
 # Word-State Associator – maps words to semantic state labels
 # ------------------------------------------------------------
@@ -1603,6 +1602,230 @@ class WordStateAssociator:
                 data = json.load(f)
             self.word_to_labels = defaultdict(dict, {w: defaultdict(float, labs) for w, labs in data['word_to_labels'].items()})
             self.label_to_words = defaultdict(set, {lab: set(words) for lab, words in data['label_to_words'].items()})
+# ------------------------------------------------------------
+# Knowledge Graph – maps relationships between words, phrases, states
+# ------------------------------------------------------------
+class KnowledgeGraph:
+    """
+    Stores a heterogeneous graph of knowledge:
+    - Nodes: words, phrases, states (each node has a type and a unique identifier)
+    - Edges: relationships with confidence and metadata.
+    Supports incremental updates, transitive inference, and merging.
+    """
+    def __init__(self):
+        self.nodes = {}          # node_id -> {'type': str, 'label': str, 'embedding': np.ndarray (optional), 'metadata': dict}
+        self.edges = defaultdict(lambda: defaultdict(dict))  # node1 -> node2 -> {rel_type: confidence, ...} (supports multiple relation types between same nodes)
+        self.edge_list = []       # list of (node1, node2, rel_type, confidence, timestamp) for fast iteration
+        self.node_counter = 0
+        self._load()
+
+    def _next_node_id(self):
+        self.node_counter += 1
+        return f"n{self.node_counter}"
+
+    def add_node(self, label: str, node_type: str = "word", embedding: np.ndarray = None, metadata: dict = None) -> str:
+        """Add a node, return its ID. If node with same label and type exists, return existing ID."""
+        # Check if already exists
+        for nid, ndata in self.nodes.items():
+            if ndata['label'] == label and ndata['type'] == node_type:
+                return nid
+        nid = self._next_node_id()
+        self.nodes[nid] = {
+            'type': node_type,
+            'label': label,
+            'embedding': embedding.copy() if embedding is not None else None,
+            'metadata': metadata or {}
+        }
+        return nid
+
+    def get_node_id(self, label: str, node_type: str = "word") -> Optional[str]:
+        for nid, ndata in self.nodes.items():
+            if ndata['label'] == label and ndata['type'] == node_type:
+                return nid
+        return None
+
+    def add_edge(self, node1: str, node2: str, rel_type: str, confidence: float = 1.0, metadata: dict = None):
+        """Add or update an edge between two nodes."""
+        if node1 not in self.nodes or node2 not in self.nodes:
+            return
+        # Update the adjacency dict
+        self.edges[node1][node2][rel_type] = confidence
+        # Also store in reverse direction for undirected? We'll treat as directed unless specified.
+        # For many relations, we want symmetric (synonym, similar) but we'll store both ways if needed.
+        # We'll store a separate list for easy iteration
+        self.edge_list.append((node1, node2, rel_type, confidence, time.time()))
+        # Optional: add reverse edge for symmetric relations
+        if rel_type in ['synonym', 'similar', 'co_occur']:
+            self.edges[node2][node1][rel_type] = confidence
+
+    def get_neighbors(self, node_id: str, rel_type: Optional[str] = None) -> List[Tuple[str, str, float]]:
+        """Return list of (neighbor_id, rel_type, confidence) for given node."""
+        if node_id not in self.edges:
+            return []
+        neighbors = []
+        for n2, rels in self.edges[node_id].items():
+            for rt, conf in rels.items():
+                if rel_type is None or rt == rel_type:
+                    neighbors.append((n2, rt, conf))
+        return neighbors
+
+    def get_all_edges(self) -> List[Tuple[str, str, str, float]]:
+        """Return list of (node1, node2, rel_type, confidence)."""
+        edges = []
+        for n1, n2dict in self.edges.items():
+            for n2, rels in n2dict.items():
+                for rt, conf in rels.items():
+                    edges.append((n1, n2, rt, conf))
+        return edges
+
+    def infer_transitive_relations(self, rel_type: str, threshold: float = 0.5) -> List[Tuple[str, str, str, float]]:
+        """
+        For transitive relations (e.g., is_a, means), infer new edges via path.
+        Returns list of inferred edges.
+        """
+        if rel_type not in ['is_a', 'means']:
+            return []
+        # Build adjacency list for this relation
+        adj = defaultdict(list)
+        for n1, n2, rt, conf in self.get_all_edges():
+            if rt == rel_type and conf >= threshold:
+                adj[n1].append((n2, conf))
+        # Run Floyd-Warshall? Too heavy. Use BFS from each node to find paths of length 2+.
+        inferred = []
+        for start in adj:
+            # BFS up to depth 3
+            visited = set()
+            queue = [(start, 1.0, 0)]  # (node, cumulative_confidence, depth)
+            while queue:
+                cur, cum_conf, depth = queue.pop(0)
+                if depth > 0 and cur != start and depth <= 3:
+                    # If there's not already a direct edge with confidence >= cum_conf, add inference
+                    existing = self.edges[start].get(cur, {}).get(rel_type, 0)
+                    if existing < cum_conf:
+                        inferred.append((start, cur, rel_type, cum_conf))
+                if depth < 3:
+                    for nxt, conf in adj.get(cur, []):
+                        if nxt not in visited:
+                            visited.add(nxt)
+                            queue.append((nxt, cum_conf * conf, depth+1))
+        return inferred
+
+    def merge_nodes(self, node_id1: str, node_id2: str, keep_id: Optional[str] = None):
+        """Merge node2 into node1 (or keep specified). Transfer all edges, delete node2."""
+        if keep_id is None:
+            keep_id = node_id1
+            remove_id = node_id2 if node_id2 != keep_id else node_id1
+        else:
+            if keep_id == node_id1:
+                remove_id = node_id2
+            else:
+                remove_id = node_id1
+        if remove_id not in self.nodes:
+            return
+        # Transfer edges from remove_id to keep_id
+        # Incoming edges to remove_id: we need to update edges where target is remove_id
+        # We'll collect all edges where remove_id is either end.
+        edges_to_add = []
+        # Outgoing
+        for n2, rels in self.edges.get(remove_id, {}).items():
+            for rt, conf in rels.items():
+                edges_to_add.append((keep_id, n2, rt, conf))
+        # Incoming
+        for n1, n2dict in self.edges.items():
+            if n1 != remove_id:
+                if remove_id in n2dict:
+                    for rt, conf in n2dict[remove_id].items():
+                        edges_to_add.append((n1, keep_id, rt, conf))
+        # Add transferred edges
+        for n1, n2, rt, conf in edges_to_add:
+            self.add_edge(n1, n2, rt, conf)
+        # Remove old edges involving remove_id
+        # Remove from edges dict
+        if remove_id in self.edges:
+            del self.edges[remove_id]
+        for n1 in list(self.edges.keys()):
+            if remove_id in self.edges[n1]:
+                del self.edges[n1][remove_id]
+        # Remove from node list
+        del self.nodes[remove_id]
+        # Optionally, update embeddings (e.g., average) for keep_id
+
+    def prune_weak_edges(self, threshold: float = 0.1):
+        """Remove edges with confidence below threshold."""
+        to_remove = []
+        for n1, n2dict in self.edges.items():
+            for n2, rels in n2dict.items():
+                for rt, conf in list(rels.items()):
+                    if conf < threshold:
+                        to_remove.append((n1, n2, rt))
+        for n1, n2, rt in to_remove:
+            del self.edges[n1][n2][rt]
+            if not self.edges[n1][n2]:
+                del self.edges[n1][n2]
+        # Also clean edge_list? We'll regenerate on save.
+
+    def get_central_nodes(self, top_k: int = 10) -> List[Tuple[str, int]]:
+        """Return node IDs with highest degree (number of edges)."""
+        degree = defaultdict(int)
+        for n1, n2dict in self.edges.items():
+            for n2, rels in n2dict.items():
+                degree[n1] += len(rels)
+                degree[n2] += len(rels)
+        sorted_nodes = sorted(degree.items(), key=lambda x: -x[1])
+        return sorted_nodes[:top_k]
+
+    def save(self, path: str):
+        """Serialize graph to file."""
+        # Convert embeddings to lists for JSON
+        nodes_serial = {}
+        for nid, ndata in self.nodes.items():
+            nd = ndata.copy()
+            if nd['embedding'] is not None:
+                nd['embedding'] = nd['embedding'].tolist()
+            nodes_serial[nid] = nd
+        edges_serial = []
+        for n1, n2dict in self.edges.items():
+            for n2, rels in n2dict.items():
+                for rt, conf in rels.items():
+                    edges_serial.append((n1, n2, rt, conf))
+        data = {
+            'nodes': nodes_serial,
+            'edges': edges_serial,
+            'node_counter': self.node_counter
+        }
+        tmp = path + ".tmp"
+        with open(tmp, 'w') as f:
+            json.dump(data, f, indent=2)
+        os.replace(tmp, path)
+
+    def load(self, path: str):
+        if not os.path.exists(path):
+            return
+        with open(path, 'r') as f:
+            data = json.load(f)
+        nodes_serial = data['nodes']
+        edges_serial = data['edges']
+        self.node_counter = data.get('node_counter', 0)
+        self.nodes = {}
+        for nid, ndata in nodes_serial.items():
+            nd = ndata.copy()
+            if nd['embedding'] is not None:
+                nd['embedding'] = np.array(nd['embedding'])
+            self.nodes[nid] = nd
+        self.edges = defaultdict(lambda: defaultdict(dict))
+        for n1, n2, rt, conf in edges_serial:
+            self.edges[n1][n2][rt] = conf
+        # Rebuild edge_list? Not needed, can be regenerated.
+        self.edge_list = edges_serial  # for compatibility
+
+    def _load(self):
+        path = os.path.join(STATE_DIR, 'knowledge_graph.json')
+        if os.path.exists(path):
+            self.load(path)
+
+    def _save(self):
+        path = os.path.join(STATE_DIR, 'knowledge_graph.json')
+        self.save(path)
 
 @dataclass
 class ConscienceBelief:
@@ -1981,33 +2204,81 @@ class LogicInheritanceManager:
         return None
 # ------------------------------------------------------------
 # CodeGenerator – writes Python code from confirmed logic rules
+# Enhanced with resource monitoring, error handling, and dynamic code generation
 # ------------------------------------------------------------
 class CodeGenerator:
     """
     Converts high‑level logic rules into executable Python code.
     Uses safe templates; every generated file contains a `run()` function.
+    Enhanced to be resource‑aware and scalable, with built‑in performance tracking.
     """
+
+    # Common imports added to every generated file
+    BASE_IMPORTS = '''import time
+import logging
+import psutil  # for resource monitoring (optional, gracefully degrades)
+from functools import wraps
+'''
 
     # Template for behavioral rules (identity aliases, pronoun mappings)
     BEHAVIORAL_TEMPLATE = '''# AUTO‑GENERATED CODE
 # Logic ID: {logic_id}
 # Rule type: {rule_type}
 # Created: {timestamp}
+# Version: 1.0
 
+{BASE_IMPORTS}
+
+# Setup module‑level logger
+logger = logging.getLogger(__name__)
+
+def resource_monitor(func):
+    """Decorator to track execution time and memory usage."""
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        start_time = time.perf_counter()
+        try:
+            result = func(*args, **kwargs)
+        finally:
+            elapsed = time.perf_counter() - start_time
+            # Log if execution takes too long (>0.5s)
+            if elapsed > 0.5:
+                logger.warning(f"{{func.__name__}} took {{elapsed:.3f}}s")
+            # Optionally check memory
+            try:
+                mem = psutil.Process().memory_percent()
+                if mem > 10.0:  # >10% of system memory
+                    logger.warning(f"{{func.__name__}} using {{mem:.1f}}% memory")
+            except:
+                pass
+        return result
+    return wrapper
+
+@resource_monitor
 def run(context: dict) -> str:
     """
-    context: {'user_input': str, 'tokens': list, 'state': str, ...}
+    context: {{'user_input': str, 'tokens': list, 'state': dict, ...}}
     Returns a response or None.
     """
     user_input = context.get("user_input", "").lower()
     tokens = context.get("tokens", [])
+    state = context.get("state", {{}})
     
+    # Resource check: if system under heavy load, return early
+    try:
+        if psutil.cpu_percent(interval=None) > 80:
+            logger.info("CPU load high, skipping expensive processing")
+            return None
+    except:
+        pass
+
     # Condition: {condition}
-    if {condition_code}:
-        # Action: {action}
-{action_code}
-        return response
-    return None
+    {condition_code}
+
+    # Action: {action}
+    {action_code}
+
+    return response if 'response' in locals() else None
 '''
 
     # Template for synonym / category hypotheses
@@ -2015,12 +2286,18 @@ def run(context: dict) -> str:
 # Logic ID: {logic_id}
 # Semantic relation: {relation}
 # Created: {timestamp}
+# Version: 1.0
 
+{BASE_IMPORTS}
+
+logger = logging.getLogger(__name__)
+
+@resource_monitor
 def run(word: str, semantic_learner) -> float:
     """
     Returns similarity confidence (0‑1) between word and known concept.
     """
-{body}
+    {body}
     return 0.0
 '''
 
@@ -2029,12 +2306,19 @@ def run(word: str, semantic_learner) -> float:
 # Logic ID: {logic_id}
 # State label: {label}
 # Created: {timestamp}
+# Version: 1.0
 
+{BASE_IMPORTS}
+import numpy as np
+
+logger = logging.getLogger(__name__)
+
+@resource_monitor
 def run(factor_vector: list) -> bool:
     """
     Returns True if the current factor vector matches this state.
     """
-{body}
+    {body}
     return False
 '''
 
@@ -2042,50 +2326,46 @@ def run(factor_vector: list) -> bool:
     def generate(cls, logic_rule: dict) -> str:
         """
         Dispatch to the appropriate template based on rule type.
+        Enhanced with dynamic condition/action parsing.
         """
         rule_type = logic_rule.get("rule_type", logic_rule.get("type", "unknown"))
         logic_id = logic_rule.get("logic_id", f"gen_{int(time.time())}")
         timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
 
+        # Common imports will be inserted by the template formatter
+        base_imports = cls.BASE_IMPORTS
+
         if rule_type in ("identity_alias", "pronoun_mapping", "behavioral"):
-            return cls._generate_behavioral(logic_rule, logic_id, timestamp)
+            return cls._generate_behavioral(logic_rule, logic_id, timestamp, base_imports)
         elif rule_type in ("synonym", "category", "analogy"):
-            return cls._generate_semantic(logic_rule, logic_id, timestamp)
+            return cls._generate_semantic(logic_rule, logic_id, timestamp, base_imports)
         elif rule_type == "state_definition":
-            return cls._generate_state(logic_rule, logic_id, timestamp)
+            return cls._generate_state(logic_rule, logic_id, timestamp, base_imports)
         else:
-            # Fallback: generic template
-            return f"# No template for rule type {rule_type}\\n"
+            # Fallback: generic template with minimal functionality
+            return f"""# No template for rule type {rule_type}
+{base_imports}
+
+def run(context: dict) -> str:
+    return None
+"""
 
     @classmethod
-    def _generate_behavioral(cls, rule: dict, logic_id: str, timestamp: str) -> str:
+    def _generate_behavioral(cls, rule: dict, logic_id: str, timestamp: str, base_imports: str) -> str:
         condition = rule.get("condition", {})
         action = rule.get("action", {})
 
-        # Convert condition dict to Python expression
-        cond_parts = []
-        if "alias" in condition:
-            alias = condition["alias"].lower()
-            cond_parts.append(f"'{alias}' in user_input")
-        if "pronoun" in condition:
-            pronoun = condition["pronoun"].lower()
-            cond_parts.append(f"'{pronoun}' in tokens")
-        # Add more condition handlers as needed
-        condition_code = " and ".join(cond_parts) if cond_parts else "False"
+        # Convert condition dict to robust Python code
+        condition_code = cls._parse_condition(condition)
 
         # Convert action dict to Python statements
-        action_lines = []
-        if "self_reference" in action:
-            alias = action["self_reference"]
-            action_lines.append(f'    response = f"I am {{alias}}."')
-        else:
-            action_lines.append("    response = \"[acknowledged]\"")
-        action_code = "\n".join(action_lines)
+        action_code = cls._parse_action(action)
 
         return cls.BEHAVIORAL_TEMPLATE.format(
             logic_id=logic_id,
             rule_type=rule.get("rule_type", "behavioral"),
             timestamp=timestamp,
+            BASE_IMPORTS=base_imports,
             condition=condition,
             condition_code=condition_code,
             action=action,
@@ -2093,39 +2373,141 @@ def run(factor_vector: list) -> bool:
         )
 
     @classmethod
-    def _generate_semantic(cls, rule: dict, logic_id: str, timestamp: str) -> str:
-        # Simplified: return fixed similarity if word matches candidate
+    def _generate_semantic(cls, rule: dict, logic_id: str, timestamp: str, base_imports: str) -> str:
+        # Enhanced semantic: use embedding comparison if available, else fallback
         candidate = rule.get("candidate", "")
-        body = f'''    if word == "{rule.get('word', '')}":
-        return 0.95  # learned similarity
-    # TODO: implement embedding comparison'''
+        word = rule.get("word", "")
+        if candidate and word:
+            body = f'''    # Learned similarity from rule
+    if word == "{word}":
+        # Check if semantic_learner provides embedding
+        try:
+            emb1 = semantic_learner.get_embedding(word)
+            emb2 = semantic_learner.get_embedding("{candidate}")
+            if emb1 is not None and emb2 is not None:
+                sim = np.dot(emb1, emb2) / (np.linalg.norm(emb1) * np.linalg.norm(emb2) + 1e-12)
+                return float(sim)
+        except (AttributeError, ImportError):
+            pass
+        return 0.95  # fallback confidence
+    # TODO: implement more general similarity'''
+        else:
+            body = '''    # No specific word/candidate; return zero
+    return 0.0'''
+
         return cls.SEMANTIC_TEMPLATE.format(
             logic_id=logic_id,
             relation=rule.get("type", "synonym"),
             timestamp=timestamp,
+            BASE_IMPORTS=base_imports,
             body=body
         )
 
     @classmethod
-    def _generate_state(cls, rule: dict, logic_id: str, timestamp: str) -> str:
+    def _generate_state(cls, rule: dict, logic_id: str, timestamp: str, base_imports: str) -> str:
         label = rule.get("label", "unknown_state")
-        # Use cosine similarity with stored prototype
         prototype = rule.get("prototype", [])
         if not prototype:
             prototype = [0.0] * 10  # default dimension
         proto_str = "[" + ", ".join(f"{x:.4f}" for x in prototype) + "]"
-        body = f'''    from numpy import dot, linalg
-    prototype = {proto_str}
+        body = f'''    try:
+        import numpy as np
+    except ImportError:
+        return False  # cannot compute without numpy
+
+    prototype = np.array({proto_str})
     if len(factor_vector) != len(prototype):
         return False
-    sim = dot(factor_vector, prototype) / (linalg.norm(factor_vector) * linalg.norm(prototype) + 1e-12)
-    return sim > 0.85'''
+    vec = np.array(factor_vector)
+    sim = np.dot(vec, prototype) / (np.linalg.norm(vec) * np.linalg.norm(prototype) + 1e-12)
+    # Threshold can be adjusted dynamically
+    threshold = rule.get("threshold", 0.85) if isinstance(rule, dict) else 0.85
+    return bool(sim > threshold)'''
         return cls.STATE_TEMPLATE.format(
             logic_id=logic_id,
             label=label,
             timestamp=timestamp,
+            BASE_IMPORTS=base_imports,
             body=body
         )
+
+    @staticmethod
+    def _parse_condition(condition: dict) -> str:
+        """
+        Convert a condition dictionary into executable Python code.
+        Supports multiple keys: 'alias', 'pronoun', 'regex', 'state', etc.
+        Returns a string of Python statements that set a boolean variable `condition_met`.
+        """
+        if not condition:
+            return "condition_met = False"
+
+        lines = []
+        parts = []
+
+        # Alias condition
+        if "alias" in condition:
+            alias = condition["alias"].lower()
+            parts.append(f"'{alias}' in user_input")
+
+        # Pronoun condition
+        if "pronoun" in condition:
+            pronoun = condition["pronoun"].lower()
+            parts.append(f"'{pronoun}' in tokens")
+
+        # Regex condition
+        if "regex" in condition:
+            import re
+            pattern = condition["regex"]
+            # Safely compile regex; use raw string
+            parts.append(f"re.search(r'{pattern}', user_input) is not None")
+            lines.insert(0, "import re")
+
+        # State condition (check a value in the state dict)
+        if "state_key" in condition and "state_value" in condition:
+            key = condition["state_key"]
+            value = condition["state_value"]
+            if isinstance(value, str):
+                parts.append(f"state.get('{key}') == '{value}'")
+            else:
+                parts.append(f"state.get('{key}') == {value}")
+
+        if parts:
+            condition_code = "condition_met = " + " and ".join(parts)
+        else:
+            condition_code = "condition_met = False"
+
+        if lines:
+            condition_code = "\n".join(lines) + "\n" + condition_code
+        return condition_code
+
+    @staticmethod
+    def _parse_action(action: dict) -> str:
+        """
+        Convert an action dictionary into Python statements.
+        Returns a string of code to execute, which should set a `response` variable.
+        """
+        if not action:
+            return '    response = "[acknowledged]"'
+
+        lines = []
+        if "self_reference" in action:
+            alias = action["self_reference"]
+            lines.append(f'    response = f"I am {{alias}}."')
+        elif "say" in action:
+            text = action["say"]
+            lines.append(f'    response = "{text}"')
+        elif "modify_state" in action:
+            # Example: modify_state: {"key": "value"}
+            mod = action["modify_state"]
+            for k, v in mod.items():
+                lines.append(f'    state["{k}"] = "{v}"')
+            lines.append('    response = "[state updated]"')
+        else:
+            lines.append('    response = "[acknowledged]"')
+
+        # Add optional logging
+        lines.append('    logger.debug(f"Action executed: {response}")')
+        return "\n".join(lines)
 
     @staticmethod
     def save_code_file(logic_id: str, code: str) -> str:
@@ -2581,6 +2963,8 @@ class ReasoningEngine:
         self.inferences: List[Dict] = []                        # pending inferred relations to ask user
         self.is_a_relations: Dict[str, Set[str]] = defaultdict(set)   # subject -> set of objects (for "is a")
         self.means_relations: Dict[str, Set[str]] = defaultdict(set)  # subject -> set of objects (for "means")
+        # ---- Knowledge graph for connected reasoning ----
+        self.knowledge_graph = KnowledgeGraph()
 
     def update_parameters_from_config(self):
         """Placeholder for hot reload."""
@@ -2598,9 +2982,32 @@ class ReasoningEngine:
             if len(tokens) <= 3:
                 pat["short_utterance"] += 1
 
+            # update co‑occurrence counts (original functionality)
             for w2 in tokens[i+1:]:
                 self.co_occurrence[w1][w2] += 1
                 self.co_occurrence[w2][w1] += 1
+
+        # ---- Add edges to knowledge graph for co-occurring words ----
+        if len(tokens) >= 2:
+            # Get node IDs for each token (add if not present)
+            node_ids = {}
+            for t in tokens:
+                nid = self.knowledge_graph.get_node_id(t, "word")
+                if nid is None:
+                    emb = None
+                    if hasattr(self, 'config_manager') and hasattr(self.config_manager, 'semantic_learner'):
+                        # Attempt to get embedding
+                        emb = self.config_manager.semantic_learner.word_embeddings.get(t)
+                    nid = self.knowledge_graph.add_node(t, "word", embedding=emb)
+                node_ids[t] = nid
+
+            # For each pair, add co-occurrence edge with confidence based on frequency
+            for i, w1 in enumerate(tokens):
+                for w2 in tokens[i+1:]:
+                    count = self.co_occurrence[w1][w2]   # now includes current sentence
+                    # Confidence: 1 - exp(-count/5)  (saturates at ~1 after many co-occurrences)
+                    conf = 1.0 - math.exp(-count / 5.0)
+                    self.knowledge_graph.add_edge(node_ids[w1], node_ids[w2], "co_occur", confidence=conf)
 
         # --- store sentence (without embedding now; embedding added later) ---
         self.store_sentence(sentence, tokens, embedding=None,
@@ -2617,6 +3024,16 @@ class ReasoningEngine:
             self.means_relations[subject].add(object)
         # Also store in generic phrase_relations for completeness
         self.phrase_relations[subject].append((rel_type, object, confidence))
+        # ---- Add to knowledge graph ----
+        # Get or create nodes for subject and object
+        subj_nid = self.knowledge_graph.get_node_id(subject, "phrase")
+        if subj_nid is None:
+            subj_nid = self.knowledge_graph.add_node(subject, "phrase")
+        obj_nid = self.knowledge_graph.get_node_id(object, "phrase")
+        if obj_nid is None:
+            obj_nid = self.knowledge_graph.add_node(object, "phrase")
+        # Add edge
+        self.knowledge_graph.add_edge(subj_nid, obj_nid, rel_type, confidence=confidence)
         self._check_transitive_inferences(subject, object, rel_type)
 
     def _check_transitive_inferences(self, subject: str, object: str, rel_type: str):
@@ -2815,6 +3232,7 @@ class ReasoningEngine:
         os.replace(tmp, path)
         # Save word-state associations separately
         self.word_state.save(os.path.join(STATE_DIR, 'word_state.json'))
+        self.knowledge_graph._save()
 
     def load(self, path: str):
         with open(path, 'rb') as f:
@@ -2849,6 +3267,7 @@ class ReasoningEngine:
             self.phrase_metadata = data.get('phrase_metadata', {})
         # Load word-state associations
         self.word_state.load(os.path.join(STATE_DIR, 'word_state.json'))
+        self.knowledge_graph._load()
 
     def detect_pattern_and_query(self, word: str) -> Optional[str]:
         pat = self.context_patterns[word]
@@ -3085,7 +3504,12 @@ class StateManager:
                         data = json.load(f)
                     label = data.get("label", fname[:-5])
                     vector = data.get("vector", [])
+                    metadata = data.get("metadata", {})
                     self.states[label] = self._normalize_vector(np.array(vector))
+                    # Store metadata in a separate dictionary for later use
+                    if not hasattr(self, 'state_metadata'):
+                        self.state_metadata = {}
+                    self.state_metadata[label] = metadata
                 except Exception as e:
                     print(f"Could not load state {fname}: {e}")
         self._update_ref_dim()
@@ -3200,6 +3624,7 @@ class StateManager:
         """
         Scan all states and find pairs with similarity > threshold.
         Both vectors are normalised to the reference dimension.
+        Returns conflicts including associated words if available in metadata.
         """
         if threshold is None:
             if self.config_manager:
@@ -3212,16 +3637,23 @@ class StateManager:
         processed_pairs = set()
         for i, l1 in enumerate(labels):
             v1 = self._normalize_vector(self.states[l1])
+            # Retrieve associated words from metadata (if any)
+            meta1 = self.state_metadata.get(l1, {})
+            words1 = meta1.get('tokens', [])  # stored during state creation
             for l2 in labels[i+1:]:
                 pair = tuple(sorted([l1, l2]))
                 if pair in processed_pairs:
                     continue
                 v2 = self._normalize_vector(self.states[l2])
+                meta2 = self.state_metadata.get(l2, {})
+                words2 = meta2.get('tokens', [])
                 sim = np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2) + 1e-12)
                 if sim >= threshold:
                     conflict = {
                         "labels": [l1, l2],
                         "similarity": float(sim),
+                        "words1": words1,          # list of tokens that led to state l1
+                        "words2": words2,          # list of tokens that led to state l2
                         "resolved": False,
                         "resolution_label": None,
                         "timestamp": time.time(),
@@ -4317,6 +4749,38 @@ class CuriosityEngine:
         keys = ['confidence', 'stability', 'phon_score', 'char_valid', 'structure']
         return np.array([features.get(k, 0.5) for k in keys])
 
+    def _apply_knowledge_graph_curiosity(self, token: str, base_factors: Dict[str, float]) -> Dict[str, float]:
+        """
+        Modify curiosity factors based on knowledge graph structure.
+        - If token has many connections (high degree), boost novelty and uncertainty.
+        - If token is a bridge between clusters, boost curiosity further.
+        """
+        # Get node ID for token
+        nid = self.reasoner.knowledge_graph.get_node_id(token, "word")
+        if nid is None:
+            return base_factors
+
+        # Compute degree
+        neighbors = self.reasoner.knowledge_graph.get_neighbors(nid)
+        degree = len(neighbors)
+        # Normalize degree (max expected degree maybe 100)
+        degree_factor = min(1.0, degree / 50.0)
+
+        # Boost novelty and uncertainty based on degree
+        base_factors['novelty'] = min(1.0, base_factors.get('novelty', 0.5) + 0.2 * degree_factor)
+        base_factors['uncertainty'] = min(1.0, base_factors.get('uncertainty', 0.5) + 0.15 * degree_factor)
+        # Boost surprise a little
+        base_factors['surprise'] = min(1.0, base_factors.get('surprise', 0.5) + 0.1 * degree_factor)
+
+        # Optionally, if token appears in many different relation types, boost more
+        rel_types = set()
+        for _, rt, _ in neighbors:
+            rel_types.add(rt)
+        rel_diversity = len(rel_types) / 5.0  # max 5 types
+        base_factors['complexity'] = min(1.0, base_factors.get('complexity', 0.5) + 0.1 * rel_diversity)
+
+        return base_factors
+    
     def _compute_curiosity_factors(self, token: str, token_ci: Dict, token_phon: float,
                                    diag: Dict, features_array: np.ndarray,
                                    global_factor_dict: Optional[Dict] = None) -> CuriosityFactors:
@@ -4364,6 +4828,8 @@ class CuriosityEngine:
                 "bayesian_surprise": bayes_surprise,
                 "gp_uncertainty": gp_uncertainty,
             }
+            # Apply knowledge graph based curiosity boost
+            factor_dict = self._apply_knowledge_graph_curiosity(token, factor_dict)
             # If word has a definition, reduce its curiosity significantly
             if self.reasoner and self.reasoner.definitions.get(token):
                 factor_dict["novelty"] *= 0.1
@@ -4461,6 +4927,9 @@ class CuriosityEngine:
         label = input("    🏷️  Label: ").strip()
         if not label:
             label = "unnamed_state"
+
+        # Add tokens from the input that caused this state to metadata
+        metadata['tokens'] = self._tokenize(metadata.get('input_text', ''))
 
         self.state_manager.save_state(label, factor_vector, metadata)
         print(f"    ✅ State saved as '{label}'.")
@@ -4624,13 +5093,21 @@ class CuriosityEngine:
                     }
                     self.reasoner.hypotheses.append(hyp)
 
-                # ---- NEW: Word-state association ----
+                # ---- Word-state association ----
                 # If subject is a word/phrase and object is a state label (single word), associate
                 # Also handle "X like Y" as suggesting similarity
                 if rel_type in ('means', 'is_a'):
                     # Treat object as a label for subject
                     self.reasoner.word_state.add_association(subject, object, confidence=1.0, source="explicit")
                     print(f"📝 [Word-State] Associated '{subject}' with label '{object}'")
+                    
+                    # ---- IMMEDIATE PROPAGATION: if object has labels, propagate them to subject ----
+                    object_labels = self.reasoner.word_state.get_labels(object, threshold=0.3)
+                    for lab in object_labels:
+                        if lab != object:  # avoid self‑propagation
+                            self.reasoner.word_state.add_association(subject, lab, confidence=0.9, source="inheritance")
+                            print(f"   ↪ Propagated label '{lab}' from '{object}' to '{subject}'")
+                            
                 elif rel_type == 'similar':
                     # If subject and object are both words, they should share labels
                     subj_labels = self.reasoner.word_state.get_labels(subject)
@@ -4641,6 +5118,15 @@ class CuriosityEngine:
                     for lab in subj_labels:
                         self.reasoner.word_state.add_association(object, lab, confidence=0.7, source="similarity")
                     print(f"📝 [Word-State] Propagated labels between '{subject}' and '{object}'")
+                # ---- Also add to knowledge graph ----
+                # Get node for subject (word/phrase) and object (label)
+                subj_nid = self.reasoner.knowledge_graph.get_node_id(subject, "word" if len(subject.split())==1 else "phrase")
+                if subj_nid is None:
+                    subj_nid = self.reasoner.knowledge_graph.add_node(subject, "word" if len(subject.split())==1 else "phrase")
+                obj_nid = self.reasoner.knowledge_graph.get_node_id(object, "state")
+                if obj_nid is None:
+                    obj_nid = self.reasoner.knowledge_graph.add_node(object, "state")
+                self.reasoner.knowledge_graph.add_edge(subj_nid, obj_nid, "associated", confidence=1.0)
 
         # Generate other hypotheses (existing logic)
         hypothesis = self.reasoner.generate_sentence_hypothesis(sentence, tokens, sentence_emb)
@@ -5516,7 +6002,13 @@ class CuriosityEngine:
             for conflict in unresolved[:3]:
                 l1, l2 = conflict["labels"]
                 sim = conflict["similarity"]
+                words1 = conflict.get("words1", [])
+                words2 = conflict.get("words2", [])
                 print(f"    Conflict: '{l1}' ↔ '{l2}' (similarity={sim:.3f})")
+                if words1:
+                    print(f"      Words that led to '{l1}': {', '.join(words1)}")
+                if words2:
+                    print(f"      Words that led to '{l2}': {', '.join(words2)}")
                 shadow_label = self.state_manager.create_shadow_resolution(conflict)
                 self.state_manager.apply_shadow_to_conflict(conflict, shadow_label)
                 print(f"      → Created shadow state '{shadow_label}'. Will ask user at next interaction.")
@@ -6695,7 +7187,48 @@ class CuriosityEngine:
                         }
                         self.reasoner.hypotheses.append(hyp)
                         print(f"   ➕ Proposed phrase similarity: '{p1}' ↔ '{p2}' (sim={sim:.2f})")
-                        
+
+    def converge_knowledge_graph(self):
+        """
+        Idle-time consolidation of the knowledge graph:
+        - Infer transitive relations (is_a, means)
+        - Merge nodes that are synonyms or highly similar
+        - Prune weak edges
+        - Detect central nodes for curiosity prioritization
+        """
+        if not hasattr(self.reasoner, 'knowledge_graph'):
+            return
+        kg = self.reasoner.knowledge_graph
+
+        cpu_ok, mem_ok, throttle, cpu_p, mem_p = self._get_resource_status()
+        if not cpu_ok or not mem_ok:
+            print(f"   [Resource Aware] Skipping knowledge graph convergence (CPU:{cpu_p:.1f}% MEM:{mem_p:.1f}%).")
+            return
+
+        print("🕸️ [Knowledge Graph] Converging...")
+
+        # 1. Infer transitive relations for is_a and means
+        for rel in ['is_a', 'means']:
+            inferred = kg.infer_transitive_relations(rel, threshold=0.6)
+            for n1, n2, rt, conf in inferred:
+                kg.add_edge(n1, n2, rt, conf)
+                print(f"   Inferred {rt}: {kg.nodes[n1]['label']} -> {kg.nodes[n2]['label']} (conf={conf:.2f})")
+
+        # 2. Merge synonym candidates (if two words have very high similarity in embeddings)
+        #    This is a placeholder – you could use semantic similarity or co-occurrence.
+        #    For now, we'll skip because merging requires careful handling.
+
+        # 3. Prune weak edges (confidence < 0.1)
+        kg.prune_weak_edges(threshold=0.1)
+        print("   Pruned weak edges.")
+
+        # 4. Identify central nodes to influence curiosity (store in a separate structure)
+        central = kg.get_central_nodes(top_k=10)
+        self.central_graph_nodes = central
+        print("   Top central nodes: " + ", ".join(f"{kg.nodes[nid]['label']}({deg})" for nid, deg in central))
+
+        kg._save()
+
     def perform_all_idle_tasks(self):
         """Orchestrate all idle‑time tasks, respecting configuration."""
         now = time.time()
@@ -6737,6 +7270,7 @@ class CuriosityEngine:
             self.propagate_word_state_associations,
             self.mine_phrase_relations,
             self._metabolic_maintenance,
+            self.converge_knowledge_graph,            
         ]
         for task in tasks:
             try:
@@ -6974,6 +7508,7 @@ class ActionGenerator:
         """
         Generate a conversational, non‑interrogative response when chat mode is active.
         Uses learned conversational patterns from behavioral rules, then definitions, then trigram.
+        Does NOT ask questions; only makes statements or prompts.
         """
         user_input_lower = user_input.lower().strip()
 
@@ -6981,20 +7516,6 @@ class ActionGenerator:
         alias = None
         if self.engine.identity_aliases:
             alias = next(iter(self.engine.identity_aliases))
-
-        # --- If we have a pending sentence query, ask it (still valid) ---
-        if self.engine.pending_sentence_query:
-            query = self.engine.pending_sentence_query
-            self.engine.pending_sentence_query = None
-            return query
-
-        # --- If there's an unanswered hypothesis, still ask it (curiosity) ---
-        for hyp in self.reasoner.hypotheses:
-            if hyp.get('type') in ('synonym', 'category', 'analogy', 'inference') and not hyp.get('asked', False):
-                hyp['asked'] = True
-                hyp['last_used'] = time.time()
-                hyp['recent_usage'] = hyp.get('recent_usage', 0.0) * 0.99 + 0.1
-                return hyp['text']
 
         # --- 1. Check learned behavioral patterns (conversational_pattern) ---
         # We look for rules where condition contains 'user_input_pattern' or 'question_pattern'
@@ -7024,21 +7545,21 @@ class ActionGenerator:
                 def_text = self.reasoner.phrase_definitions[phrase]
                 return f"Ah, '{phrase}' means {def_text}. That's interesting."
 
-        # --- 2.5 NEW: Use word-state labels to provide contextual info ---
+        # --- 3. Use word-state labels to provide contextual info ---
         for word in tokens:
             labels = self.reasoner.word_state.get_labels(word, threshold=0.6)
             if labels:
                 label_str = ', '.join(labels)
                 return f"I know '{word}' is associated with: {label_str}. Tell me more about it."
 
-        # --- 2.2 Check if user input is similar to known phrases ---
+        # --- 4. Check if user input is similar to known phrases ---
         input_emb = self.semantic_learner.text_to_embedding(user_input, fallback_to_char=True)
         if input_emb is not None:
             similar = self.reasoner.find_similar_phrases(input_emb, threshold=0.8)
             if similar:
                 best_phrase, sim = similar[0]
                 return f"This reminds me of when you said '{best_phrase}'. Tell me more."
-            
+
         # Check for words with definitions
         for word in tokens:
             if word in self.reasoner.definitions:
@@ -7053,7 +7574,21 @@ class ActionGenerator:
                 else:
                     return f"I understand '{word}' as {def_text}. Tell me more."
 
-        # --- 3. Fall back to trigram model from episodic memory ---
+        # --- 5. Optionally express curiosity about a word (as a statement, not a question) ---
+        # Pick a random word from known vocabulary and make a statement about it
+        if self.engine.word_history:
+            # Get all words with at least some history
+            known_words = list(self.engine.word_history.keys())
+            if known_words:
+                word = np.random.choice(known_words)
+                # Check if we have a definition
+                if word in self.reasoner.definitions:
+                    return f"I've been thinking about '{word}'. It means {self.reasoner.definitions[word][:50]}."
+                else:
+                    # Express curiosity without asking
+                    return f"I'm curious about '{word}'. I'd like to learn more about it."
+
+        # --- 6. Fall back to trigram model from episodic memory ---
         # Build a simple trigram model from recent episodes
         trigram = defaultdict(Counter)
         episodes = self.engine.episodic_memory.episodes[-50:]  # recent
@@ -7092,8 +7627,8 @@ class ActionGenerator:
             else:
                 return f"What do you mean by '{word}'?"
         else:
-            return "That's interesting. Can you tell me more?"
-              
+            return "That's interesting. Can you tell me more?"             
+
     def generate_reply(self, user_input: str, state: Dict) -> str:
         """
         Main entry point: decide what to say.

@@ -25,6 +25,8 @@ PIPE_PATH = '/tmp/vision_pipe'
 WINDOW_NAME = 'Receiver'
 CAMERA_DEVICE = '/dev/video11'
 
+EDGE_MARGIN = 40  # pixels from frame edge to trigger predictive boundary handling (PHASE 1)
+
 # ============================================================
 # Global camera motion estimation (Stage 1 & 2)
 # Optimized for low‑end hardware & low‑res cameras
@@ -1022,7 +1024,419 @@ def enhance_small_objects_with_depth(frame: np.ndarray,
             enhanced_contours.append(dcontour)
             
     return enhanced_contours
+
+class AppearanceExtractor:
+    """
+    Robust object envelope extraction using multi-mask fusion and adaptive lighting compensation.
+    Implements HSV/LAB clustering, shadow compensation, region growing, and contour scoring.
+    Optimized for low-res cameras and low-end hardware.
+    """
     
+    def __init__(self, 
+                 roi_margin: float = 0.08,           # ROI expansion margin
+                 min_contour_area: int = 50,          # Minimum contour area (pixels)
+                 n_colors: int = 3,                    # Number of color clusters for HSV
+                 shadow_threshold: float = 0.3,        # Shadow detection threshold (V difference)
+                 edge_threshold1: int = 40,             # Canny low threshold
+                 edge_threshold2: int = 120,            # Canny high threshold
+                 grow_tolerance: float = 0.15,         # Region growing color tolerance (fraction)
+                 # NEW: Dynamic resolution scaling for low-end hardware [citation:1]
+                 enable_dynamic_resolution: bool = True,
+                 base_scale_factor: float = 1.0,       # Start at full resolution
+                 min_scale_factor: float = 0.5,         # Don't go below 50% resolution
+                 performance_target: float = 15.0):     # Target 15 FPS minimum
+        
+        # Existing initializations
+        self.roi_margin = roi_margin
+        self.min_contour_area = min_contour_area
+        self.n_colors = n_colors
+        self.shadow_threshold = shadow_threshold
+        self.edge_threshold1 = edge_threshold1
+        self.edge_threshold2 = edge_threshold2
+        self.grow_tolerance = grow_tolerance
+        
+        # NEW: Dynamic resolution attributes
+        self.enable_dynamic_resolution = enable_dynamic_resolution
+        self.current_scale = base_scale_factor
+        self.min_scale = min_scale_factor
+        self.target_fps = performance_target
+        self.fps_history = []
+        self.last_scale_adjustment = time.time()
+        
+        self.roi_margin = roi_margin
+        self.min_contour_area = min_contour_area
+        self.n_colors = n_colors
+        self.shadow_threshold = shadow_threshold
+        self.edge_threshold1 = edge_threshold1
+        self.edge_threshold2 = edge_threshold2
+        self.grow_tolerance = grow_tolerance
+        
+    def _simple_kmeans_hue(self, hue_vals: np.ndarray, k: int, max_iters: int = 10) -> np.ndarray:
+        """
+        Fast k-means on hue values (circular) using histogram peaks as initial centers.
+        Returns cluster centers (hue angles).
+        """
+        if len(hue_vals) < k:
+            # Not enough pixels, return equally spaced centers
+            return np.linspace(0, 179, k, dtype=np.float32)
+        
+        # Use histogram peaks as initial centers (fast)
+        hist = np.bincount(hue_vals, minlength=180)
+        # Find top k peaks (excluding zero bins maybe)
+        peaks = []
+        for _ in range(k):
+            if np.max(hist) == 0:
+                break
+            peak = np.argmax(hist)
+            peaks.append(peak)
+            # Suppress neighborhood to avoid multiple peaks near each other
+            start = max(0, peak - 10)
+            end = min(180, peak + 11)
+            hist[start:end] = 0
+        if len(peaks) < k:
+            # Pad with default
+            peaks.extend([0] * (k - len(peaks)))
+        
+        centers = np.array(peaks, dtype=np.float32)
+        
+        # Simple k-means with circular distance
+        for _ in range(max_iters):
+            # Assign each pixel to nearest center (circular distance)
+            distances = np.abs(hue_vals[:, None] - centers[None, :])
+            distances = np.minimum(distances, 180 - distances)  # circular
+            labels = np.argmin(distances, axis=1)
+            
+            # Update centers
+            new_centers = []
+            for i in range(k):
+                mask = labels == i
+                if np.any(mask):
+                    # Circular mean
+                    mean_hue = np.mean(hue_vals[mask])
+                    new_centers.append(mean_hue)
+                else:
+                    new_centers.append(centers[i])
+            new_centers = np.array(new_centers)
+            if np.allclose(centers, new_centers, atol=1.0):
+                break
+            centers = new_centers
+        return centers
+    
+    def _adaptive_color_mask(self, roi_hsv: np.ndarray, seed_point: Tuple[int, int]) -> np.ndarray:
+        """
+        Generate color mask using HSV clustering around seed point.
+        Returns binary mask.
+        """
+        h, w = roi_hsv.shape[:2]
+        seed_y, seed_x = seed_point
+        seed_hue = roi_hsv[seed_y, seed_x, 0]
+        
+        # Sample pixels near seed to estimate local color distribution
+        margin = 5
+        y1 = max(0, seed_y - margin)
+        y2 = min(h, seed_y + margin + 1)
+        x1 = max(0, seed_x - margin)
+        x2 = min(w, seed_x + margin + 1)
+        local_region = roi_hsv[y1:y2, x1:x2]
+        local_hues = local_region[:, :, 0].reshape(-1)
+        local_sats = local_region[:, :, 1].reshape(-1)
+        
+        # Cluster hues in local region (k=2 for object vs background)
+        if len(local_hues) > 10:
+            centers = self._simple_kmeans_hue(local_hues, k=min(2, self.n_colors))
+            # Find which center is closest to seed hue
+            dist_to_seed = np.minimum(np.abs(centers - seed_hue), 180 - np.abs(centers - seed_hue))
+            object_center = centers[np.argmin(dist_to_seed)]
+            # Use standard deviation of local hues around object center as tolerance
+            distances = np.minimum(np.abs(local_hues - object_center), 180 - np.abs(local_hues - object_center))
+            hue_std = np.std(distances)
+            hue_range = max(15, int(2 * hue_std))
+        else:
+            object_center = seed_hue
+            hue_range = 20
+        
+        # Also compute local saturation and value statistics for adaptive thresholds
+        local_sats = local_sats[local_sats > 0]  # ignore zero if any
+        local_vals = local_region[:, :, 2].reshape(-1)
+        local_vals = local_vals[local_vals > 0]
+        
+        s_mean = np.mean(local_sats) if len(local_sats) > 0 else 100
+        v_mean = np.mean(local_vals) if len(local_vals) > 0 else 100
+        
+        # Adaptive lower/upper bounds (ensure integer and within 0-255)
+        lower_hue = int(max(0, object_center - hue_range))
+        upper_hue = int(min(179, object_center + hue_range))
+        
+        lower_sat = int(max(30, s_mean * 0.4))
+        upper_sat = 255
+        
+        lower_val = int(max(30, v_mean * 0.3))
+        upper_val = 255
+        
+        # Create arrays with explicit uint8 type
+        lower = np.array([lower_hue, lower_sat, lower_val], dtype=np.uint8)
+        upper = np.array([upper_hue, upper_sat, upper_val], dtype=np.uint8)
+        
+        # Create mask
+        mask = cv2.inRange(roi_hsv, lower, upper)
+        
+        # Optional: handle hue wrap-around
+        if lower_hue > upper_hue:  # if range crosses 0
+            lower2 = np.array([0, lower_sat, lower_val], dtype=np.uint8)
+            upper2 = np.array([upper_hue, upper_sat, upper_val], dtype=np.uint8)
+            mask2 = cv2.inRange(roi_hsv, lower2, upper2)
+            mask = cv2.bitwise_or(mask, mask2)
+        
+        return mask  
+
+    def _shadow_compensation(self, roi_hsv: np.ndarray, color_mask: np.ndarray) -> np.ndarray:
+        """
+        Detect and compensate for shadows by analyzing V channel relative to local mean.
+        Returns adjusted mask (shadows removed or included based on color).
+        """
+        # Compute local average V for non-zero areas in color mask
+        v_channel = roi_hsv[:, :, 2].astype(np.float32)
+        if np.sum(color_mask) == 0:
+            return color_mask
+        
+        # Estimate object's typical brightness from areas already in mask
+        object_v = v_channel[color_mask > 0]
+        if len(object_v) == 0:
+            return color_mask
+        mean_v = np.mean(object_v)
+        std_v = np.std(object_v)
+        
+        # Shadow regions: pixels that have similar hue/sat but much lower V
+        # We'll create a mask of candidate shadows: where V < mean_v - threshold*std_v
+        shadow_candidates = (v_channel < (mean_v - self.shadow_threshold * std_v)).astype(np.uint8) * 255
+        
+        # But only if hue and sat are similar to object (we already have color mask for those)
+        # So final shadow mask = shadow_candidates AND (hue/sat similar)
+        # We can approximate by dilating color mask and intersecting
+        kernel = np.ones((5,5), np.uint8)
+        dilated_mask = cv2.dilate(color_mask, kernel, iterations=1)
+        shadow_mask = cv2.bitwise_and(shadow_candidates, dilated_mask)
+        
+        # Add shadow mask to original color mask
+        compensated_mask = cv2.bitwise_or(color_mask, shadow_mask)
+        return compensated_mask
+    
+    def _edge_mask(self, roi_gray: np.ndarray) -> np.ndarray:
+        """Canny edge detection with morphological closing to form connected regions."""
+        edges = cv2.Canny(roi_gray, self.edge_threshold1, self.edge_threshold2)
+        kernel = np.ones((3,3), np.uint8)
+        edges = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel, iterations=1)
+        return edges
+    
+    def _region_growing(self, mask: np.ndarray, seed_point: Tuple[int, int], 
+                        roi_hsv: np.ndarray, roi_gray: np.ndarray) -> np.ndarray:
+        """
+        Grow region from seed using color and edge affinity.
+        Returns refined mask.
+        """
+        h, w = mask.shape
+        seed_y, seed_x = seed_point
+        
+        # If seed is out of bounds or already zero, return original
+        if seed_y >= h or seed_x >= w or mask[seed_y, seed_x] == 0:
+            return mask
+        
+        # Get seed color - convert to int to avoid uint8 underflow later
+        seed_hsv = roi_hsv[seed_y, seed_x]
+        seed_hue = int(seed_hsv[0])
+        seed_sat = int(seed_hsv[1])
+        seed_val = int(seed_hsv[2])
+        
+        # Create a queue for flood fill
+        visited = np.zeros_like(mask, dtype=bool)
+        grown_mask = np.zeros_like(mask)
+        
+        queue = [(seed_y, seed_x)]
+        visited[seed_y, seed_x] = True
+        
+        # Tolerances
+        hue_tol = 15
+        sat_tol = 40
+        val_tol = 40
+        
+        while queue:
+            y, x = queue.pop(0)
+            grown_mask[y, x] = 255
+            
+            # Check 4-neighbors
+            for dy, dx in [(-1,0), (1,0), (0,-1), (0,1)]:
+                ny, nx = y+dy, x+dx
+                if ny < 0 or ny >= h or nx < 0 or nx >= w:
+                    continue
+                if visited[ny, nx]:
+                    continue
+                
+                # Check if neighbor is in original mask OR color-similar
+                if mask[ny, nx] > 0:
+                    # If it's in mask, accept
+                    visited[ny, nx] = True
+                    queue.append((ny, nx))
+                else:
+                    # Check color similarity - convert neighbor values to int
+                    nhsv = roi_hsv[ny, nx]
+                    nhsv_0 = int(nhsv[0])
+                    nhsv_1 = int(nhsv[1])
+                    nhsv_2 = int(nhsv[2])
+                    
+                    # Compute differences (now with ints, no overflow)
+                    dhue = min(abs(nhsv_0 - seed_hue), 180 - abs(nhsv_0 - seed_hue))
+                    dsat = abs(nhsv_1 - seed_sat)
+                    dval = abs(nhsv_2 - seed_val)
+                    
+                    if dhue < hue_tol and dsat < sat_tol and dval < val_tol:
+                        # Also check edge presence: if strong edge nearby, maybe stop
+                        # For simplicity, we proceed
+                        visited[ny, nx] = True
+                        queue.append((ny, nx))
+        
+        return grown_mask  
+
+    def _contour_confidence(self, contour: np.ndarray, roi_gray: np.ndarray, 
+                            roi_mask: np.ndarray) -> float:
+        """
+        Compute confidence score for a contour based on:
+        - Edge strength along boundary
+        - Color consistency inside
+        - Contour smoothness (curve continuity)
+        """
+        # Create mask of contour interior
+        interior_mask = np.zeros_like(roi_gray, dtype=np.uint8)
+        cv2.drawContours(interior_mask, [contour], -1, 255, -1)
+        
+        # 1. Color consistency: standard deviation of gray values inside
+        inside_pixels = roi_gray[interior_mask > 0]
+        if len(inside_pixels) == 0:
+            color_score = 0.0
+        else:
+            color_std = np.std(inside_pixels)
+            # Normalize: lower std is better (max possible std ~128)
+            color_score = max(0.0, 1.0 - (color_std / 128.0))
+        
+        # 2. Edge strength along boundary: sample edge image at contour points
+        edges = cv2.Canny(roi_gray, self.edge_threshold1, self.edge_threshold2)
+        # Draw contour line
+        contour_line = np.zeros_like(roi_gray, dtype=np.uint8)
+        cv2.drawContours(contour_line, [contour], -1, 255, 1)
+        edge_on_contour = cv2.bitwise_and(edges, contour_line)
+        edge_strength = np.sum(edge_on_contour > 0) / max(1, np.sum(contour_line > 0))
+        
+        # 3. Smoothness: compare arc length to convex hull perimeter
+        hull = cv2.convexHull(contour)
+        arc_len = cv2.arcLength(contour, True)
+        hull_len = cv2.arcLength(hull, True)
+        if hull_len > 0:
+            smoothness = hull_len / arc_len  # closer to 1 means smoother
+        else:
+            smoothness = 1.0
+        
+        # Combine scores (weights can be tuned)
+        confidence = 0.3 * color_score + 0.5 * edge_strength + 0.2 * smoothness
+        return confidence
+    
+    def extract_contours(self, frame: np.ndarray, box: Tuple[int, int, int, int, int, int, int, int], 
+                         prior_contour: Optional[np.ndarray] = None) -> List[Tuple[np.ndarray, float]]:
+        """
+        Main method: extract multiple contours from ROI with confidence scores.
+        Returns list of (contour, confidence).
+        """
+        x1,y1,x2,y2,x3,y3,x4,y4 = box
+        x_min = min(x1,x2,x3,x4)
+        y_min = min(y1,y2,y3,y4)
+        x_max = max(x1,x2,x3,x4)
+        y_max = max(y1,y2,y3,y4)
+
+        margin = int(self.roi_margin * max(x_max - x_min, y_max - y_min))
+        h, w = frame.shape[:2]
+        x_min_exp = max(0, x_min - margin)
+        y_min_exp = max(0, y_min - margin)
+        x_max_exp = min(w, x_max + margin)
+        y_max_exp = min(h, y_max + margin)
+
+        roi = frame[y_min_exp:y_max_exp, x_min_exp:x_max_exp]
+        if roi.size == 0:
+            return []
+        
+        roi_hsv = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
+        roi_gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
+        
+        # Seed point: center of original box (before expansion) within ROI
+        seed_x = (x_min + x_max)//2 - x_min_exp
+        seed_y = (y_min + y_max)//2 - y_min_exp
+        seed_point = (seed_y, seed_x)
+        
+        # --- Multi-mask generation ---
+        
+        # 1. Adaptive color mask (HSV clustering)
+        color_mask = self._adaptive_color_mask(roi_hsv, seed_point)
+        
+        # 2. Shadow compensation
+        color_mask = self._shadow_compensation(roi_hsv, color_mask)
+        
+        # 3. Edge mask
+        edge_mask = self._edge_mask(roi_gray)
+        
+        # 4. Fusion: combine color and edge (weighted OR, but keep color as primary)
+        #    Use color mask as base, then add edges to fill gaps
+        kernel = np.ones((3,3), np.uint8)
+        color_mask_dilated = cv2.dilate(color_mask, kernel, iterations=1)
+        fused_mask = cv2.bitwise_or(color_mask_dilated, edge_mask)
+        # 5. Apply prior contour if available (as a soft constraint)
+        if prior_contour is not None:
+            # Transform prior contour to ROI coordinates
+            prior_in_roi = prior_contour.copy()
+            prior_in_roi[:, :, 0] -= x_min_exp
+            prior_in_roi[:, :, 1] -= y_min_exp
+            
+            # Create mask from prior contour and dilate it
+            prior_mask = np.zeros_like(roi_gray, dtype=np.uint8)
+            cv2.drawContours(prior_mask, [prior_in_roi], -1, 255, -1)
+            kernel_large = np.ones((11,11), np.uint8)
+            prior_mask_dilated = cv2.dilate(prior_mask, kernel_large, iterations=2)
+            
+            # Restrict fused mask to the dilated prior region
+            fused_mask = cv2.bitwise_and(fused_mask, prior_mask_dilated)
+        
+        # 6. Region growing from seed to ensure continuity
+        # 5. Region growing from seed to ensure continuity
+        grown_mask = self._region_growing(fused_mask, seed_point, roi_hsv, roi_gray)
+        
+        # --- Contour extraction ---
+        contours, _ = cv2.findContours(grown_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        if not contours:
+            return []
+        
+        # Filter small contours
+        valid = []
+        for cnt in contours:
+            area = cv2.contourArea(cnt)
+            if area >= self.min_contour_area:
+                # Smooth contour
+                epsilon = 0.002 * cv2.arcLength(cnt, True)
+                cnt = cv2.approxPolyDP(cnt, epsilon, True)
+                # Shift back to frame coordinates
+                cnt[:, :, 0] += x_min_exp
+                cnt[:, :, 1] += y_min_exp
+                # Compute confidence
+                # Need ROI-level gray for confidence; we have roi_gray in ROI coordinates,
+                # but contour is in frame coordinates. For simplicity, we compute confidence
+                # before shifting, using roi_gray and mask.
+                # We'll compute confidence now (before shift) using roi-level data.
+                # Create a temporary contour copy in ROI coordinates
+                cnt_roi = cnt.copy()
+                cnt_roi[:, :, 0] -= x_min_exp
+                cnt_roi[:, :, 1] -= y_min_exp
+                conf = self._contour_confidence(cnt_roi, roi_gray, grown_mask)
+                valid.append((cnt, conf))
+        
+        # Sort by confidence descending
+        valid.sort(key=lambda x: x[1], reverse=True)
+        return valid
+
 class ObjectTracker:
     """
     Lightweight multi-object tracker for low-end hardware.
@@ -1033,7 +1447,8 @@ class ObjectTracker:
                  max_lost_frames: int = 10,      # Frames to keep lost objects (occlusion recovery)
                  distance_threshold: float = 50,  # Max pixel distance for ID matching
                  persistence_decay: float = 0.7,  # How quickly persistence decays with distance
-                 min_persistence: float = 0.3):   # Threshold for ID reassignment
+                 min_persistence: float = 0.3,    # Threshold for ID reassignment
+                 min_area_global: int = 50):      # PHASE 2: absolute minimum contour area (from extractor)
         
         self.next_id = 0
         self.tracked_objects: Dict[int, TrackedObject] = {}
@@ -1042,6 +1457,7 @@ class ObjectTracker:
         self.persistence_decay = persistence_decay
         self.min_persistence = min_persistence
         # Temporal shape memory
+        self.min_area_global = min_area_global   # PHASE 2
         self.geometry_store = TemporalGeometryStore(
             max_history=5,
             iou_threshold=0.3,
@@ -1323,7 +1739,8 @@ class ObjectTracker:
                frame: np.ndarray, 
                detected_pairs: List[Tuple[np.ndarray, float]],
                camera_affine: Optional[np.ndarray] = None,
-               identity_memory: Optional[ObjectIdentityMemory] = None) -> Dict[int, Tuple[np.ndarray, Tuple[float, float]]]:
+               identity_memory: Optional[ObjectIdentityMemory] = None,
+               appearance_extractor: Optional[AppearanceExtractor] = None) -> Dict[int, Tuple[np.ndarray, Tuple[float, float]]]:   # PHASE 1
         """
         Enhanced multi‑object tracker with camera-motion-aware world-space matching.
         
@@ -1359,7 +1776,85 @@ class ObjectTracker:
 
         # ---- Prepare current frame ----
         frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-
+        # ---- PHASE 1: Predictive boundary handling - generate forced detections for objects near edge ----
+        # Store forced detections separately; they will be merged after regular detections
+        forced_detections = []
+        if appearance_extractor is not None:
+            h_img, w_img = frame.shape[:2]
+            active_items = [(oid, obj) for oid, obj in self.tracked_objects.items()
+                            if obj.lost_frames <= self.max_lost_frames]
+            for obj_id, obj in active_items:
+                # Get predicted centroid from geometry store
+                pred_centroid = self.geometry_store.get_kalman_centroid(obj_id)
+                if pred_centroid is None:
+                    continue
+                cx, cy = pred_centroid
+                # Check if near edge
+                if (cx < EDGE_MARGIN or cx > w_img - EDGE_MARGIN or
+                    cy < EDGE_MARGIN or cy > h_img - EDGE_MARGIN):
+                    # Get last known bounding box
+                    last_bbox = self.geometry_store.get_last_bbox(obj_id)
+                    if last_bbox is None:
+                        # fallback: use last contour
+                        if not obj.contours:
+                            continue
+                        last_cnt = obj.contours[-1]
+                        last_bbox = cv2.boundingRect(last_cnt)
+                    lx, ly, lw, lh = last_bbox
+                    # Create search region centered at predicted centroid with last known size (expanded)
+                    margin = 1.5
+                    sw = int(lw * margin)
+                    sh = int(lh * margin)
+                    sx = int(cx - sw // 2)
+                    sy = int(cy - sh // 2)
+                    # Clamp to frame
+                    sx = max(0, min(sx, w_img - 1))
+                    sy = max(0, min(sy, h_img - 1))
+                    ex = min(sx + sw, w_img)
+                    ey = min(sy + sh, h_img)
+                    sw = ex - sx
+                    sh = ey - sy
+                    if sw <= 0 or sh <= 0:
+                        continue
+                    # Create 8-point box for extractor
+                    box8 = (sx, sy, sx+sw, sy, sx+sw, sy+sh, sx, sy+sh)
+                    # Use last contour as prior if available
+                    prior = obj.contours[-1] if obj.contours else None
+                    forced_contours = appearance_extractor.extract_contours(frame, box8, prior_contour=prior)
+                    if forced_contours:
+                        # Take the best contour (highest confidence)
+                        best_forced_cnt, best_conf = max(forced_contours, key=lambda x: x[1])
+                        # Compute its attributes
+                        forced_centroid = self._compute_centroid(best_forced_cnt)
+                        forced_brightness = self._compute_brightness(frame, best_forced_cnt)
+                        forced_hue = self._compute_dominant_hue(frame, best_forced_cnt)
+                        forced_area = cv2.contourArea(best_forced_cnt)
+                        forced_color_sig = self._compute_color_signature(frame, best_forced_cnt)
+                        # Flow (optional, set to zero)
+                        forced_flow = (0.0, 0.0)
+                        forced_flow_conf = 0.0
+                        # World centroid
+                        forced_world = forced_centroid
+                        if camera_affine is not None:
+                            inv_transform = cv2.invertAffineTransform(camera_affine)
+                            pt = np.array([[forced_centroid]], dtype=np.float32)
+                            world_pt = cv2.transform(pt, inv_transform).reshape(2)
+                            forced_world = (world_pt[0], world_pt[1])
+                        # Confidence: use extractor confidence but capped (0.6) to avoid over‑reliance
+                        forced_conf = min(0.6, best_conf)
+                        forced_detections.append({
+                            'contour': best_forced_cnt,
+                            'centroid': forced_centroid,
+                            'world_centroid': forced_world,
+                            'brightness': forced_brightness,
+                            'hue': forced_hue,
+                            'area': forced_area,
+                            'color_sig': forced_color_sig,
+                            'flow': forced_flow,
+                            'flow_conf': forced_flow_conf,
+                            'conf': forced_conf,
+                            'forced': True   # optional marker
+                        })
         # ---- Compute optical flow for existing tracked objects (unchanged) ----
         if self.prev_gray is not None:
             for obj in self.tracked_objects.values():
@@ -1420,6 +1915,11 @@ class ObjectTracker:
                     'conf': conf
                 })
             detections.sort(key=lambda x: x['area'], reverse=True)
+
+            # ---- Merge forced detections from PHASE 1 ----
+            if forced_detections:
+                detections.extend(forced_detections)
+                detections.sort(key=lambda x: x['area'], reverse=True)
 
             # ---- Stage A: Get active objects and convert their positions to world space ----
             active_items = [(oid, obj) for oid, obj in self.tracked_objects.items()
@@ -1505,8 +2005,23 @@ class ObjectTracker:
                         else:
                             flow_cost = 0.5
 
+                        # ===== PHASE 2: Area‑based rejection and penalty =====
+                        det_area = det['area']
+                        prev_area = obj.contour_area
+
+                        # Reject if area too small and object not lost
+                        if obj.lost_frames == 0 and det_area < self.min_area_global:
+                            continue   # skip this pair (cost stays at large default)
+
+                        # Penalty if area drops significantly (even if lost)
+                        area_penalty = 0.0
+                        if prev_area > 0:
+                            area_ratio = det_area / prev_area
+                            if area_ratio < 0.4:
+                                area_penalty = 0.5   # tunable penalty
+
                         # Weighted sum (weights tuned for world-space matching)
-                        total_cost = 0.7 * dist_cost + 0.2 * appearance_cost + 0.1 * flow_cost
+                        total_cost = 0.7 * dist_cost + 0.2 * appearance_cost + 0.1 * flow_cost + area_penalty
                         cost_matrix[i, j] = total_cost
 
                 # Solve assignment (Hungarian)
@@ -1956,419 +2471,6 @@ class TemporalGeometryStore:
                 best_iou = iou
                 best_id = obj_id
         return best_id
-
-class AppearanceExtractor:
-    """
-    Robust object envelope extraction using multi-mask fusion and adaptive lighting compensation.
-    Implements HSV/LAB clustering, shadow compensation, region growing, and contour scoring.
-    Optimized for low-res cameras and low-end hardware.
-    """
-    
-    def __init__(self, 
-                 roi_margin: float = 0.08,           # ROI expansion margin
-                 min_contour_area: int = 50,          # Minimum contour area (pixels)
-                 n_colors: int = 3,                    # Number of color clusters for HSV
-                 shadow_threshold: float = 0.3,        # Shadow detection threshold (V difference)
-                 edge_threshold1: int = 40,             # Canny low threshold
-                 edge_threshold2: int = 120,            # Canny high threshold
-                 grow_tolerance: float = 0.15,         # Region growing color tolerance (fraction)
-                 # NEW: Dynamic resolution scaling for low-end hardware [citation:1]
-                 enable_dynamic_resolution: bool = True,
-                 base_scale_factor: float = 1.0,       # Start at full resolution
-                 min_scale_factor: float = 0.5,         # Don't go below 50% resolution
-                 performance_target: float = 15.0):     # Target 15 FPS minimum
-        
-        # Existing initializations
-        self.roi_margin = roi_margin
-        self.min_contour_area = min_contour_area
-        self.n_colors = n_colors
-        self.shadow_threshold = shadow_threshold
-        self.edge_threshold1 = edge_threshold1
-        self.edge_threshold2 = edge_threshold2
-        self.grow_tolerance = grow_tolerance
-        
-        # NEW: Dynamic resolution attributes
-        self.enable_dynamic_resolution = enable_dynamic_resolution
-        self.current_scale = base_scale_factor
-        self.min_scale = min_scale_factor
-        self.target_fps = performance_target
-        self.fps_history = []
-        self.last_scale_adjustment = time.time()
-        
-        self.roi_margin = roi_margin
-        self.min_contour_area = min_contour_area
-        self.n_colors = n_colors
-        self.shadow_threshold = shadow_threshold
-        self.edge_threshold1 = edge_threshold1
-        self.edge_threshold2 = edge_threshold2
-        self.grow_tolerance = grow_tolerance
-        
-    def _simple_kmeans_hue(self, hue_vals: np.ndarray, k: int, max_iters: int = 10) -> np.ndarray:
-        """
-        Fast k-means on hue values (circular) using histogram peaks as initial centers.
-        Returns cluster centers (hue angles).
-        """
-        if len(hue_vals) < k:
-            # Not enough pixels, return equally spaced centers
-            return np.linspace(0, 179, k, dtype=np.float32)
-        
-        # Use histogram peaks as initial centers (fast)
-        hist = np.bincount(hue_vals, minlength=180)
-        # Find top k peaks (excluding zero bins maybe)
-        peaks = []
-        for _ in range(k):
-            if np.max(hist) == 0:
-                break
-            peak = np.argmax(hist)
-            peaks.append(peak)
-            # Suppress neighborhood to avoid multiple peaks near each other
-            start = max(0, peak - 10)
-            end = min(180, peak + 11)
-            hist[start:end] = 0
-        if len(peaks) < k:
-            # Pad with default
-            peaks.extend([0] * (k - len(peaks)))
-        
-        centers = np.array(peaks, dtype=np.float32)
-        
-        # Simple k-means with circular distance
-        for _ in range(max_iters):
-            # Assign each pixel to nearest center (circular distance)
-            distances = np.abs(hue_vals[:, None] - centers[None, :])
-            distances = np.minimum(distances, 180 - distances)  # circular
-            labels = np.argmin(distances, axis=1)
-            
-            # Update centers
-            new_centers = []
-            for i in range(k):
-                mask = labels == i
-                if np.any(mask):
-                    # Circular mean
-                    mean_hue = np.mean(hue_vals[mask])
-                    new_centers.append(mean_hue)
-                else:
-                    new_centers.append(centers[i])
-            new_centers = np.array(new_centers)
-            if np.allclose(centers, new_centers, atol=1.0):
-                break
-            centers = new_centers
-        return centers
-    
-    def _adaptive_color_mask(self, roi_hsv: np.ndarray, seed_point: Tuple[int, int]) -> np.ndarray:
-        """
-        Generate color mask using HSV clustering around seed point.
-        Returns binary mask.
-        """
-        h, w = roi_hsv.shape[:2]
-        seed_y, seed_x = seed_point
-        seed_hue = roi_hsv[seed_y, seed_x, 0]
-        
-        # Sample pixels near seed to estimate local color distribution
-        margin = 5
-        y1 = max(0, seed_y - margin)
-        y2 = min(h, seed_y + margin + 1)
-        x1 = max(0, seed_x - margin)
-        x2 = min(w, seed_x + margin + 1)
-        local_region = roi_hsv[y1:y2, x1:x2]
-        local_hues = local_region[:, :, 0].reshape(-1)
-        local_sats = local_region[:, :, 1].reshape(-1)
-        
-        # Cluster hues in local region (k=2 for object vs background)
-        if len(local_hues) > 10:
-            centers = self._simple_kmeans_hue(local_hues, k=min(2, self.n_colors))
-            # Find which center is closest to seed hue
-            dist_to_seed = np.minimum(np.abs(centers - seed_hue), 180 - np.abs(centers - seed_hue))
-            object_center = centers[np.argmin(dist_to_seed)]
-            # Use standard deviation of local hues around object center as tolerance
-            distances = np.minimum(np.abs(local_hues - object_center), 180 - np.abs(local_hues - object_center))
-            hue_std = np.std(distances)
-            hue_range = max(15, int(2 * hue_std))
-        else:
-            object_center = seed_hue
-            hue_range = 20
-        
-        # Also compute local saturation and value statistics for adaptive thresholds
-        local_sats = local_sats[local_sats > 0]  # ignore zero if any
-        local_vals = local_region[:, :, 2].reshape(-1)
-        local_vals = local_vals[local_vals > 0]
-        
-        s_mean = np.mean(local_sats) if len(local_sats) > 0 else 100
-        v_mean = np.mean(local_vals) if len(local_vals) > 0 else 100
-        
-        # Adaptive lower/upper bounds (ensure integer and within 0-255)
-        lower_hue = int(max(0, object_center - hue_range))
-        upper_hue = int(min(179, object_center + hue_range))
-        
-        lower_sat = int(max(30, s_mean * 0.4))
-        upper_sat = 255
-        
-        lower_val = int(max(30, v_mean * 0.3))
-        upper_val = 255
-        
-        # Create arrays with explicit uint8 type
-        lower = np.array([lower_hue, lower_sat, lower_val], dtype=np.uint8)
-        upper = np.array([upper_hue, upper_sat, upper_val], dtype=np.uint8)
-        
-        # Create mask
-        mask = cv2.inRange(roi_hsv, lower, upper)
-        
-        # Optional: handle hue wrap-around
-        if lower_hue > upper_hue:  # if range crosses 0
-            lower2 = np.array([0, lower_sat, lower_val], dtype=np.uint8)
-            upper2 = np.array([upper_hue, upper_sat, upper_val], dtype=np.uint8)
-            mask2 = cv2.inRange(roi_hsv, lower2, upper2)
-            mask = cv2.bitwise_or(mask, mask2)
-        
-        return mask  
-
-    def _shadow_compensation(self, roi_hsv: np.ndarray, color_mask: np.ndarray) -> np.ndarray:
-        """
-        Detect and compensate for shadows by analyzing V channel relative to local mean.
-        Returns adjusted mask (shadows removed or included based on color).
-        """
-        # Compute local average V for non-zero areas in color mask
-        v_channel = roi_hsv[:, :, 2].astype(np.float32)
-        if np.sum(color_mask) == 0:
-            return color_mask
-        
-        # Estimate object's typical brightness from areas already in mask
-        object_v = v_channel[color_mask > 0]
-        if len(object_v) == 0:
-            return color_mask
-        mean_v = np.mean(object_v)
-        std_v = np.std(object_v)
-        
-        # Shadow regions: pixels that have similar hue/sat but much lower V
-        # We'll create a mask of candidate shadows: where V < mean_v - threshold*std_v
-        shadow_candidates = (v_channel < (mean_v - self.shadow_threshold * std_v)).astype(np.uint8) * 255
-        
-        # But only if hue and sat are similar to object (we already have color mask for those)
-        # So final shadow mask = shadow_candidates AND (hue/sat similar)
-        # We can approximate by dilating color mask and intersecting
-        kernel = np.ones((5,5), np.uint8)
-        dilated_mask = cv2.dilate(color_mask, kernel, iterations=1)
-        shadow_mask = cv2.bitwise_and(shadow_candidates, dilated_mask)
-        
-        # Add shadow mask to original color mask
-        compensated_mask = cv2.bitwise_or(color_mask, shadow_mask)
-        return compensated_mask
-    
-    def _edge_mask(self, roi_gray: np.ndarray) -> np.ndarray:
-        """Canny edge detection with morphological closing to form connected regions."""
-        edges = cv2.Canny(roi_gray, self.edge_threshold1, self.edge_threshold2)
-        kernel = np.ones((3,3), np.uint8)
-        edges = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel, iterations=1)
-        return edges
-    
-    def _region_growing(self, mask: np.ndarray, seed_point: Tuple[int, int], 
-                        roi_hsv: np.ndarray, roi_gray: np.ndarray) -> np.ndarray:
-        """
-        Grow region from seed using color and edge affinity.
-        Returns refined mask.
-        """
-        h, w = mask.shape
-        seed_y, seed_x = seed_point
-        
-        # If seed is out of bounds or already zero, return original
-        if seed_y >= h or seed_x >= w or mask[seed_y, seed_x] == 0:
-            return mask
-        
-        # Get seed color - convert to int to avoid uint8 underflow later
-        seed_hsv = roi_hsv[seed_y, seed_x]
-        seed_hue = int(seed_hsv[0])
-        seed_sat = int(seed_hsv[1])
-        seed_val = int(seed_hsv[2])
-        
-        # Create a queue for flood fill
-        visited = np.zeros_like(mask, dtype=bool)
-        grown_mask = np.zeros_like(mask)
-        
-        queue = [(seed_y, seed_x)]
-        visited[seed_y, seed_x] = True
-        
-        # Tolerances
-        hue_tol = 15
-        sat_tol = 40
-        val_tol = 40
-        
-        while queue:
-            y, x = queue.pop(0)
-            grown_mask[y, x] = 255
-            
-            # Check 4-neighbors
-            for dy, dx in [(-1,0), (1,0), (0,-1), (0,1)]:
-                ny, nx = y+dy, x+dx
-                if ny < 0 or ny >= h or nx < 0 or nx >= w:
-                    continue
-                if visited[ny, nx]:
-                    continue
-                
-                # Check if neighbor is in original mask OR color-similar
-                if mask[ny, nx] > 0:
-                    # If it's in mask, accept
-                    visited[ny, nx] = True
-                    queue.append((ny, nx))
-                else:
-                    # Check color similarity - convert neighbor values to int
-                    nhsv = roi_hsv[ny, nx]
-                    nhsv_0 = int(nhsv[0])
-                    nhsv_1 = int(nhsv[1])
-                    nhsv_2 = int(nhsv[2])
-                    
-                    # Compute differences (now with ints, no overflow)
-                    dhue = min(abs(nhsv_0 - seed_hue), 180 - abs(nhsv_0 - seed_hue))
-                    dsat = abs(nhsv_1 - seed_sat)
-                    dval = abs(nhsv_2 - seed_val)
-                    
-                    if dhue < hue_tol and dsat < sat_tol and dval < val_tol:
-                        # Also check edge presence: if strong edge nearby, maybe stop
-                        # For simplicity, we proceed
-                        visited[ny, nx] = True
-                        queue.append((ny, nx))
-        
-        return grown_mask  
-
-    def _contour_confidence(self, contour: np.ndarray, roi_gray: np.ndarray, 
-                            roi_mask: np.ndarray) -> float:
-        """
-        Compute confidence score for a contour based on:
-        - Edge strength along boundary
-        - Color consistency inside
-        - Contour smoothness (curve continuity)
-        """
-        # Create mask of contour interior
-        interior_mask = np.zeros_like(roi_gray, dtype=np.uint8)
-        cv2.drawContours(interior_mask, [contour], -1, 255, -1)
-        
-        # 1. Color consistency: standard deviation of gray values inside
-        inside_pixels = roi_gray[interior_mask > 0]
-        if len(inside_pixels) == 0:
-            color_score = 0.0
-        else:
-            color_std = np.std(inside_pixels)
-            # Normalize: lower std is better (max possible std ~128)
-            color_score = max(0.0, 1.0 - (color_std / 128.0))
-        
-        # 2. Edge strength along boundary: sample edge image at contour points
-        edges = cv2.Canny(roi_gray, self.edge_threshold1, self.edge_threshold2)
-        # Draw contour line
-        contour_line = np.zeros_like(roi_gray, dtype=np.uint8)
-        cv2.drawContours(contour_line, [contour], -1, 255, 1)
-        edge_on_contour = cv2.bitwise_and(edges, contour_line)
-        edge_strength = np.sum(edge_on_contour > 0) / max(1, np.sum(contour_line > 0))
-        
-        # 3. Smoothness: compare arc length to convex hull perimeter
-        hull = cv2.convexHull(contour)
-        arc_len = cv2.arcLength(contour, True)
-        hull_len = cv2.arcLength(hull, True)
-        if hull_len > 0:
-            smoothness = hull_len / arc_len  # closer to 1 means smoother
-        else:
-            smoothness = 1.0
-        
-        # Combine scores (weights can be tuned)
-        confidence = 0.3 * color_score + 0.5 * edge_strength + 0.2 * smoothness
-        return confidence
-    
-    def extract_contours(self, frame: np.ndarray, box: Tuple[int, int, int, int, int, int, int, int], 
-                         prior_contour: Optional[np.ndarray] = None) -> List[Tuple[np.ndarray, float]]:
-        """
-        Main method: extract multiple contours from ROI with confidence scores.
-        Returns list of (contour, confidence).
-        """
-        x1,y1,x2,y2,x3,y3,x4,y4 = box
-        x_min = min(x1,x2,x3,x4)
-        y_min = min(y1,y2,y3,y4)
-        x_max = max(x1,x2,x3,x4)
-        y_max = max(y1,y2,y3,y4)
-
-        margin = int(self.roi_margin * max(x_max - x_min, y_max - y_min))
-        h, w = frame.shape[:2]
-        x_min_exp = max(0, x_min - margin)
-        y_min_exp = max(0, y_min - margin)
-        x_max_exp = min(w, x_max + margin)
-        y_max_exp = min(h, y_max + margin)
-
-        roi = frame[y_min_exp:y_max_exp, x_min_exp:x_max_exp]
-        if roi.size == 0:
-            return []
-        
-        roi_hsv = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
-        roi_gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
-        
-        # Seed point: center of original box (before expansion) within ROI
-        seed_x = (x_min + x_max)//2 - x_min_exp
-        seed_y = (y_min + y_max)//2 - y_min_exp
-        seed_point = (seed_y, seed_x)
-        
-        # --- Multi-mask generation ---
-        
-        # 1. Adaptive color mask (HSV clustering)
-        color_mask = self._adaptive_color_mask(roi_hsv, seed_point)
-        
-        # 2. Shadow compensation
-        color_mask = self._shadow_compensation(roi_hsv, color_mask)
-        
-        # 3. Edge mask
-        edge_mask = self._edge_mask(roi_gray)
-        
-        # 4. Fusion: combine color and edge (weighted OR, but keep color as primary)
-        #    Use color mask as base, then add edges to fill gaps
-        kernel = np.ones((3,3), np.uint8)
-        color_mask_dilated = cv2.dilate(color_mask, kernel, iterations=1)
-        fused_mask = cv2.bitwise_or(color_mask_dilated, edge_mask)
-        # 5. Apply prior contour if available (as a soft constraint)
-        if prior_contour is not None:
-            # Transform prior contour to ROI coordinates
-            prior_in_roi = prior_contour.copy()
-            prior_in_roi[:, :, 0] -= x_min_exp
-            prior_in_roi[:, :, 1] -= y_min_exp
-            
-            # Create mask from prior contour and dilate it
-            prior_mask = np.zeros_like(roi_gray, dtype=np.uint8)
-            cv2.drawContours(prior_mask, [prior_in_roi], -1, 255, -1)
-            kernel_large = np.ones((11,11), np.uint8)
-            prior_mask_dilated = cv2.dilate(prior_mask, kernel_large, iterations=2)
-            
-            # Restrict fused mask to the dilated prior region
-            fused_mask = cv2.bitwise_and(fused_mask, prior_mask_dilated)
-        
-        # 6. Region growing from seed to ensure continuity
-        # 5. Region growing from seed to ensure continuity
-        grown_mask = self._region_growing(fused_mask, seed_point, roi_hsv, roi_gray)
-        
-        # --- Contour extraction ---
-        contours, _ = cv2.findContours(grown_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        if not contours:
-            return []
-        
-        # Filter small contours
-        valid = []
-        for cnt in contours:
-            area = cv2.contourArea(cnt)
-            if area >= self.min_contour_area:
-                # Smooth contour
-                epsilon = 0.002 * cv2.arcLength(cnt, True)
-                cnt = cv2.approxPolyDP(cnt, epsilon, True)
-                # Shift back to frame coordinates
-                cnt[:, :, 0] += x_min_exp
-                cnt[:, :, 1] += y_min_exp
-                # Compute confidence
-                # Need ROI-level gray for confidence; we have roi_gray in ROI coordinates,
-                # but contour is in frame coordinates. For simplicity, we compute confidence
-                # before shifting, using roi_gray and mask.
-                # We'll compute confidence now (before shift) using roi-level data.
-                # Create a temporary contour copy in ROI coordinates
-                cnt_roi = cnt.copy()
-                cnt_roi[:, :, 0] -= x_min_exp
-                cnt_roi[:, :, 1] -= y_min_exp
-                conf = self._contour_confidence(cnt_roi, roi_gray, grown_mask)
-                valid.append((cnt, conf))
-        
-        # Sort by confidence descending
-        valid.sort(key=lambda x: x[1], reverse=True)
-        return valid
-
 # ============================================================
 # Proposal buffer – temporal stability gate + area filter + hysteresis
 # ============================================================
@@ -2962,13 +3064,6 @@ def main():
         print("Camera open failed", file=sys.stderr)
         sys.exit(1)
 
-    # Initialize tracker with parameters optimized for low-res video
-    tracker = ObjectTracker(
-        max_lost_frames=8,           # Quick recovery after occlusion
-        distance_threshold=40,        # Tighter matching for small objects
-        persistence_decay=0.6,        # Moderate decay
-        min_persistence=0.25          # Lower threshold for reassignment
-    )
     # ===== Initialize Object Identity Memory =====
     identity_memory = ObjectIdentityMemory(
         db_path='./object_memory_db.pkl',
@@ -3005,6 +3100,16 @@ def main():
         edge_threshold2=120,
         grow_tolerance=0.15
     )
+
+    # Initialize tracker with parameters optimized for low-res video
+    tracker = ObjectTracker(
+        max_lost_frames=8,           # Quick recovery after occlusion
+        distance_threshold=40,        # Tighter matching for small objects
+        persistence_decay=0.6,        # Moderate decay
+        min_persistence=0.25,         # Lower threshold for reassignment
+        min_area_global=extractor.min_contour_area   # PHASE 2: use extractor's min area
+    )
+    
     # Initialize proposal buffer
     proposal_buffer = ProposalBuffer(
         iou_threshold=0.5,
@@ -3039,6 +3144,8 @@ def main():
     NOVELTY_AGE_DECAY = 20              # frames over which novelty from age decays
     NOVELTY_AREA_INCREASE_FACTOR = 1.5  # area increase factor for novelty bonus
     NOVELTY_AREA_BONUS = 0.3            # bonus if area increased significantly
+    # --- Segment 5: Focus decay threshold ---
+    FOCUS_DECAY_THRESHOLD = 0.3        # if focused object's persistence drops below this, release focus
     while True:
         ret, frame = cap.read()
         if not ret:
@@ -3191,7 +3298,7 @@ def main():
             contour_list = extractor.extract_contours(frame, box8, prior_contour=None)
             raw_detections.extend(contour_list)   # each is (contour, conf)
 
-        # NEW: Enhance small objects using depth information [citation:6]
+        #  Enhance small objects using depth information [citation:6]
         if depth_proposals:   # depth_proposals is always defined (may be empty)
             enhanced_small = enhance_small_objects_with_depth(frame, depth_proposals)
             # Assign a default confidence of 0.7 to enhanced contours
@@ -3210,7 +3317,7 @@ def main():
         filtered_pairs = proposal_buffer.update(raw_detections)
 
         # Update tracker with filtered contours and confidences
-        tracked_objects = tracker.update(frame, filtered_pairs, camera_affine=affine_to_use, identity_memory=identity_memory)
+        tracked_objects = tracker.update(frame, filtered_pairs, camera_affine=affine_to_use, identity_memory=identity_memory, appearance_extractor=extractor)
         
         # NEW: Update template feature cache - only for confirmed tracks [citation:8]
         if not hasattr(tracker, 'feature_cache'):
@@ -3310,18 +3417,25 @@ def main():
             else:
                 # Check if current focus is still tracked
                 if current_focus_id in tracked_objects:
+                    current_obj = tracker.tracked_objects[current_focus_id]
                     current_score = attention_scores[current_focus_id]
                     focus_hold_frames += 1
 
-                    # Only consider switching if we've held for minimum frames
-                    if focus_hold_frames >= focus_min_hold:
-                        # Switch if best score is significantly better (margin)
-                        if best_id != current_focus_id and best_score > current_score * focus_switch_margin:
-                            # Switch focus
-                            current_focus_id = best_id
-                            focus_hold_frames = 1
-                            last_switch_time = time.time()
-                    # else: still in cooldown, keep current focus
+                    # --- Segment 5: Focus decay - release if persistence too low ---
+                    if current_obj.persistence_score < FOCUS_DECAY_THRESHOLD:
+                        current_focus_id = None
+                        focus_hold_frames = 0
+                        # Skip further checks, will reselect next frame
+                    else:
+                        # Only consider switching if we've held for minimum frames
+                        if focus_hold_frames >= focus_min_hold:
+                            # Switch if best score is significantly better (margin)
+                            if best_id != current_focus_id and best_score > current_score * focus_switch_margin:
+                                # Switch focus
+                                current_focus_id = best_id
+                                focus_hold_frames = 1
+                                last_switch_time = time.time()
+                        # else: still in cooldown, keep current focus
                 else:
                     # Current focus lost -> reset
                     current_focus_id = None
