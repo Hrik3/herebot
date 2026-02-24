@@ -1,0 +1,23 @@
+{
+  "timestamp": 1771943314.6474967,
+  "user_input": "bro",
+  "system_response": "I've been thinking about 'means'. It means means means mean.",
+  "factor_vector": {
+    "curiosity": 27.00667284583874,
+    "threat": 0.2811238656479287,
+    "trust": 0.6576900756107319,
+    "confidence": 0.5684403358801783,
+    "uncertainty": 0.06154087661372233,
+    "energy": 0.43700000000000006,
+    "attention": 0.05,
+    "comprehension": 0.5,
+    "fluency": 0.7,
+    "cognitive_load": 0.97815,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 5.941338093297755,
+  "metadata": {
+    "ci_confidence": 0.5684403358801783
+  }
+}

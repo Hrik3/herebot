@@ -1,0 +1,23 @@
+{
+  "timestamp": 1771945414.634746,
+  "user_input": "hi herebot",
+  "system_response": "Curious as I am, I understand 'hi' as hi means greeting. Tell me more.",
+  "factor_vector": {
+    "curiosity": 1.9943107257298107,
+    "threat": 0.16301352450531553,
+    "trust": 0.5640185077342195,
+    "confidence": 0.6840345476408604,
+    "uncertainty": 0.06801658792450074,
+    "energy": 0.44200000000000006,
+    "attention": 0.1,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9558,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.8047829892216902,
+  "metadata": {
+    "ci_confidence": 0.6840345476408604
+  }
+}

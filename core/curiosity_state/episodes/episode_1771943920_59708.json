@@ -1,0 +1,11 @@
+{
+  "timestamp": 1771943920.5993695,
+  "user_input": "how are you?",
+  "system_response": "[synthetic]",
+  "factor_vector": {},
+  "factor_dim": 0,
+  "intrinsic_reward": 0.0,
+  "metadata": {
+    "synthetic": true
+  }
+}

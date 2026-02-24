@@ -1,0 +1,23 @@
+{
+  "timestamp": 1771943343.1382198,
+  "user_input": "\"switch chat",
+  "system_response": "I'm curious about 'hi,'. I'd like to learn more about it.",
+  "factor_vector": {
+    "curiosity": 26.79710293520738,
+    "threat": 0.29887556115294867,
+    "trust": 0.6574339282688402,
+    "confidence": 0.5343289542604855,
+    "uncertainty": 0.059342988163225065,
+    "energy": 0.43799999999999994,
+    "attention": 0.1,
+    "comprehension": 0.5,
+    "fluency": 0.7,
+    "cognitive_load": 0.9562,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 6.438522796826573,
+  "metadata": {
+    "ci_confidence": 0.5343289542604855
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "label": "shadow_normal state_basic knowledge_1771942682",
+  "vector": [
+    45.154445243941424,
+    0.19566714185855155,
+    0.7539338878021874,
+    0.6434373369627235,
+    0.053549649696882806,
+    0.3725,
+    0.15,
+    0.6666666666666666,
+    0.7,
+    0.944125,
+    0.0
+  ],
+  "dimension": 11,
+  "timestamp": 1771942682.8081777,
+  "metadata": {
+    "merged_from": [
+      "normal state",
+      "basic knowledge"
+    ],
+    "similarity": 0.9999944155410697,
+    "timestamp": 1771942682.8081353
+  },
+  "is_shadow": true
+}

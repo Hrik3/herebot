@@ -1,23 +1,438 @@
 [
   {
     "labels": [
-      "greeting",
-      "positive"
+      "living beings",
+      "fruits"
     ],
-    "similarity": 0.9987874887548036,
+    "similarity": 0.9667725245959478,
+    "words1": [],
+    "words2": [],
     "resolved": true,
-    "resolution_label": "shadow_greeting_positive_1771032946",
-    "timestamp": 1771034426.4338706
+    "resolution_label": "shadow_living beings_fruits_1771943917",
+    "timestamp": 1771943917.8577077,
+    "resolution_type": "shadow"
   },
   {
     "labels": [
-      "greeting",
-      "living beings"
+      "living beings",
+      "basic knowledge"
     ],
-    "similarity": 0.9898160550892068,
+    "similarity": 0.999960542028163,
+    "words1": [],
+    "words2": [],
+    "resolved": true,
+    "resolution_label": "shadow_living beings_basic knowledge_1771943917",
+    "timestamp": 1771943917.8577175,
+    "resolution_type": "shadow"
+  },
+  {
+    "labels": [
+      "living beings",
+      "confusion"
+    ],
+    "similarity": 0.9465474655796552,
+    "words1": [],
+    "words2": [],
+    "resolved": true,
+    "resolution_label": "shadow_living beings_confusion_1771943917",
+    "timestamp": 1771943917.8577297,
+    "resolution_type": "shadow"
+  },
+  {
+    "labels": [
+      "living beings",
+      "negative"
+    ],
+    "similarity": 0.957409569183285,
+    "words1": [],
+    "words2": [],
+    "resolved": false,
+    "resolution_label": null,
+    "timestamp": 1771943917.8577356
+  },
+  {
+    "labels": [
+      "living beings",
+      "normal state"
+    ],
+    "similarity": 0.9999460632409191,
+    "words1": [],
+    "words2": [],
+    "resolved": true,
+    "resolution_label": "shadow_normal state_living beings_1771942682",
+    "timestamp": 1771943917.8577418
+  },
+  {
+    "labels": [
+      "living beings",
+      "greeting"
+    ],
+    "similarity": 0.9840642097940656,
+    "words1": [],
+    "words2": [],
     "resolved": true,
     "resolution_label": "shadow_greeting_living beings_1771034291",
-    "timestamp": 1771034426.433884
+    "timestamp": 1771943917.857753
+  },
+  {
+    "labels": [
+      "living beings",
+      "water bodies"
+    ],
+    "similarity": 0.9998142376327677,
+    "words1": [],
+    "words2": [],
+    "resolved": false,
+    "resolution_label": null,
+    "timestamp": 1771943917.857759
+  },
+  {
+    "labels": [
+      "cautious",
+      "normal"
+    ],
+    "similarity": 0.9924151880270218,
+    "words1": [],
+    "words2": [],
+    "resolved": false,
+    "resolution_label": null,
+    "timestamp": 1771943917.8577743
+  },
+  {
+    "labels": [
+      "cautious",
+      "confusion"
+    ],
+    "similarity": 0.8549926949293672,
+    "words1": [],
+    "words2": [],
+    "resolved": false,
+    "resolution_label": null,
+    "timestamp": 1771943917.8577797
+  },
+  {
+    "labels": [
+      "cautious",
+      "cautious inquiry"
+    ],
+    "similarity": 0.9596726774609512,
+    "words1": [],
+    "words2": [],
+    "resolved": false,
+    "resolution_label": null,
+    "timestamp": 1771943917.8577943
+  },
+  {
+    "labels": [
+      "fruits",
+      "basic knowledge"
+    ],
+    "similarity": 0.9655678170022165,
+    "words1": [],
+    "words2": [],
+    "resolved": false,
+    "resolution_label": null,
+    "timestamp": 1771943917.8578093
+  },
+  {
+    "labels": [
+      "fruits",
+      "normal"
+    ],
+    "similarity": 0.859182254681199,
+    "words1": [],
+    "words2": [],
+    "resolved": false,
+    "resolution_label": null,
+    "timestamp": 1771943917.8578148
+  },
+  {
+    "labels": [
+      "fruits",
+      "confusion"
+    ],
+    "similarity": 0.9891079924251991,
+    "words1": [],
+    "words2": [],
+    "resolved": false,
+    "resolution_label": null,
+    "timestamp": 1771943917.8578198
+  },
+  {
+    "labels": [
+      "fruits",
+      "negative"
+    ],
+    "similarity": 0.9987202543911146,
+    "words1": [],
+    "words2": [],
+    "resolved": false,
+    "resolution_label": null,
+    "timestamp": 1771943917.8578255
+  },
+  {
+    "labels": [
+      "fruits",
+      "normal state"
+    ],
+    "similarity": 0.9647660493973695,
+    "words1": [],
+    "words2": [],
+    "resolved": true,
+    "resolution_label": "shadow_normal state_fruits_1771942682",
+    "timestamp": 1771943917.8578308
+  },
+  {
+    "labels": [
+      "fruits",
+      "greeting"
+    ],
+    "similarity": 0.9961290043498713,
+    "words1": [],
+    "words2": [],
+    "resolved": true,
+    "resolution_label": "shadow_greeting_fruits_1771034426",
+    "timestamp": 1771943917.8578405
+  },
+  {
+    "labels": [
+      "fruits",
+      "water bodies"
+    ],
+    "similarity": 0.9618997845376318,
+    "words1": [],
+    "words2": [],
+    "resolved": false,
+    "resolution_label": null,
+    "timestamp": 1771943917.8578455
+  },
+  {
+    "labels": [
+      "basic knowledge",
+      "confusion"
+    ],
+    "similarity": 0.9446579946301499,
+    "words1": [],
+    "words2": [],
+    "resolved": false,
+    "resolution_label": null,
+    "timestamp": 1771943917.8578563
+  },
+  {
+    "labels": [
+      "basic knowledge",
+      "negative"
+    ],
+    "similarity": 0.9563039055945916,
+    "words1": [],
+    "words2": [],
+    "resolved": false,
+    "resolution_label": null,
+    "timestamp": 1771943917.8578613
+  },
+  {
+    "labels": [
+      "basic knowledge",
+      "normal state"
+    ],
+    "similarity": 0.9999944155410697,
+    "words1": [],
+    "words2": [],
+    "resolved": true,
+    "resolution_label": "shadow_normal state_basic knowledge_1771942682",
+    "timestamp": 1771943917.8578675
+  },
+  {
+    "labels": [
+      "basic knowledge",
+      "greeting"
+    ],
+    "similarity": 0.9833941562961566,
+    "words1": [],
+    "words2": [],
+    "resolved": true,
+    "resolution_label": "shadow_greeting_basic knowledge_1771034426",
+    "timestamp": 1771943917.8578773
+  },
+  {
+    "labels": [
+      "basic knowledge",
+      "water bodies"
+    ],
+    "similarity": 0.999815426081266,
+    "words1": [],
+    "words2": [],
+    "resolved": false,
+    "resolution_label": null,
+    "timestamp": 1771943917.8578823
+  },
+  {
+    "labels": [
+      "normal",
+      "confusion"
+    ],
+    "similarity": 0.897247192866339,
+    "words1": [],
+    "words2": [],
+    "resolved": false,
+    "resolution_label": null,
+    "timestamp": 1771943917.8578885
+  },
+  {
+    "labels": [
+      "normal",
+      "negative"
+    ],
+    "similarity": 0.8717149059376189,
+    "words1": [],
+    "words2": [],
+    "resolved": false,
+    "resolution_label": null,
+    "timestamp": 1771943917.8578937
+  },
+  {
+    "labels": [
+      "normal",
+      "cautious inquiry"
+    ],
+    "similarity": 0.9592893502031375,
+    "words1": [],
+    "words2": [],
+    "resolved": false,
+    "resolution_label": null,
+    "timestamp": 1771943917.857904
+  },
+  {
+    "labels": [
+      "confusion",
+      "negative"
+    ],
+    "similarity": 0.9868386015046908,
+    "words1": [],
+    "words2": [],
+    "resolved": false,
+    "resolution_label": null,
+    "timestamp": 1771943917.857922
+  },
+  {
+    "labels": [
+      "confusion",
+      "normal state"
+    ],
+    "similarity": 0.943791087362712,
+    "words1": [],
+    "words2": [],
+    "resolved": true,
+    "resolution_label": "shadow_normal state_confusion_1771943006",
+    "timestamp": 1771943917.8579276
+  },
+  {
+    "labels": [
+      "confusion",
+      "cautious inquiry"
+    ],
+    "similarity": 0.8535132908874266,
+    "words1": [],
+    "words2": [],
+    "resolved": false,
+    "resolution_label": null,
+    "timestamp": 1771943917.857933
+  },
+  {
+    "labels": [
+      "confusion",
+      "greeting"
+    ],
+    "similarity": 0.9806236975092323,
+    "words1": [],
+    "words2": [],
+    "resolved": false,
+    "resolution_label": null,
+    "timestamp": 1771943917.8579383
+  },
+  {
+    "labels": [
+      "confusion",
+      "water bodies"
+    ],
+    "similarity": 0.941455256196746,
+    "words1": [],
+    "words2": [],
+    "resolved": false,
+    "resolution_label": null,
+    "timestamp": 1771943917.8579438
+  },
+  {
+    "labels": [
+      "negative",
+      "normal state"
+    ],
+    "similarity": 0.9553990069231899,
+    "words1": [],
+    "words2": [],
+    "resolved": true,
+    "resolution_label": "shadow_normal state_negative_1771943006",
+    "timestamp": 1771943917.85795
+  },
+  {
+    "labels": [
+      "negative",
+      "cautious inquiry"
+    ],
+    "similarity": 0.8672936374255836,
+    "words1": [],
+    "words2": [],
+    "resolved": false,
+    "resolution_label": null,
+    "timestamp": 1771943917.857955
+  },
+  {
+    "labels": [
+      "negative",
+      "greeting"
+    ],
+    "similarity": 0.9931505654609597,
+    "words1": [],
+    "words2": [],
+    "resolved": true,
+    "resolution_label": "shadow_greeting_negative_1771034426",
+    "timestamp": 1771943917.8579602
+  },
+  {
+    "labels": [
+      "negative",
+      "water bodies"
+    ],
+    "similarity": 0.9518124767024084,
+    "words1": [],
+    "words2": [],
+    "resolved": false,
+    "resolution_label": null,
+    "timestamp": 1771943917.8579652
+  },
+  {
+    "labels": [
+      "normal state",
+      "greeting"
+    ],
+    "similarity": 0.9828112076448247,
+    "words1": [],
+    "words2": [],
+    "resolved": true,
+    "resolution_label": "shadow_greeting_normal state_1771034291",
+    "timestamp": 1771943917.8579757
+  },
+  {
+    "labels": [
+      "normal state",
+      "water bodies"
+    ],
+    "similarity": 0.9998628117378573,
+    "words1": [],
+    "words2": [],
+    "resolved": true,
+    "resolution_label": "shadow_normal state_water bodies_1771943006",
+    "timestamp": 1771943917.857981
   },
   {
     "labels": [
@@ -25,304 +440,10 @@
       "water bodies"
     ],
     "similarity": 0.9805174155828829,
+    "words1": [],
+    "words2": [],
     "resolved": true,
     "resolution_label": "shadow_greeting_water bodies_1771034291",
-    "timestamp": 1771034426.4338932
-  },
-  {
-    "labels": [
-      "greeting",
-      "normal state"
-    ],
-    "similarity": 0.9828112076448247,
-    "resolved": true,
-    "resolution_label": "shadow_greeting_normal state_1771034291",
-    "timestamp": 1771034426.4339085
-  },
-  {
-    "labels": [
-      "greeting",
-      "negative"
-    ],
-    "similarity": 0.9993351899097284,
-    "resolved": true,
-    "resolution_label": "shadow_greeting_negative_1771034426",
-    "timestamp": 1771034426.433916,
-    "resolution_type": "shadow"
-  },
-  {
-    "labels": [
-      "greeting",
-      "basic knowledge"
-    ],
-    "similarity": 0.9833941562961566,
-    "resolved": true,
-    "resolution_label": "shadow_greeting_basic knowledge_1771034426",
-    "timestamp": 1771034426.4339254,
-    "resolution_type": "shadow"
-  },
-  {
-    "labels": [
-      "greeting",
-      "fruits"
-    ],
-    "similarity": 0.9845137764327785,
-    "resolved": true,
-    "resolution_label": "shadow_greeting_fruits_1771034426",
-    "timestamp": 1771034426.4339335,
-    "resolution_type": "shadow"
-  },
-  {
-    "labels": [
-      "greeting",
-      "me"
-    ],
-    "similarity": 0.8751081835749324,
-    "resolved": true,
-    "resolution_label": "greeting",
-    "timestamp": 1771034426.4339414,
-    "resolution_type": "permanent"
-  },
-  {
-    "labels": [
-      "positive",
-      "living beings"
-    ],
-    "similarity": 0.9818734534157764,
-    "resolved": true,
-    "resolution_label": "living beings",
-    "timestamp": 1771034426.4339495,
-    "resolution_type": "permanent"
-  },
-  {
-    "labels": [
-      "positive",
-      "water bodies"
-    ],
-    "similarity": 0.9697843124798406,
-    "resolved": true,
-    "resolution_label": "water bodies",
-    "timestamp": 1771034426.4339569,
-    "resolution_type": "permanent"
-  },
-  {
-    "labels": [
-      "positive",
-      "normal state"
-    ],
-    "similarity": 0.9726368264207865,
-    "resolved": false,
-    "resolution_label": null,
-    "timestamp": 1771034426.4339705
-  },
-  {
-    "labels": [
-      "positive",
-      "negative"
-    ],
-    "similarity": 0.999867189492044,
-    "resolved": false,
-    "resolution_label": null,
-    "timestamp": 1771034426.4339776
-  },
-  {
-    "labels": [
-      "positive",
-      "basic knowledge"
-    ],
-    "similarity": 0.9733709339170482,
-    "resolved": false,
-    "resolution_label": null,
-    "timestamp": 1771034426.433985
-  },
-  {
-    "labels": [
-      "positive",
-      "fruits"
-    ],
-    "similarity": 0.9748449257069048,
-    "resolved": false,
-    "resolution_label": null,
-    "timestamp": 1771034426.4339921
-  },
-  {
-    "labels": [
-      "positive",
-      "me"
-    ],
-    "similarity": 0.8976945373484938,
-    "resolved": false,
-    "resolution_label": null,
-    "timestamp": 1771034426.4339993
-  },
-  {
-    "labels": [
-      "living beings",
-      "water bodies"
-    ],
-    "similarity": 0.998146503679982,
-    "resolved": false,
-    "resolution_label": null,
-    "timestamp": 1771034426.4340074
-  },
-  {
-    "labels": [
-      "living beings",
-      "normal state"
-    ],
-    "similarity": 0.99847969935072,
-    "resolved": false,
-    "resolution_label": null,
-    "timestamp": 1771034426.4340212
-  },
-  {
-    "labels": [
-      "living beings",
-      "negative"
-    ],
-    "similarity": 0.9843678215862289,
-    "resolved": false,
-    "resolution_label": null,
-    "timestamp": 1771034426.4340284
-  },
-  {
-    "labels": [
-      "living beings",
-      "basic knowledge"
-    ],
-    "similarity": 0.9986073588707851,
-    "resolved": false,
-    "resolution_label": null,
-    "timestamp": 1771034426.4340355
-  },
-  {
-    "labels": [
-      "living beings",
-      "fruits"
-    ],
-    "similarity": 0.999294273804079,
-    "resolved": false,
-    "resolution_label": null,
-    "timestamp": 1771034426.4340556
-  },
-  {
-    "labels": [
-      "water bodies",
-      "normal state"
-    ],
-    "similarity": 0.9998628117378573,
-    "resolved": false,
-    "resolution_label": null,
-    "timestamp": 1771034426.4340768
-  },
-  {
-    "labels": [
-      "water bodies",
-      "negative"
-    ],
-    "similarity": 0.9730921410967385,
-    "resolved": false,
-    "resolution_label": null,
-    "timestamp": 1771034426.434084
-  },
-  {
-    "labels": [
-      "water bodies",
-      "basic knowledge"
-    ],
-    "similarity": 0.999815426081266,
-    "resolved": false,
-    "resolution_label": null,
-    "timestamp": 1771034426.4340913
-  },
-  {
-    "labels": [
-      "water bodies",
-      "fruits"
-    ],
-    "similarity": 0.9997276620703904,
-    "resolved": false,
-    "resolution_label": null,
-    "timestamp": 1771034426.4340982
-  },
-  {
-    "labels": [
-      "cautious inquiry",
-      "me"
-    ],
-    "similarity": 0.9908659589427474,
-    "resolved": false,
-    "resolution_label": null,
-    "timestamp": 1771034426.4341378
-  },
-  {
-    "labels": [
-      "normal state",
-      "negative"
-    ],
-    "similarity": 0.9757772227198656,
-    "resolved": false,
-    "resolution_label": null,
-    "timestamp": 1771034426.4341462
-  },
-  {
-    "labels": [
-      "normal state",
-      "basic knowledge"
-    ],
-    "similarity": 0.9999944155410697,
-    "resolved": false,
-    "resolution_label": null,
-    "timestamp": 1771034426.4341528
-  },
-  {
-    "labels": [
-      "normal state",
-      "fruits"
-    ],
-    "similarity": 0.9997702002824351,
-    "resolved": false,
-    "resolution_label": null,
-    "timestamp": 1771034426.4341605
-  },
-  {
-    "labels": [
-      "negative",
-      "basic knowledge"
-    ],
-    "similarity": 0.9764743052134383,
-    "resolved": false,
-    "resolution_label": null,
-    "timestamp": 1771034426.4341748
-  },
-  {
-    "labels": [
-      "negative",
-      "fruits"
-    ],
-    "similarity": 0.9778465003311704,
-    "resolved": false,
-    "resolution_label": null,
-    "timestamp": 1771034426.4341822
-  },
-  {
-    "labels": [
-      "negative",
-      "me"
-    ],
-    "similarity": 0.8910459025000911,
-    "resolved": false,
-    "resolution_label": null,
-    "timestamp": 1771034426.434189
-  },
-  {
-    "labels": [
-      "basic knowledge",
-      "fruits"
-    ],
-    "similarity": 0.9997904439874047,
-    "resolved": false,
-    "resolution_label": null,
-    "timestamp": 1771034426.434197
+    "timestamp": 1771943917.8579967
   }
 ]

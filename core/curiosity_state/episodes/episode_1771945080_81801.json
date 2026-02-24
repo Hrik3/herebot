@@ -1,0 +1,23 @@
+{
+  "timestamp": 1771945080.0991383,
+  "user_input": "curious?",
+  "system_response": "I feel confident, and I'm really curious about 'normal'. It keeps appearing in my thoughts.",
+  "factor_vector": {
+    "curiosity": 26.961727828742934,
+    "threat": 0.17014915845513123,
+    "trust": 0.7094921191121056,
+    "confidence": 0.6596854807369743,
+    "uncertainty": 0.06755351196132328,
+    "energy": 0.44600000000000006,
+    "attention": 0.05,
+    "comprehension": 0.5,
+    "fluency": 0.7,
+    "cognitive_load": 0.9777,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 5.856446952744771,
+  "metadata": {
+    "ci_confidence": 0.6596854807369743
+  }
+}
