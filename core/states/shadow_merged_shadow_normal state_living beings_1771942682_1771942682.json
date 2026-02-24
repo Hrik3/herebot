@@ -1,0 +1,27 @@
+{
+  "label": "shadow_normal state_living beings_1771942682",
+  "vector": [
+    41.572323370493436,
+    0.19172358654501376,
+    0.702207427713943,
+    0.6402193841204422,
+    0.0555104534467844,
+    0.3655,
+    0.15,
+    0.5,
+    0.7,
+    0.945175,
+    0.0
+  ],
+  "dimension": 11,
+  "timestamp": 1771942682.6868343,
+  "metadata": {
+    "merged_from": [
+      "normal state",
+      "living beings"
+    ],
+    "similarity": 0.9999460632409191,
+    "timestamp": 1771942682.6867836
+  },
+  "is_shadow": true
+}

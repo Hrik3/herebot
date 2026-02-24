@@ -19,5 +19,14 @@
         }
       }
     }
+  ],
+  "logic_1771942692_30": [
+    {
+      "rating": "negative",
+      "timestamp": 1771942972.1735315,
+      "context": {
+        "factor_dict": {}
+      }
+    }
   ]
 }

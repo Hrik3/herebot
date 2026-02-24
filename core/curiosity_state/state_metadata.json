@@ -1,9 +1,9 @@
 {
   "greeting": {
     "energy_cost": 1.0,
-    "recent_usage": 1.026647331451401e-06,
+    "recent_usage": 0.0,
     "predictive_gain": 1.0,
-    "phase": "weak",
+    "phase": "archived",
     "last_used": 1771033056.3449464,
     "confidence": 1.0
   },
@@ -11,63 +11,63 @@
     "energy_cost": 1.0,
     "recent_usage": 0.0,
     "predictive_gain": 1.0,
-    "phase": "weak",
+    "phase": "archived",
     "last_used": 1771032946.2667623,
     "confidence": 1.0
   },
   "living beings": {
     "energy_cost": 1.0,
-    "recent_usage": 0.00010354224586690638,
+    "recent_usage": 0.10000001906475665,
     "predictive_gain": 1.0,
-    "phase": "weak",
-    "last_used": 1771033618.1602557,
+    "phase": "archived",
+    "last_used": 1771945080.0982192,
     "confidence": 1.0
   },
   "water bodies": {
     "energy_cost": 1.0,
-    "recent_usage": 3.080118208757451e-05,
+    "recent_usage": 0.0,
     "predictive_gain": 1.0,
-    "phase": "weak",
+    "phase": "archived",
     "last_used": 1771033490.2467427,
     "confidence": 1.0
   },
   "cautious inquiry": {
     "energy_cost": 1.0,
-    "recent_usage": 0.10002594161085544,
+    "recent_usage": 0.10397405415508534,
     "predictive_gain": 1.0,
-    "phase": "weak",
-    "last_used": 1771035189.8779013,
+    "phase": "archived",
+    "last_used": 1771945394.4093888,
     "confidence": 1.0
   },
   "normal state": {
     "energy_cost": 1.0,
-    "recent_usage": 1.0858778602695311e-05,
+    "recent_usage": 0.0,
     "predictive_gain": 1.0,
-    "phase": "weak",
-    "last_used": 1771033322.1261613,
+    "phase": "active",
+    "last_used": 1771943088.7206805,
     "confidence": 1.0
   },
   "negative": {
     "energy_cost": 1.0,
-    "recent_usage": 2.5940113028612293e-05,
+    "recent_usage": 0.0,
     "predictive_gain": 1.0,
-    "phase": "weak",
+    "phase": "archived",
     "last_used": 1771033480.434593,
     "confidence": 1.0
   },
   "basic knowledge": {
     "energy_cost": 1.0,
-    "recent_usage": 1.8312347471649798e-05,
+    "recent_usage": 0.0,
     "predictive_gain": 1.0,
-    "phase": "weak",
+    "phase": "archived",
     "last_used": 1771033382.903712,
     "confidence": 1.0
   },
   "fruits": {
     "energy_cost": 1.0,
-    "recent_usage": 0.10000000053602962,
+    "recent_usage": 0.0,
     "predictive_gain": 1.0,
-    "phase": "weak",
+    "phase": "archived",
     "last_used": 1771035257.8549454,
     "confidence": 1.0
   },
@@ -75,7 +75,7 @@
     "energy_cost": 1.0,
     "recent_usage": 0.0,
     "predictive_gain": 1.0,
-    "phase": "weak",
+    "phase": "archived",
     "last_used": 1771034291.1865199,
     "confidence": 1.0
   },
@@ -83,7 +83,7 @@
     "energy_cost": 1.0,
     "recent_usage": 0.0,
     "predictive_gain": 1.0,
-    "phase": "weak",
+    "phase": "archived",
     "last_used": 1771034291.187395,
     "confidence": 1.0
   },
@@ -91,7 +91,7 @@
     "energy_cost": 1.0,
     "recent_usage": 0.0,
     "predictive_gain": 1.0,
-    "phase": "weak",
+    "phase": "archived",
     "last_used": 1771034291.18823,
     "confidence": 1.0
   },
@@ -99,7 +99,7 @@
     "energy_cost": 1.0,
     "recent_usage": 0.0,
     "predictive_gain": 1.0,
-    "phase": "weak",
+    "phase": "archived",
     "last_used": 1771034298.8855317,
     "confidence": 1.0
   },
@@ -107,7 +107,7 @@
     "energy_cost": 1.0,
     "recent_usage": 0.0,
     "predictive_gain": 1.0,
-    "phase": "weak",
+    "phase": "archived",
     "last_used": 1771034298.8861778,
     "confidence": 1.0
   },
@@ -115,7 +115,7 @@
     "energy_cost": 1.0,
     "recent_usage": 0.0,
     "predictive_gain": 1.0,
-    "phase": "weak",
+    "phase": "archived",
     "last_used": 1771034298.8870378,
     "confidence": 1.0
   },
@@ -123,7 +123,7 @@
     "energy_cost": 1.0,
     "recent_usage": 0.0,
     "predictive_gain": 1.0,
-    "phase": "weak",
+    "phase": "archived",
     "last_used": 1771034298.8874862,
     "confidence": 1.0
   },
@@ -131,7 +131,7 @@
     "energy_cost": 1.0,
     "recent_usage": 0.0,
     "predictive_gain": 1.0,
-    "phase": "active",
+    "phase": "dormant",
     "last_used": 1771034426.4349892,
     "confidence": 1.0
   },
@@ -139,7 +139,7 @@
     "energy_cost": 1.0,
     "recent_usage": 0.0,
     "predictive_gain": 1.0,
-    "phase": "active",
+    "phase": "dormant",
     "last_used": 1771034426.4361377,
     "confidence": 1.0
   },
@@ -147,24 +147,176 @@
     "energy_cost": 1.0,
     "recent_usage": 0.0,
     "predictive_gain": 1.0,
-    "phase": "active",
+    "phase": "dormant",
     "last_used": 1771034426.4372735,
     "confidence": 1.0
   },
   "normal": {
     "energy_cost": 1.0,
-    "recent_usage": 0.1,
+    "recent_usage": 0.10000000015681092,
     "predictive_gain": 1.0,
     "phase": "active",
-    "last_used": 1771035214.3263748,
+    "last_used": 1771945414.633776,
     "confidence": 1.0
   },
   "confusion": {
     "energy_cost": 1.0,
-    "recent_usage": 0.1,
+    "recent_usage": 0.0,
     "predictive_gain": 1.0,
     "phase": "active",
-    "last_used": 1771035263.0345688,
+    "last_used": 1771943088.721288,
+    "confidence": 1.0
+  },
+  "shadow_normal state_living beings_1771942682": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.0,
+    "predictive_gain": 1.0,
+    "phase": "dormant",
+    "last_used": 1771942682.6868358,
+    "confidence": 1.0
+  },
+  "shadow_normal state_fruits_1771942682": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.0,
+    "predictive_gain": 1.0,
+    "phase": "dormant",
+    "last_used": 1771942682.7994716,
+    "confidence": 1.0
+  },
+  "shadow_normal state_basic knowledge_1771942682": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.0,
+    "predictive_gain": 1.0,
+    "phase": "dormant",
+    "last_used": 1771942682.8081784,
+    "confidence": 1.0
+  },
+  "macro_0_1771942691": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.0,
+    "predictive_gain": 1.0,
+    "phase": "dormant",
+    "last_used": 1771942691.1580188,
+    "confidence": 1.0
+  },
+  "macro_1_1771942691": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.0,
+    "predictive_gain": 1.0,
+    "phase": "dormant",
+    "last_used": 1771942691.1586273,
+    "confidence": 1.0
+  },
+  "macro_2_1771942691": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.0,
+    "predictive_gain": 1.0,
+    "phase": "dormant",
+    "last_used": 1771942691.1594834,
+    "confidence": 1.0
+  },
+  "shadow_normal state_confusion_1771943006": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.0,
+    "predictive_gain": 1.0,
+    "phase": "weak",
+    "last_used": 1771943006.9715853,
+    "confidence": 1.0
+  },
+  "shadow_normal state_negative_1771943006": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.0,
+    "predictive_gain": 1.0,
+    "phase": "weak",
+    "last_used": 1771943006.9724126,
+    "confidence": 1.0
+  },
+  "shadow_normal state_water bodies_1771943006": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.0,
+    "predictive_gain": 1.0,
+    "phase": "weak",
+    "last_used": 1771943006.9732075,
+    "confidence": 1.0
+  },
+  "macro_1_1771943014": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.0,
+    "predictive_gain": 1.0,
+    "phase": "weak",
+    "last_used": 1771943014.4468331,
+    "confidence": 1.0
+  },
+  "macro_3_1771943014": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.0,
+    "predictive_gain": 1.0,
+    "phase": "weak",
+    "last_used": 1771943014.4474788,
+    "confidence": 1.0
+  },
+  "macro_4_1771943014": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.0,
+    "predictive_gain": 1.0,
+    "phase": "weak",
+    "last_used": 1771943014.4483771,
+    "confidence": 1.0
+  },
+  "cautious": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.1868358234535098,
+    "predictive_gain": 1.0,
+    "phase": "active",
+    "last_used": 1771943380.1333842,
+    "confidence": 1.0
+  },
+  "shadow_living beings_fruits_1771943917": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.0,
+    "predictive_gain": 1.0,
+    "phase": "active",
+    "last_used": 1771943917.8586717,
+    "confidence": 1.0
+  },
+  "shadow_living beings_basic knowledge_1771943917": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.0,
+    "predictive_gain": 1.0,
+    "phase": "active",
+    "last_used": 1771943917.859688,
+    "confidence": 1.0
+  },
+  "shadow_living beings_confusion_1771943917": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.0,
+    "predictive_gain": 1.0,
+    "phase": "active",
+    "last_used": 1771943917.860556,
+    "confidence": 1.0
+  },
+  "macro_1_1771943926": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.0,
+    "predictive_gain": 1.0,
+    "phase": "active",
+    "last_used": 1771943926.3258736,
+    "confidence": 1.0
+  },
+  "macro_2_1771943926": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.0,
+    "predictive_gain": 1.0,
+    "phase": "active",
+    "last_used": 1771943926.3265033,
+    "confidence": 1.0
+  },
+  "macro_3_1771943926": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.0,
+    "predictive_gain": 1.0,
+    "phase": "active",
+    "last_used": 1771943926.3281515,
     "confidence": 1.0
   }
 }
