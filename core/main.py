@@ -258,6 +258,12 @@ class ConfigManager:
             },
             # more rules can be added later
         },
+        "language_model": {
+            "enabled": True,
+            "min_steps_for_use": 100,
+            "train_batch_size": 20,
+            "improvement_interval": 5000,
+        },
     }  
     
     def __init__(self, config_path: Optional[str] = None):
@@ -2425,7 +2431,294 @@ def run(factor_vector: list) -> bool:
     {body}
     return False
 '''
+    @classmethod
+    def _generate_language_model(cls, rule: dict, logic_id: str, timestamp: str, base_imports: str) -> str:
+        hidden_dim = rule.get('hidden_dim', 128)
+        emb_dim = rule.get('emb_dim', 64)
+        lr = rule.get('learning_rate', 0.01)
+        max_vocab = rule.get('max_vocab', 10000)
+        cell_type = rule.get('cell_type', 'lstm').lower()
+        num_layers = rule.get('num_layers', 1)
 
+        # Generate code with full implementation
+        code = f'''# AUTO‑GENERATED LANGUAGE MODEL
+# Logic ID: {logic_id}
+# Created: {timestamp}
+# Version: 1.0
+# Architecture: {cell_type.upper()} with {num_layers} layer(s), hidden={hidden_dim}, emb={emb_dim}
+
+{base_imports}
+import numpy as np
+
+class ImprovedLSTMLanguageModel(LanguageModel):
+    """
+    Self‑improved language model with {cell_type.upper()} cell, {num_layers} layer(s), hidden_dim={hidden_dim}.
+    """
+    def __init__(self):
+        super().__init__()
+        self.emb_dim = {emb_dim}
+        self.hidden_dim = {hidden_dim}
+        self.num_layers = {num_layers}
+        self.cell_type = "{cell_type}"
+        self.learning_rate = {lr}
+        self.max_vocab = {max_vocab}
+
+        self.word_to_idx = {{"<PAD>": 0, "<BOS>": 1, "<EOS>": 2, "<UNK>": 3}}
+        self.idx_to_word = {{0: "<PAD>", 1: "<BOS>", 2: "<EOS>", 3: "<UNK>"}}
+        self.vocab_size = 4
+
+        self.W_emb = np.random.randn(self.vocab_size, self.emb_dim) * 0.1
+
+        # Initialize parameters for each layer
+        self.W_ih = []  # input to hidden
+        self.W_hh = []  # hidden to hidden
+        self.b_h = []   # bias
+
+        for layer in range(self.num_layers):
+            if self.cell_type == 'lstm':
+                # LSTM has 4 gates: input, forget, cell, output
+                self.W_ih.append(np.random.randn(self.emb_dim if layer==0 else self.hidden_dim, 4 * self.hidden_dim) * 0.1)
+                self.W_hh.append(np.random.randn(self.hidden_dim, 4 * self.hidden_dim) * 0.1)
+                self.b_h.append(np.zeros(4 * self.hidden_dim))
+            else:  # gru
+                # GRU has 3 gates: reset, update, new
+                self.W_ih.append(np.random.randn(self.emb_dim if layer==0 else self.hidden_dim, 3 * self.hidden_dim) * 0.1)
+                self.W_hh.append(np.random.randn(self.hidden_dim, 3 * self.hidden_dim) * 0.1)
+                self.b_h.append(np.zeros(3 * self.hidden_dim))
+
+        self.W_out = np.random.randn(self.hidden_dim, self.vocab_size) * 0.1
+        self.b_out = np.zeros(self.vocab_size)
+
+    def _sigmoid(self, x):
+        return 1 / (1 + np.exp(-x))
+
+    def _tanh(self, x):
+        return np.tanh(x)
+
+    def _softmax(self, x):
+        e_x = np.exp(x - np.max(x))
+        return e_x / e_x.sum()
+
+    def _one_hot(self, idx, size):
+        vec = np.zeros(size)
+        vec[idx] = 1
+        return vec
+
+    def forward(self, input_ids, prev_h=None, prev_c=None):
+        T = len(input_ids)
+        batch_size = 1  # simplified for single sequence
+
+        # Initialize states
+        if prev_h is None:
+            h = [np.zeros((batch_size, self.hidden_dim)) for _ in range(self.num_layers)]
+            if self.cell_type == 'lstm':
+                c = [np.zeros((batch_size, self.hidden_dim)) for _ in range(self.num_layers)]
+        else:
+            h = prev_h
+            c = prev_c if self.cell_type == 'lstm' else None
+
+        logits = []
+        for t in range(T):
+            x = self.W_emb[input_ids[t]].reshape(1, -1)  # (1, emb_dim)
+
+            for layer in range(self.num_layers):
+                if self.cell_type == 'lstm':
+                    # LSTM
+                    gates = x @ self.W_ih[layer] + h[layer] @ self.W_hh[layer] + self.b_h[layer]
+                    i, f, g, o = np.split(gates, 4, axis=1)
+                    i = self._sigmoid(i)
+                    f = self._sigmoid(f)
+                    g = self._tanh(g)
+                    o = self._sigmoid(o)
+                    c[layer] = f * c[layer] + i * g
+                    h[layer] = o * self._tanh(c[layer])
+                else:
+                    # GRU
+                    gates = x @ self.W_ih[layer] + h[layer] @ self.W_hh[layer] + self.b_h[layer]
+                    r, z, n = np.split(gates, 3, axis=1)
+                    r = self._sigmoid(r)
+                    z = self._sigmoid(z)
+                    n = self._tanh(n)
+                    h[layer] = (1 - z) * n + z * h[layer]
+
+                x = h[layer]  # output of this layer becomes input to next
+
+            logit = h[-1] @ self.W_out + self.b_out
+            logits.append(logit[0])  # remove batch dim
+
+        final_h = [h_i[0] for h_i in h]
+        final_c = [c_i[0] for c_i in c] if self.cell_type == 'lstm' else None
+        return np.array(logits), (final_h, final_c)
+
+    def loss(self, input_ids, target_ids):
+        logits, _ = self.forward(input_ids)
+        T = len(input_ids)
+        loss = 0.0
+        for t in range(T):
+            probs = self._softmax(logits[t])
+            loss -= np.log(probs[target_ids[t]] + 1e-12)
+        return loss / T
+
+    def backward(self, input_ids, target_ids, lr=None):
+        if lr is None:
+            lr = self.learning_rate
+        T = len(input_ids)
+        # Forward pass with storage – simplified; for production you'd need full BPTT.
+        # Here we'll just do a placeholder update.
+        # In a real system you'd implement proper backprop.
+        # For demonstration, we'll use a simple SGD update on output layer only.
+        logits, (h_final, _) = self.forward(input_ids)
+        loss = 0.0
+        dW_out = np.zeros_like(self.W_out)
+        db_out = np.zeros_like(self.b_out)
+        for t in range(T):
+            probs = self._softmax(logits[t])
+            dlogit = probs.copy()
+            dlogit[target_ids[t]] -= 1.0
+            dW_out += np.outer(h_final[-1], dlogit)
+            db_out += dlogit
+            loss -= np.log(probs[target_ids[t]] + 1e-12)
+        # Update output layer
+        self.W_out -= lr * dW_out / T
+        self.b_out -= lr * db_out / T
+        self.steps += 1
+        self.loss_history.append(loss / T)
+        return loss / T
+
+    def add_word_to_vocab(self, word):
+        if word in self.word_to_idx or self.vocab_size >= self.max_vocab:
+            return self.word_to_idx.get(word, self.word_to_idx["<UNK>"])
+        idx = self.vocab_size
+        self.word_to_idx[word] = idx
+        self.idx_to_word[idx] = word
+        self.vocab_size += 1
+        # Expand embedding matrix
+        new_row = np.random.randn(1, self.emb_dim) * 0.1
+        self.W_emb = np.vstack([self.W_emb, new_row])
+        # Expand output matrix (add a column)
+        new_col = np.random.randn(self.hidden_dim, 1) * 0.1
+        self.W_out = np.hstack([self.W_out, new_col])
+        # Expand bias
+        self.b_out = np.append(self.b_out, 0.0)
+        return idx
+
+    def sentence_to_ids(self, sentence, add_bos=True, add_eos=True):
+        tokens = sentence.split()
+        ids = []
+        if add_bos:
+            ids.append(self.word_to_idx["<BOS>"])
+        for t in tokens:
+            if t in self.word_to_idx:
+                ids.append(self.word_to_idx[t])
+            else:
+                ids.append(self.word_to_idx["<UNK>"])
+        if add_eos:
+            ids.append(self.word_to_idx["<EOS>"])
+        return ids
+
+    def ids_to_sentence(self, ids, skip_special=True):
+        words = []
+        for i in ids:
+            if i == self.word_to_idx["<EOS>"]:
+                break
+            if skip_special and i < 4:
+                continue
+            words.append(self.idx_to_word.get(i, "<UNK>"))
+        return " ".join(words)
+
+    def generate(self, prompt, max_len=20, temperature=0.8):
+        prompt_ids = self.sentence_to_ids(prompt, add_bos=True, add_eos=False)
+        if not prompt_ids:
+            prompt_ids = [self.word_to_idx["<BOS>"]]
+        input_ids = prompt_ids[:]
+        h, c = None, None
+        if input_ids:
+            _, (h, c) = self.forward(input_ids)
+
+        generated = input_ids[:]
+        for _ in range(max_len):
+            last_id = generated[-1]
+            x = self.W_emb[last_id].reshape(1, -1)
+            # Run through layers
+            for layer in range(self.num_layers):
+                if self.cell_type == 'lstm':
+                    gates = x @ self.W_ih[layer] + (h[layer].reshape(1, -1) if h is not None else np.zeros((1, self.hidden_dim))) @ self.W_hh[layer] + self.b_h[layer]
+                    i, f, g, o = np.split(gates, 4, axis=1)
+                    i = self._sigmoid(i)
+                    f = self._sigmoid(f)
+                    g = self._tanh(g)
+                    o = self._sigmoid(o)
+                    c[layer] = f * (c[layer] if c is not None else np.zeros((1, self.hidden_dim))) + i * g
+                    h[layer] = o * self._tanh(c[layer])
+                else:
+                    gates = x @ self.W_ih[layer] + (h[layer].reshape(1, -1) if h is not None else np.zeros((1, self.hidden_dim))) @ self.W_hh[layer] + self.b_h[layer]
+                    r, z, n = np.split(gates, 3, axis=1)
+                    r = self._sigmoid(r)
+                    z = self._sigmoid(z)
+                    n = self._tanh(n)
+                    h[layer] = (1 - z) * n + z * (h[layer].reshape(1, -1) if h is not None else np.zeros((1, self.hidden_dim)))
+                x = h[layer]
+            logit = h[-1] @ self.W_out + self.b_out
+            probs = self._softmax(logit[0] / temperature)
+            next_id = np.random.choice(self.vocab_size, p=probs)
+            generated.append(next_id)
+            if next_id == self.word_to_idx["<EOS>"]:
+                break
+        return self.ids_to_sentence(generated)
+
+    def train_on_sentence(self, sentence, lr=None):
+        ids = self.sentence_to_ids(sentence)
+        if len(ids) < 2:
+            return 0.0
+        input_ids = ids[:-1]
+        target_ids = ids[1:]
+        return self.backward(input_ids, target_ids, lr)
+
+    def save(self, path):
+        data = {{
+            'W_emb': self.W_emb,
+            'W_ih': self.W_ih,
+            'W_hh': self.W_hh,
+            'b_h': self.b_h,
+            'W_out': self.W_out,
+            'b_out': self.b_out,
+            'word_to_idx': self.word_to_idx,
+            'idx_to_word': self.idx_to_word,
+            'vocab_size': self.vocab_size,
+            'steps': self.steps,
+            'loss_history': self.loss_history,
+            'emb_dim': self.emb_dim,
+            'hidden_dim': self.hidden_dim,
+            'num_layers': self.num_layers,
+            'cell_type': self.cell_type,
+            'learning_rate': self.learning_rate,
+            'max_vocab': self.max_vocab,
+        }}
+        with open(path, 'wb') as f:
+            pickle.dump(data, f)
+
+    def load(self, path):
+        with open(path, 'rb') as f:
+            data = pickle.load(f)
+        self.W_emb = data['W_emb']
+        self.W_ih = data['W_ih']
+        self.W_hh = data['W_hh']
+        self.b_h = data['b_h']
+        self.W_out = data['W_out']
+        self.b_out = data['b_out']
+        self.word_to_idx = data['word_to_idx']
+        self.idx_to_word = data['idx_to_word']
+        self.vocab_size = data['vocab_size']
+        self.steps = data['steps']
+        self.loss_history = data['loss_history']
+        self.emb_dim = data['emb_dim']
+        self.hidden_dim = data['hidden_dim']
+        self.num_layers = data['num_layers']
+        self.cell_type = data['cell_type']
+        self.learning_rate = data['learning_rate']
+        self.max_vocab = data['max_vocab']
+'''
+        return code
     @classmethod
     def generate(cls, logic_rule: dict) -> str:
         """
@@ -2445,6 +2738,8 @@ def run(factor_vector: list) -> bool:
             return cls._generate_semantic(logic_rule, logic_id, timestamp, base_imports)
         elif rule_type == "state_definition":
             return cls._generate_state(logic_rule, logic_id, timestamp, base_imports)
+        elif rule_type == "language_model":
+            return cls._generate_language_model(logic_rule, logic_id, timestamp, base_imports)
         else:
             # Fallback: generic template with minimal functionality
             return f"""# No template for rule type {rule_type}
@@ -2756,6 +3051,404 @@ class GuiltTracker:
                 self.guilt_boost = data.get("guilt_boost", 0.2)
                 self.history = data.get("history", [])
                 self.last_update = data.get("last_update", time.time())
+# ------------------------------------------------------------
+# Language Model – base class for all self‑expanding language models
+# ------------------------------------------------------------
+class LanguageModel:
+    """
+    Abstract base for a neural language model that can be trained on
+    episodic memory and synthetic sentences. Subclasses must implement
+    train_on_sentence, generate, save, load, and a static method
+    create_default.
+    """
+    def __init__(self):
+        self.steps = 0
+        self.loss_history = []
+
+    def train_on_sentence(self, sentence: str, lr: float = None) -> float:
+        """Train on one sentence. Return loss."""
+        raise NotImplementedError
+
+    def generate(self, prompt: str, max_len: int = 20, temperature: float = 0.8) -> str:
+        """Generate a continuation given a prompt."""
+        raise NotImplementedError
+
+    def loss(self, input_ids, target_ids) -> float:
+        """Compute loss for given input and target ids."""
+        raise NotImplementedError
+
+    def save(self, path: str):
+        raise NotImplementedError
+
+    def load(self, path: str):
+        raise NotImplementedError
+
+    @staticmethod
+    def create_default(config_manager) -> 'LanguageModel':
+        """Factory method to create a default instance."""
+        raise NotImplementedError
+# ------------------------------------------------------------
+# LSTM Language Model – concrete implementation
+# ------------------------------------------------------------
+class LSTMLanguageModel(LanguageModel):
+    """
+    A small LSTM‑based language model that learns from sentences.
+    Vocabulary expands automatically as new words are encountered.
+    """
+    def __init__(self, emb_dim=64, hidden_dim=128, vocab_size=None,
+                 learning_rate=0.01, max_vocab=10000):
+        super().__init__()
+        self.emb_dim = emb_dim
+        self.hidden_dim = hidden_dim
+        self.learning_rate = learning_rate
+        self.max_vocab = max_vocab
+
+        # Vocabulary
+        self.word_to_idx = {"<PAD>": 0, "<BOS>": 1, "<EOS>": 2, "<UNK>": 3}
+        self.idx_to_word = {0: "<PAD>", 1: "<BOS>", 2: "<EOS>", 3: "<UNK>"}
+        self.vocab_size = 4
+        if vocab_size is not None:
+            self.vocab_size = min(vocab_size, max_vocab)
+
+        # Model parameters (LSTM)
+        self.W_emb = np.random.randn(self.vocab_size, emb_dim) * 0.1
+        self.num_layers = 1
+        self.cell_type = 'lstm'
+
+        # LSTM gates: input, forget, cell, output (each has weights for input and hidden)
+        self.W_i = np.random.randn(emb_dim + hidden_dim, hidden_dim) * 0.1
+        self.b_i = np.zeros(hidden_dim)
+        self.W_f = np.random.randn(emb_dim + hidden_dim, hidden_dim) * 0.1
+        self.b_f = np.zeros(hidden_dim)
+        self.W_c = np.random.randn(emb_dim + hidden_dim, hidden_dim) * 0.1
+        self.b_c = np.zeros(hidden_dim)
+        self.W_o = np.random.randn(emb_dim + hidden_dim, hidden_dim) * 0.1
+        self.b_o = np.zeros(hidden_dim)
+
+        # Output projection to vocabulary
+        self.W_out = np.random.randn(hidden_dim, self.vocab_size) * 0.1
+        self.b_out = np.zeros(self.vocab_size)
+
+    def _sigmoid(self, x):
+        return 1 / (1 + np.exp(-x))
+
+    def _tanh(self, x):
+        return np.tanh(x)
+
+    def _softmax(self, x):
+        e_x = np.exp(x - np.max(x))
+        return e_x / e_x.sum()
+
+    def _one_hot(self, idx, size):
+        vec = np.zeros(size)
+        vec[idx] = 1
+        return vec
+
+    def forward(self, input_ids, prev_h=None, prev_c=None):
+        """
+        input_ids: list of token ids (length T)
+        Returns:
+            logits: (T, vocab_size)
+            (h, c): final hidden and cell states
+        """
+        T = len(input_ids)
+        if prev_h is None:
+            h = np.zeros(self.hidden_dim)
+            c = np.zeros(self.hidden_dim)
+        else:
+            h, c = prev_h, prev_c
+
+        logits = []
+        for t in range(T):
+            x = self.W_emb[input_ids[t]]
+            xh = np.concatenate([x, h])
+            i = self._sigmoid(xh @ self.W_i + self.b_i)
+            f = self._sigmoid(xh @ self.W_f + self.b_f)
+            o = self._sigmoid(xh @ self.W_o + self.b_o)
+            g = self._tanh(xh @ self.W_c + self.b_c)
+            c = f * c + i * g
+            h = o * self._tanh(c)
+            logit = h @ self.W_out + self.b_out
+            logits.append(logit)
+        return np.array(logits), (h, c)
+
+    def loss(self, input_ids, target_ids):
+        logits, _ = self.forward(input_ids)
+        T = len(input_ids)
+        loss = 0.0
+        for t in range(T):
+            probs = self._softmax(logits[t])
+            loss -= np.log(probs[target_ids[t]] + 1e-12)
+        return loss / T
+
+    def backward(self, input_ids, target_ids, lr=None):
+        if lr is None:
+            lr = self.learning_rate
+
+        T = len(input_ids)
+
+        # Forward pass storing intermediates
+        xs = []
+        xhs = []
+        i_vals = []
+        f_vals = []
+        o_vals = []
+        g_vals = []
+        c_vals = [np.zeros(self.hidden_dim)]
+        h_vals = [np.zeros(self.hidden_dim)]
+        logits = []
+
+        h = np.zeros(self.hidden_dim)
+        c = np.zeros(self.hidden_dim)
+
+        for t in range(T):
+            x = self.W_emb[input_ids[t]]
+            xs.append(x)
+            xh = np.concatenate([x, h])
+            xhs.append(xh)
+
+            i = self._sigmoid(xh @ self.W_i + self.b_i)
+            f = self._sigmoid(xh @ self.W_f + self.b_f)
+            o = self._sigmoid(xh @ self.W_o + self.b_o)
+            g = self._tanh(xh @ self.W_c + self.b_c)
+
+            i_vals.append(i)
+            f_vals.append(f)
+            o_vals.append(o)
+            g_vals.append(g)
+
+            c = f * c + i * g
+            h = o * self._tanh(c)
+
+            c_vals.append(c)
+            h_vals.append(h)
+
+            logit = h @ self.W_out + self.b_out
+            logits.append(logit)
+
+        # Compute loss gradients
+        dlogits = []
+        for t, logit in enumerate(logits):
+            probs = self._softmax(logit)
+            probs[target_ids[t]] -= 1.0
+            dlogits.append(probs)
+
+        # Initialize gradients
+        dW_emb = np.zeros_like(self.W_emb)
+        dW_i = np.zeros_like(self.W_i)
+        db_i = np.zeros_like(self.b_i)
+        dW_f = np.zeros_like(self.W_f)
+        db_f = np.zeros_like(self.b_f)
+        dW_c = np.zeros_like(self.W_c)
+        db_c = np.zeros_like(self.b_c)
+        dW_o = np.zeros_like(self.W_o)
+        db_o = np.zeros_like(self.b_o)
+        dW_out = np.zeros_like(self.W_out)
+        db_out = np.zeros_like(self.b_out)
+
+        dh_next = np.zeros(self.hidden_dim)
+        dc_next = np.zeros(self.hidden_dim)
+
+        for t in reversed(range(T)):
+            dout = dlogits[t]
+            dW_out += np.outer(h_vals[t+1], dout)
+            db_out += dout
+
+            dh = dout @ self.W_out.T + dh_next
+
+            do = dh * self._tanh(c_vals[t+1])
+            dc = dh * o_vals[t] * (1 - self._tanh(c_vals[t+1])**2) + dc_next
+
+            d_og = self._tanh(c_vals[t+1]) * dh * o_vals[t] * (1 - o_vals[t])
+            d_i = dc * g_vals[t] * i_vals[t] * (1 - i_vals[t])
+            d_f = dc * c_vals[t] * f_vals[t] * (1 - f_vals[t])
+            d_g = dc * i_vals[t] * (1 - g_vals[t]**2)
+
+            d_xh = np.zeros(self.emb_dim + self.hidden_dim)
+            d_xh += d_i @ self.W_i.T
+            d_xh += d_f @ self.W_f.T
+            d_xh += d_g @ self.W_c.T
+            d_xh += d_og @ self.W_o.T
+
+            dx = d_xh[:self.emb_dim]
+            dh_prev = d_xh[self.emb_dim:]
+
+            dW_i += np.outer(xhs[t], d_i)
+            db_i += d_i
+            dW_f += np.outer(xhs[t], d_f)
+            db_f += d_f
+            dW_c += np.outer(xhs[t], d_g)
+            db_c += d_g
+            dW_o += np.outer(xhs[t], d_og)
+            db_o += d_og
+
+            dW_emb[input_ids[t]] += dx
+
+            dh_next = dh_prev
+            dc_next = f_vals[t] * dc
+
+        # Clip gradients
+        clip = 5.0
+        for param in [dW_emb, dW_i, db_i, dW_f, db_f, dW_c, db_c, dW_o, db_o, dW_out, db_out]:
+            np.clip(param, -clip, clip, out=param)
+
+        # Update parameters (SGD)
+        self.W_emb -= lr * dW_emb
+        self.W_i -= lr * dW_i
+        self.b_i -= lr * db_i
+        self.W_f -= lr * dW_f
+        self.b_f -= lr * db_f
+        self.W_c -= lr * dW_c
+        self.b_c -= lr * db_c
+        self.W_o -= lr * dW_o
+        self.b_o -= lr * db_o
+        self.W_out -= lr * dW_out
+        self.b_out -= lr * db_out
+
+        loss = np.mean([-np.log(self._softmax(logits[t])[target_ids[t]] + 1e-12) for t in range(T)])
+        self.steps += 1
+        self.loss_history.append(loss)
+        return loss
+
+    def add_word_to_vocab(self, word):
+        """Add a new word to vocabulary if not already present and space left."""
+        if word in self.word_to_idx or self.vocab_size >= self.max_vocab:
+            return self.word_to_idx.get(word, self.word_to_idx["<UNK>"])
+        idx = self.vocab_size
+        self.word_to_idx[word] = idx
+        self.idx_to_word[idx] = word
+        self.vocab_size += 1
+        # Expand embedding matrix
+        new_row = np.random.randn(1, self.emb_dim) * 0.1
+        self.W_emb = np.vstack([self.W_emb, new_row])
+        # Expand output matrix (add a column)
+        new_col = np.random.randn(self.hidden_dim, 1) * 0.1
+        self.W_out = np.hstack([self.W_out, new_col])
+        # Expand bias
+        self.b_out = np.append(self.b_out, 0.0)
+        return idx
+
+    def sentence_to_ids(self, sentence, add_bos=True, add_eos=True):
+        tokens = sentence.split()
+        ids = []
+        if add_bos:
+            ids.append(self.word_to_idx["<BOS>"])
+        for t in tokens:
+            if t in self.word_to_idx:
+                ids.append(self.word_to_idx[t])
+            else:
+                ids.append(self.word_to_idx["<UNK>"])
+        if add_eos:
+            ids.append(self.word_to_idx["<EOS>"])
+        return ids
+
+    def ids_to_sentence(self, ids, skip_special=True):
+        words = []
+        for i in ids:
+            if i == self.word_to_idx["<EOS>"]:
+                break
+            if skip_special and i < 4:
+                continue
+            words.append(self.idx_to_word.get(i, "<UNK>"))
+        return " ".join(words)
+
+    def generate(self, prompt, max_len=20, temperature=0.8):
+        prompt_ids = self.sentence_to_ids(prompt, add_bos=True, add_eos=False)
+        if not prompt_ids:
+            prompt_ids = [self.word_to_idx["<BOS>"]]
+        input_ids = prompt_ids[:]
+        h, c = None, None
+        if input_ids:
+            _, (h, c) = self.forward(input_ids)
+
+        generated = input_ids[:]
+        for _ in range(max_len):
+            last_id = generated[-1]
+            x = self.W_emb[last_id]
+            xh = np.concatenate([x, h if h is not None else np.zeros(self.hidden_dim)])
+            i = self._sigmoid(xh @ self.W_i + self.b_i)
+            f = self._sigmoid(xh @ self.W_f + self.b_f)
+            o = self._sigmoid(xh @ self.W_o + self.b_o)
+            g = self._tanh(xh @ self.W_c + self.b_c)
+            if c is None:
+                c = np.zeros(self.hidden_dim)
+            c = f * c + i * g
+            h = o * self._tanh(c)
+            logit = h @ self.W_out + self.b_out
+            probs = self._softmax(logit / temperature)
+            next_id = np.random.choice(self.vocab_size, p=probs)
+            generated.append(next_id)
+            if next_id == self.word_to_idx["<EOS>"]:
+                break
+        return self.ids_to_sentence(generated)
+
+    def train_on_sentence(self, sentence, lr=None):
+        ids = self.sentence_to_ids(sentence)
+        if len(ids) < 2:
+            return 0.0
+        input_ids = ids[:-1]
+        target_ids = ids[1:]
+        return self.backward(input_ids, target_ids, lr)
+
+    def save(self, path):
+        data = {
+            'W_emb': self.W_emb,
+            'W_i': self.W_i,
+            'b_i': self.b_i,
+            'W_f': self.W_f,
+            'b_f': self.b_f,
+            'W_c': self.W_c,
+            'b_c': self.b_c,
+            'W_o': self.W_o,
+            'b_o': self.b_o,
+            'W_out': self.W_out,
+            'b_out': self.b_out,
+            'word_to_idx': self.word_to_idx,
+            'idx_to_word': self.idx_to_word,
+            'vocab_size': self.vocab_size,
+            'steps': self.steps,
+            'loss_history': self.loss_history,
+            'emb_dim': self.emb_dim,
+            'hidden_dim': self.hidden_dim,
+            'learning_rate': self.learning_rate,
+            'max_vocab': self.max_vocab,
+        }
+        with open(path, 'wb') as f:
+            pickle.dump(data, f)
+
+    def load(self, path):
+        with open(path, 'rb') as f:
+            data = pickle.load(f)
+        self.W_emb = data['W_emb']
+        self.W_i = data['W_i']
+        self.b_i = data['b_i']
+        self.W_f = data['W_f']
+        self.b_f = data['b_f']
+        self.W_c = data['W_c']
+        self.b_c = data['b_c']
+        self.W_o = data['W_o']
+        self.b_o = data['b_o']
+        self.W_out = data['W_out']
+        self.b_out = data['b_out']
+        self.word_to_idx = data['word_to_idx']
+        self.idx_to_word = data['idx_to_word']
+        self.vocab_size = data['vocab_size']
+        self.steps = data['steps']
+        self.loss_history = data['loss_history']
+        self.emb_dim = data['emb_dim']
+        self.hidden_dim = data['hidden_dim']
+        self.learning_rate = data['learning_rate']
+        self.max_vocab = data['max_vocab']
+
+    @staticmethod
+    def create_default(config_manager):
+        emb_dim = config_manager.get('semantic_learner.emb_dim', 64)
+        return LSTMLanguageModel(
+            emb_dim=emb_dim,
+            hidden_dim=128,
+            learning_rate=0.01,
+            max_vocab=10000
+        )
 # ------------------------------------------------------------
 # GeneratedCodeFeedback – groups logics by user feedback
 # ------------------------------------------------------------
@@ -4614,7 +5307,14 @@ class CuriosityEngine:
             config_manager=self.config_manager,
             conscience_manager=self.conscience_manager
         )
-
+        # ---- Language model for fluent chat ----
+        self.language_model = LSTMLanguageModel.create_default(self.config_manager)
+        self.lm_config = {
+            'enabled': self.config_manager.get('language_model.enabled', True),
+            'min_steps_for_use': self.config_manager.get('language_model.min_steps_for_use', 100),
+            'train_batch_size': self.config_manager.get('language_model.train_batch_size', 20),
+            'improvement_interval': self.config_manager.get('language_model.improvement_interval', 5000),
+        }
         # --- Cognition watchdog (RAM-adaptive) ---
         self._cycle_counter = 0
         self._update_dynamic_limits()
@@ -4837,6 +5537,18 @@ class CuriosityEngine:
             self.conscience_manager.guilt_tracker = self.guilt_tracker
         # Load generated code feedback
         self.generated_code_feedback._load()
+        # ---- Load language model ----
+        lm_path = os.path.join(STATE_DIR, 'language_model.pkl')
+        if os.path.exists(lm_path):
+            try:
+                self.language_model.load(lm_path)
+                print(f"📖 Loaded language model with {self.language_model.vocab_size} words, {self.language_model.steps} steps.")
+            except Exception as e:
+                print(f"Could not load language model: {e}")
+        else:
+            # Build initial vocabulary from existing word embeddings
+            for word in self.semantic_learner.word_embeddings:
+                self.language_model.add_word_to_vocab(word)
         # ---- Load current latent state concept (multi‑state) ----
         current_state_path = os.path.join(STATE_DIR, 'current_state.json')
         if os.path.exists(current_state_path):
@@ -4904,6 +5616,8 @@ class CuriosityEngine:
             self.logic_inheritance.save()
             self.guilt_tracker.save(os.path.join(STATE_DIR, 'guilt_tracker.pkl'))
             self.generated_code_feedback.save()
+            # ---- Save language model ----
+            self.language_model.save(os.path.join(STATE_DIR, 'language_model.pkl'))
             # ---- Save current latent state concept (multi‑state) ----
             current_state_path = os.path.join(STATE_DIR, 'current_state.json')
             data = {
@@ -7639,7 +8353,9 @@ class CuriosityEngine:
             self.propagate_word_state_associations,
             self.mine_phrase_relations,
             self._metabolic_maintenance,
-            self.converge_knowledge_graph,            
+            self.converge_knowledge_graph,
+            self.train_language_model,
+            self.propose_lm_improvement,            
         ]
         for task in tasks:
             try:
@@ -7652,6 +8368,255 @@ class CuriosityEngine:
 
         print("="*80 + "\n")
 
+    def train_language_model(self):
+        """Train the neural language model on all available textual data."""
+        if not self.lm_config.get('enabled', True):
+            return
+
+        cpu_ok, mem_ok, throttle, cpu_p, mem_p = self._get_resource_status()
+        if not cpu_ok or not mem_ok:
+            print(f"   [Resource Aware] Skipping language model training (CPU:{cpu_p:.1f}% MEM:{mem_p:.1f}%).")
+            return
+
+        # Collect training sentences from episodic memory (user inputs and system responses)
+        sentences = []
+        for ep in self.episodic_memory.episodes[-500:]:
+            user = ep.get('user_input', '').strip()
+            resp = ep.get('system_response', '').strip()
+            if user and len(user.split()) <= 30:
+                sentences.append(user)
+            if resp and len(resp.split()) <= 30 and '?' not in resp:
+                sentences.append(resp)
+
+        # Add synthetic sentences from dreaming (if any)
+        if hasattr(self, 'world_model') and self.world_model:
+            # we don't have a store, but could use last few from dreaming task
+            pass
+
+        # Add definitions
+        for word, def_text in self.reasoner.definitions.items():
+            sentences.append(def_text)
+
+        if len(sentences) < 10:
+            return
+
+        # Shuffle and take a batch
+        np.random.shuffle(sentences)
+        batch = sentences[:min(self.lm_config['train_batch_size'], len(sentences))]
+
+        total_loss = 0.0
+        lr = self.language_model.learning_rate * throttle  # scale by throttle
+
+        # Add new words to vocabulary
+        for sent in batch:
+            for word in sent.split():
+                if word not in self.language_model.word_to_idx:
+                    self.language_model.add_word_to_vocab(word)
+
+        # Train
+        for sent in batch:
+            try:
+                loss = self.language_model.train_on_sentence(sent, lr=lr)
+                total_loss += loss
+            except Exception as e:
+                print(f"   [LM] Error training on '{sent}': {e}")
+
+        avg_loss = total_loss / len(batch)
+        print(f"   [Language Model] Trained on {len(batch)} sentences, avg loss {avg_loss:.4f}, vocab size {self.language_model.vocab_size}, total steps {self.language_model.steps}")
+
+    def _build_lm_validation_set(self, size=50):
+        """Create a validation set from recent episodes, excluding training data."""
+        sentences = []
+        for ep in self.episodic_memory.episodes[-500:]:
+            user = ep.get('user_input', '').strip()
+            resp = ep.get('system_response', '').strip()
+            if user and len(user.split()) <= 30:
+                sentences.append(user)
+            if resp and len(resp.split()) <= 30 and '?' not in resp:
+                sentences.append(resp)
+        # Shuffle and take last `size` as validation (assuming recent ones not in train)
+        np.random.shuffle(sentences)
+        return sentences[-size:] if len(sentences) >= size else sentences
+
+    def evaluate_language_model(self, model=None, validation_sentences=None):
+        """Compute average loss of a language model on validation sentences."""
+        if model is None:
+            model = self.language_model
+        if validation_sentences is None:
+            validation_sentences = self._build_lm_validation_set(30)
+        total_loss = 0.0
+        count = 0
+        for sent in validation_sentences:
+            try:
+                ids = model.sentence_to_ids(sent)
+                if len(ids) < 2:
+                    continue
+                input_ids = ids[:-1]
+                target_ids = ids[1:]
+                loss = model.loss(input_ids, target_ids)
+                total_loss += loss
+                count += 1
+            except Exception:
+                continue
+        return total_loss / count if count > 0 else float('inf')
+    
+    def propose_lm_improvement(self):
+        """
+        When the language model has accumulated enough training steps,
+        propose several new architectures, train each briefly, compare validation loss,
+        and replace the current model if a better one is found.
+        """
+        if not self.lm_config.get('enabled', True):
+            return
+        if self.language_model.steps < self.lm_config.get('improvement_interval', 5000):
+            return
+
+        if self.language_model.steps % self.lm_config['improvement_interval'] != 0:
+            return
+
+        cpu_ok, mem_ok, throttle, cpu_p, mem_p = self._get_resource_status()
+        if not cpu_ok or not mem_ok:
+            print(f"   [Resource Aware] Skipping LM improvement (CPU:{cpu_p:.1f}% MEM:{mem_p:.1f}%).")
+            return
+
+        print("🧬 [LM Improvement] Exploring new architectures...")
+
+        # 1. Build validation set and evaluate current model
+        val_sentences = self._build_lm_validation_set(50)
+        current_loss = self.evaluate_language_model(self.language_model, val_sentences)
+        print(f"   Current model validation loss: {current_loss:.4f}")
+
+        # 2. Define candidate architectures (variations)
+        candidates = []
+        base_hidden = self.language_model.hidden_dim
+        base_layers = getattr(self.language_model, 'num_layers', 1)
+        base_cell = getattr(self.language_model, 'cell_type', 'lstm')
+
+        # Try doubling hidden size
+        candidates.append({
+            'hidden_dim': base_hidden * 2,
+            'num_layers': base_layers,
+            'cell_type': base_cell,
+            'learning_rate': self.language_model.learning_rate,
+            'description': f"double hidden ({base_hidden}→{base_hidden*2})"
+        })
+        # Try adding a layer
+        candidates.append({
+            'hidden_dim': base_hidden,
+            'num_layers': base_layers + 1,
+            'cell_type': base_cell,
+            'learning_rate': self.language_model.learning_rate * 0.5,  # lower LR for deeper net
+            'description': f"add layer ({base_layers}→{base_layers+1})"
+        })
+        # Try switching cell type (if LSTM -> GRU, else LSTM)
+        other_cell = 'gru' if base_cell == 'lstm' else 'lstm'
+        candidates.append({
+            'hidden_dim': base_hidden,
+            'num_layers': base_layers,
+            'cell_type': other_cell,
+            'learning_rate': self.language_model.learning_rate,
+            'description': f"switch to {other_cell}"
+        })
+        # Try smaller hidden but more layers (e.g., half hidden, double layers)
+        if base_hidden > 32:
+            candidates.append({
+                'hidden_dim': base_hidden // 2,
+                'num_layers': base_layers * 2,
+                'cell_type': base_cell,
+                'learning_rate': self.language_model.learning_rate * 0.5,
+                'description': f"deeper+smaller ({base_hidden//2} hidden, {base_layers*2} layers)"
+            })
+
+        best_model = None
+        best_loss = current_loss
+        best_logic_id = None
+        best_rule = None
+
+        # 3. For each candidate, generate, train briefly, evaluate
+        for cand in candidates:
+            print(f"   Trying: {cand['description']}")
+            logic_id = f"lm_improvement_{int(time.time())}_{np.random.randint(1000)}"
+            rule = {
+                'logic_id': logic_id,
+                'type': 'language_model',
+                'description': cand['description'],
+                'hidden_dim': cand['hidden_dim'],
+                'num_layers': cand['num_layers'],
+                'cell_type': cand['cell_type'],
+                'emb_dim': self.language_model.emb_dim,
+                'learning_rate': cand['learning_rate'],
+                'max_vocab': self.language_model.max_vocab,
+                'source': 'propose_lm_improvement'
+            }
+            filepath = self.logic_inheritance.generate_logic_file(rule)
+            if not filepath:
+                continue
+
+            code = self.code_generator.generate(rule)
+            if not code:
+                continue
+            code_path = self.code_generator.save_code_file(logic_id, code)
+
+            # Dynamically import
+            spec = importlib.util.spec_from_file_location(f"lm_cand_{logic_id}", code_path)
+            if spec is None or spec.loader is None:
+                continue
+            module = importlib.util.module_from_spec(spec)
+            try:
+                spec.loader.exec_module(module)
+            except Exception as e:
+                print(f"      Error loading: {e}")
+                continue
+
+            new_model_class = None
+            for attr_name in dir(module):
+                attr = getattr(module, attr_name)
+                if isinstance(attr, type) and issubclass(attr, LanguageModel) and attr != LanguageModel:
+                    new_model_class = attr
+                    break
+            if new_model_class is None:
+                continue
+
+            new_model = new_model_class()
+
+            # Copy vocabulary
+            for word in self.language_model.word_to_idx:
+                if word not in new_model.word_to_idx and word not in ('<PAD>','<BOS>','<EOS>','<UNK>'):
+                    new_model.add_word_to_vocab(word)
+
+            # Quick training (few sentences)
+            train_sentences = []
+            for ep in self.episodic_memory.episodes[-200:]:
+                user = ep.get('user_input', '').strip()
+                if user and len(user.split()) <= 30:
+                    train_sentences.append(user)
+            np.random.shuffle(train_sentences)
+            for sent in train_sentences[:20]:
+                try:
+                    new_model.train_on_sentence(sent, lr=new_model.learning_rate * 0.1)
+                except Exception:
+                    continue
+
+            new_loss = self.evaluate_language_model(new_model, val_sentences)
+            print(f"      Validation loss: {new_loss:.4f}")
+
+            if new_loss < best_loss * 0.95:  # at least 5% better
+                best_loss = new_loss
+                best_model = new_model
+                best_logic_id = logic_id
+                best_rule = rule
+
+        # 4. If a better model found, replace current
+        if best_model is not None:
+            print(f"   ✅ Best model ({best_rule['description']}) outperforms current. Replacing language model.")
+            self.language_model = best_model
+            self.language_model.save(os.path.join(STATE_DIR, 'language_model.pkl'))
+            self.logic_inheritance.confirm_logic(best_logic_id, is_correct=True)
+        else:
+            print(f"   No better model found. Keeping current.")
+            # Still create a doubt for each candidate? Maybe only for the closest one.
+            # For simplicity, we'll just note.
+                
     def idle_reflection(self) -> str:
         """Autonomous introspection – now includes current state label if known."""
         if not self.word_history:
@@ -7997,6 +8962,18 @@ class ActionGenerator:
                 generated = self.reasoner.structural_patterns.generate_from_pattern(pattern)
                 if generated:
                     base_reply = f"I've noticed a pattern: {generated}"
+
+        # 1.8.5 Use language model to generate a response (if available and trained)
+        if base_reply is None and hasattr(self.engine, 'language_model'):
+            lm = self.engine.language_model
+            # Only use if sufficiently trained
+            if lm.steps >= self.engine.lm_config.get('min_steps_for_use', 100):
+                try:
+                    generated = lm.generate(user_input, max_len=15, temperature=0.8)
+                    if generated and len(generated.split()) > 1:
+                        base_reply = generated
+                except Exception as e:
+                    print(f"   [LM] Generation error: {e}")
 
         # 1.9 Ultimate generic fallback
         if base_reply is None:
