@@ -425,6 +425,10 @@ class HierarchicalConceptModel:
         self.feature_vocab = set()
         # Store previous posterior for each word (to compute Bayesian surprise)
         self.prev_posterior = {}     # word -> dict(concept: probability)
+        # New: meta‑concept layer
+        self.meta_concept_counts = Counter()           # meta‑concept -> count
+        self.concept_to_meta = {}                      # concept -> meta‑concept
+        self.meta_alpha = 0.1                           # concentration for meta‑DP
 
     def update_parameters_from_config(self):
         """Reload parameters from the config manager (for hot reload)."""
@@ -540,58 +544,6 @@ class HierarchicalConceptModel:
 
     def register_definition_event(self, word: str):
         """
-        Called when a word receives an explicit definition from the user.
-        Performs strong supervised stabilization:
-        - boosts observation confidence
-        - collapses entropy for the concept
-        - marks the concept as semantically anchored
-        - schedules hierarchy promotion
-        """
-
-        if not hasattr(self, "word_concept_counts"):
-            return
-
-        if word not in self.word_concept_counts:
-            return
-
-        # ---------- Strong confidence reinforcement ----------
-        # Explicit definitions act as high-confidence observations
-        self.word_concept_counts[word] += 10
-
-        # ---------- Mark stabilized words ----------
-        if not hasattr(self, "stabilized_words"):
-            self.stabilized_words = set()
-
-        self.stabilized_words.add(word)
-
-        # ---------- Entropy collapse ----------
-        if hasattr(self, "word_entropies") and word in self.word_entropies:
-            self.word_entropies[word] *= 0.2  # strong reduction
-
-        # ---------- Semantic anchoring ----------
-        if not hasattr(self, "semantic_anchors"):
-            self.semantic_anchors = set()
-        self.semantic_anchors.add(word)
-
-        # ---------- Promote toward higher-level concept (hierarchical compression) ----------
-        if hasattr(self, "_promote_word_to_higher_concept"):
-            try:
-                self._promote_word_to_higher_concept(word)
-            except Exception:
-                pass
-
-        # ---------- Schedule stability reinforcement ----------
-        if not hasattr(self, "definition_events"):
-            self.definition_events = {}
-
-        self.definition_events[word] = {
-            "timestamp": time.time(),
-            "stability": 1.0,
-            "type": "explicit_definition"
-        }
-
-    def register_definition_event(self, word: str):
-        """
         Called when a word receives an explicit definition.
         Performs semantic stabilization:
         - Reinforces dominant concept
@@ -624,6 +576,62 @@ class HierarchicalConceptModel:
             "stability": 1.0,
             "type": "explicit_definition"
         }
+
+    def form_meta_concepts(self, min_concepts_per_meta=3):
+        """
+        Cluster concepts into meta‑concepts using their feature distributions.
+        Uses a simple Chinese Restaurant Process on the concept features.
+        """
+        # Build feature vectors for concepts
+        concept_ids = list(self.concept_features.keys())
+        if len(concept_ids) < min_concepts_per_meta:
+            return
+
+        # For each concept, compute its feature vector (normalized)
+        concept_vectors = {}
+        for c in concept_ids:
+            total = sum(self.concept_features[c].values())
+            if total == 0:
+                continue
+            vec = np.array([self.concept_features[c].get(f, 0) for f in self.feature_vocab])
+            concept_vectors[c] = vec / total
+
+        if len(concept_vectors) < min_concepts_per_meta:
+            return
+
+        # Chinese Restaurant Process for meta‑concepts
+        meta_counts = Counter()
+        concept_to_meta = {}
+        for c, vec in concept_vectors.items():
+            # Compute probabilities for existing meta‑concepts based on average feature similarity
+            probs = []
+            metas = []
+            for m, count in meta_counts.items():
+                # Get average feature vector of concepts in this meta
+                members = [c2 for c2, m2 in concept_to_meta.items() if m2 == m]
+                if members:
+                    avg_vec = np.mean([concept_vectors[m2] for m2 in members], axis=0)
+                    sim = np.dot(vec, avg_vec) / (np.linalg.norm(vec)*np.linalg.norm(avg_vec)+1e-12)
+                    probs.append(count * sim)   # popularity * similarity
+                    metas.append(m)
+            # New meta‑concept probability
+            probs.append(self.meta_alpha)
+            metas.append(max(meta_counts.keys(), default=-1) + 1)
+
+            probs = np.array(probs)
+            probs = probs / probs.sum()
+            chosen = np.random.choice(metas, p=probs)
+
+            if chosen in meta_counts:
+                meta_counts[chosen] += 1
+                concept_to_meta[c] = chosen
+            else:
+                meta_counts[chosen] = 1
+                concept_to_meta[c] = chosen
+
+        self.meta_concept_counts = meta_counts
+        self.concept_to_meta = concept_to_meta
+        print(f"   [Meta‑Concept] Formed {len(meta_counts)} meta‑concepts from {len(concept_vectors)} base concepts.")
 
     @classmethod
     def load(cls, path: str, config_manager: Optional['ConfigManager'] = None):
@@ -996,6 +1004,8 @@ class GaussianProcessUncertainty:
         """Return predictive standard deviation (uncertainty)."""
         _, var = self.predict(x)
         return np.sqrt(var)
+
+# ------------------------------------------------------------
 # Multi-Factor Curiosity with Meta-Learned Weights (extended)
 # ------------------------------------------------------------
 @dataclass
@@ -1640,6 +1650,7 @@ class KnowledgeGraph:
     Supports incremental updates, transitive inference, and merging.
     """
     def __init__(self):
+        self.inference_log = [] 
         self.nodes = {}          # node_id -> {'type': str, 'label': str, 'embedding': np.ndarray (optional), 'metadata': dict}
         self.edges = defaultdict(lambda: defaultdict(dict))  # node1 -> node2 -> {rel_type: confidence, ...} (supports multiple relation types between same nodes)
         self.edge_list = []       # list of (node1, node2, rel_type, confidence, timestamp) for fast iteration
@@ -1670,6 +1681,54 @@ class KnowledgeGraph:
             if ndata['label'] == label and ndata['type'] == node_type:
                 return nid
         return None
+
+    def apply_rule(self, rule: dict):
+        """
+        Apply a symbolic rule to the graph.
+        Rule format: {'if': (subject_predicate, relation, object_predicate),
+                     'then': (new_subject, new_relation, new_object)}
+        where each predicate can be a variable (e.g., '?x') or a constant.
+        This is a simplified forward chaining.
+        """
+        # For now, only handle simple transitive rules: if A rel B and B rel C then A rel C
+        if rule.get('type') == 'transitive' and rule.get('relation'):
+            rel = rule['relation']
+            # Build adjacency for this relation
+            adj = defaultdict(list)
+            for n1, n2, rt, conf in self.get_all_edges():
+                if rt == rel and conf >= rule.get('threshold', 0.5):
+                    adj[n1].append((n2, conf))
+            # Apply transitive closure
+            for start in adj:
+                # BFS with depth limit
+                visited = set()
+                queue = [(start, 1.0, 0)]
+                while queue:
+                    cur, cum_conf, depth = queue.pop(0)
+                    if depth > 0 and cur != start and depth <= rule.get('max_depth', 3):
+                        existing = self.edges[start].get(cur, {}).get(rel, 0)
+                        if existing < cum_conf:
+                            self.add_edge(start, cur, rel, cum_conf)
+                            # Log inference
+                            self._log_inference(start, cur, rel, cum_conf, 'transitive')
+                    if depth < rule.get('max_depth', 3):
+                        for nxt, conf in adj.get(cur, []):
+                            if nxt not in visited:
+                                visited.add(nxt)
+                                queue.append((nxt, cum_conf * conf, depth+1))
+
+    def _log_inference(self, n1, n2, rel, conf, rule_name):
+        """Store inference in a log for later review."""
+        if not hasattr(self, 'inference_log'):
+            self.inference_log = []
+        self.inference_log.append({
+            'timestamp': time.time(),
+            'node1': n1,
+            'node2': n2,
+            'relation': rel,
+            'confidence': conf,
+            'rule': rule_name
+        })
 
     def add_edge(self, node1: str, node2: str, rel_type: str, confidence: float = 1.0, metadata: dict = None):
         """Add or update an edge between two nodes."""
@@ -3711,6 +3770,77 @@ class IntrinsicRewardTracker:
             self.total_reward = data['total_reward']
             self.reward_history = data['reward_history']
 # ------------------------------------------------------------
+# SymbolicReasoner – performs rule‑based inference on the knowledge graph
+# ------------------------------------------------------------
+class SymbolicReasoner:
+    """
+    Applies symbolic rules to the knowledge graph to derive new relations,
+    and generates hypotheses for user confirmation.
+    """
+    def __init__(self, knowledge_graph: KnowledgeGraph, reasoner: 'ReasoningEngine'):
+        self.kg = knowledge_graph
+        self.reasoner = reasoner
+        self.rules = []          # list of rule dicts
+        self._load_default_rules()
+
+    def _load_default_rules(self):
+        """Add some default transitive rules."""
+        self.rules.append({
+            'type': 'transitive',
+            'relation': 'is_a',
+            'max_depth': 3,
+            'threshold': 0.6,
+            'description': 'If X is_a Y and Y is_a Z, then X is_a Z'
+        })
+        self.rules.append({
+            'type': 'transitive',
+            'relation': 'means',
+            'max_depth': 3,
+            'threshold': 0.6,
+            'description': 'If X means Y and Y means Z, then X means Z'
+        })
+        self.rules.append({
+            'type': 'transitive',
+            'relation': 'similar',
+            'max_depth': 2,
+            'threshold': 0.8,
+            'description': 'If X similar Y and Y similar Z, then X similar Z'
+        })
+
+    def run_inference(self):
+        """Apply all rules to the knowledge graph."""
+        for rule in self.rules:
+            self.kg.apply_rule(rule)
+
+    def generate_hypotheses_from_inferences(self):
+        """Convert recent inferences into user‑facing hypotheses."""
+        if not hasattr(self.kg, 'inference_log'):
+            return
+        for entry in self.kg.inference_log[-10:]:  # recent only
+            # Avoid duplicate hypotheses
+            key = f"inference:{entry['node1']}:{entry['relation']}:{entry['node2']}"
+            if any(h.get('key') == key for h in self.reasoner.hypotheses):
+                continue
+            # Get labels from kg
+            node1_label = self.kg.nodes.get(entry['node1'], {}).get('label', 'unknown')
+            node2_label = self.kg.nodes.get(entry['node2'], {}).get('label', 'unknown')
+            hyp = {
+                'key': key,
+                'type': 'inference',
+                'subject': node1_label,
+                'predicate': entry['relation'],
+                'object': node2_label,
+                'confidence': entry['confidence'],
+                'text': f"I inferred that {node1_label} {entry['relation']} {node2_label}. Is that correct?",
+                'asked': False,
+                'energy_cost': 0.5,
+                'recent_usage': 0.0,
+                'predictive_gain': entry['confidence'],
+                'phase': 'active',
+                'last_used': None,
+            }
+            self.reasoner.hypotheses.append(hyp)
+# ------------------------------------------------------------
 # Reasoning Engine (enhanced with active learning via GP)
 # ------------------------------------------------------------
 class ReasoningEngine:
@@ -3728,6 +3858,8 @@ class ReasoningEngine:
         self.hypotheses = []                       # pending hypotheses to ask user
         # GP for predicting curiosity from word features (optional)
         self.gp_predictor = None
+        self.knowledge_graph = KnowledgeGraph()
+        self.symbolic_reasoner = SymbolicReasoner(self.knowledge_graph, self)
 
         # --- NEW: Definition memory ---
         self.definitions: Dict[str, str] = {}           # word -> definition text
@@ -3761,8 +3893,6 @@ class ReasoningEngine:
         self.is_a_relations: Dict[str, Set[str]] = defaultdict(set)   # subject -> set of objects (for "is a")
         self.means_relations: Dict[str, Set[str]] = defaultdict(set)  # subject -> set of objects (for "means")
         # ---- Knowledge graph for connected reasoning ----
-        self.knowledge_graph = KnowledgeGraph()
-        # --- NEW: Structural pattern learner ---
         self.structural_patterns = StructuralPatternLearner()
 
     def update_parameters_from_config(self):
@@ -3914,7 +4044,11 @@ class ReasoningEngine:
         if uncertainty is not None:
             return f"{base} (My uncertainty about this word is {uncertainty:.2f}.)"
         return base
-
+    
+    def run_symbolic_inference(self):
+        """Call during idle to apply rules and generate hypotheses."""
+        self.symbolic_reasoner.run_inference()
+        self.symbolic_reasoner.generate_hypotheses_from_inferences()
     # ------------------------------------------------------------------
     # Definition storage and similarity
     # ------------------------------------------------------------------
@@ -5144,6 +5278,50 @@ class FactorEngine:
                 result[k] = 0.0
         return result
 # ------------------------------------------------------------
+# StructuredWorldModel – uses knowledge graph and episodic memory to simulate state transitions
+# ------------------------------------------------------------
+class StructuredWorldModel:
+    """
+    Models transitions between states and actions, using the knowledge graph
+    to represent possible outcomes. Can generate synthetic future episodes.
+    """
+    def __init__(self, kg: KnowledgeGraph, state_manager: StateManager):
+        self.kg = kg
+        self.state_manager = state_manager
+        self.transition_counts = defaultdict(lambda: defaultdict(Counter))  # state_label -> action -> next_state_label -> count
+
+    def observe_episode(self, state_label, action, next_state_label):
+        """Record a transition from episodic memory."""
+        self.transition_counts[state_label][action][next_state_label] += 1
+
+    def predict_next_state(self, state_label, action):
+        """Return the most probable next state given current state and action."""
+        if state_label not in self.transition_counts or action not in self.transition_counts[state_label]:
+            return None
+        next_states = self.transition_counts[state_label][action]
+        return max(next_states, key=next_states.get) if next_states else None
+
+    def generate_synthetic_episode(self, start_state_label, max_steps=5):
+        """Walk through the transition graph to create a synthetic sequence."""
+        if not self.transition_counts:
+            return []
+        current = start_state_label
+        sequence = [current]
+        for _ in range(max_steps):
+            # Choose a random action from known actions for this state
+            if current not in self.transition_counts:
+                break
+            actions = list(self.transition_counts[current].keys())
+            if not actions:
+                break
+            action = np.random.choice(actions)
+            next_state = self.predict_next_state(current, action)
+            if next_state is None or next_state == current:
+                break
+            sequence.append((action, next_state))
+            current = next_state
+        return sequence
+# ------------------------------------------------------------
 # Core Curiosity Engine (Enhanced with Factor Engine & State Learning)
 # ------------------------------------------------------------
 class CuriosityEngine:
@@ -5212,7 +5390,7 @@ class CuriosityEngine:
         # ---------------------------------------
 
         # ---- Persistent latent state concept ----
-        self.current_state_label = []          # label of the currently recognized state
+        self.current_state_labels = []          # label of the currently recognized state
         self.current_state_embedding = None      # embedding of that state (aligned to emb_dim)
         # ---------------------------------------
 
@@ -5252,7 +5430,8 @@ class CuriosityEngine:
                 initial_mu=0.0,
                 compute_function=self._compute_state_relevance
             )
-        
+        self._expected_next_state = None
+        self._last_action = None        
         # ------------------------------------------------------------
         # New attributes for advanced idle‑time capabilities
         # ------------------------------------------------------------
@@ -5330,6 +5509,7 @@ class CuriosityEngine:
 
         if load_state:
             self._load_state()
+        self.structured_world_model = StructuredWorldModel(self.reasoner.knowledge_graph, self.state_manager)
     # ------------------------------------------------------------------
     # Persistence (now with config_manager passed to .load() methods)
     # ------------------------------------------------------------------
@@ -5790,14 +5970,50 @@ class CuriosityEngine:
                 )
                 factor_dict[dyn_factor] = val
 
-            return CuriosityFactors(factor_dict=factor_dict)
+            # Create CuriosityFactors object
+            factors = CuriosityFactors(factor_dict=factor_dict)
+
+            # Apply top‑down modulation (expects a CuriosityFactors object)
+            factors = self._apply_top_down_modulation(token, factors)
+
+            return factors
+
         except Exception as e:
             print(f"Error computing curiosity factors for '{token}': {e}. Returning neutral factors.")
             print(traceback.format_exc())
             # Return neutral factors to avoid crash
             neutral = {name: 0.5 for name in self.meta_learner.factor_names}
-            return CuriosityFactors(factor_dict=neutral)   
+            return CuriosityFactors(factor_dict=neutral)
 
+    def _apply_top_down_modulation(self, token: str, factors: CuriosityFactors) -> CuriosityFactors:
+        """
+        Modulate curiosity factors using top‑down signals:
+        - Current state embedding
+        - Identity embedding
+        - Conscience beliefs
+        """
+        if self.current_state_embedding is not None:
+            # Compute similarity between token embedding and current state
+            token_emb = self.semantic_learner.word_embeddings.get(token)
+            if token_emb is not None:
+                state_emb = self._align_vector_to_emb_dim(self.current_state_embedding)
+                token_emb_aligned = self._align_vector_to_emb_dim(token_emb)
+                sim = np.dot(state_emb, token_emb_aligned) / (np.linalg.norm(state_emb)*np.linalg.norm(token_emb_aligned)+1e-12)
+                # Boost curiosity if token is state‑relevant (already handled by state_relevance factor)
+                # Here we also modulate novelty based on identity consistency
+                identity_sim = self.identity_manager.get_stability_bonus(token_emb_aligned)
+                # If token aligns with identity, reduce novelty (it's familiar)
+                factors.factor_dict['novelty'] *= (1.0 - 0.5 * identity_sim)
+
+        # Modulate by conscience: if a belief forbids asking about certain topics, reduce curiosity
+        for belief in self.conscience_manager.get_active_conscience():
+            if belief.rule_type == 'ethical' and belief.action.get('effect') == 'reduce_curiosity':
+                # Simple keyword match
+                if belief.condition.get('keyword') in token.lower():
+                    factors.factor_dict['curiosity'] *= 0.3
+                    factors.factor_dict['novelty'] *= 0.5
+        return factors
+    
     def _information_gain(self, token: str, new_entropy: float) -> float:
         if token not in self.word_history or len(self.word_history[token]) < 2:
             return 0.0
@@ -5943,8 +6159,9 @@ class CuriosityEngine:
         sim = np.dot(state_emb, token_emb) / (norm_state * norm_token)
         # scale from [-1,1] to [0,1]
         # update state usage
-        if self.current_state_label:
-            meta = self.state_manager.state_metadata.get(self.current_state_label)
+        if self.current_state_labels:
+            current_label = self.current_state_labels[0]  # use first active state for metadata
+            meta = self.state_manager.state_metadata.get(current_label)
             if meta:
                 now = time.time()
                 if meta.get('last_used'):
@@ -6208,6 +6425,21 @@ class CuriosityEngine:
         )
         print(f"🧠 [Drive Creation] New curiosity factor 'ctrl_{factor_name}' created from control dimension '{factor_name}'.")  
 
+    def build_world_model_transitions(self):
+        """Scan episodic memory to build transition counts for the structured world model."""
+        episodes = self.episodic_memory.episodes[-500:]
+        for i in range(len(episodes)-1):
+            ep = episodes[i]
+            next_ep = episodes[i+1]
+            if 'factor_vector' in ep and 'factor_vector' in next_ep:
+                vec = self._align_factor_vector(np.array(list(ep['factor_vector'].values())))
+                next_vec = self._align_factor_vector(np.array(list(next_ep['factor_vector'].values())))
+                state_label = self.state_manager.find_similar_state(vec, threshold=0.7)
+                next_state_label = self.state_manager.find_similar_state(next_vec, threshold=0.7)
+                if state_label and next_state_label:
+                    action = ep.get('system_response', '')   # crude action representation
+                    self.structured_world_model.observe_episode(state_label, action, next_state_label)
+                    
     def process_input(self, text: str) -> Dict[str, Any]:
             """
             Full pipeline with meta-learning, reasoning, AND factor-based state learning.
@@ -6250,7 +6482,15 @@ class CuriosityEngine:
             self.interaction_history.append(text)
             if len(self.interaction_history) > getattr(self, "_max_interaction_history", 200000):
                 self.interaction_history = self.interaction_history[-self._max_interaction_history:]
-
+            # ----------------- expectation from last turn, compute prediction  -----------------
+            if self._expected_next_state is not None and self.current_state_labels:
+                actual_state = self.current_state_labels[0]
+                if actual_state != self._expected_next_state:
+                    # Mismatch – boost curiosity for relevant words
+                    prediction_error = 1.0
+                    # Could add a factor to meta-learner
+                    print(f"   [Prediction Error] Expected {self._expected_next_state}, got {actual_state}")
+                self._expected_next_state = None   # reset
             # ----------------- RESPONSE HANDLING -----------------
             # If we are in any waiting state, handle the response and return early.
             # All waiting-state handlers live here so the main pipeline is never entered
@@ -6781,7 +7021,6 @@ class CuriosityEngine:
                     self.state_manager._save_conflicts()
 
             # 8. Behavioral rule testing (ask for confirmation)
-            # FIX: factor_dict is now guaranteed to exist (initialised to {} at top),
             # so the 'factor_dict in locals()' workaround is no longer needed.
             if not self.chat_mode_active:
                 context = {
@@ -6789,7 +7028,7 @@ class CuriosityEngine:
                     'tokens': tokens,
                     'token_analyses': token_analyses,
                     'factor_dict': factor_dict,
-                    'state': self.current_state_label
+                    'state': self.current_state_labels
                 }
                 testable = self.behavioral_learner.get_testable_rules(context)
                 if testable:
@@ -6851,7 +7090,6 @@ class CuriosityEngine:
                 "ci_confidence": ci_report.get("confidence"),
                 "phon_score": phon_score,
             }
-
             # State learning gate
             if not self.chat_mode_active and len(self.semantic_learner.word_embeddings) > 20:
                 self._handle_state_learning(factor_vector, metadata)
@@ -6864,12 +7102,22 @@ class CuriosityEngine:
                 tokens, token_analyses, ci_report, phon_score, diag_explanation,
                 factor_dict
             )
-
             # Generate system reply
             system_reply = self.action_generator.generate_reply(text, {
                 'token_analyses': token_analyses,
                 'factor_vector': factor_dict,
             })
+            self._last_action = system_reply
+            # ---- Top‑down expectation: predict next state using world model ----
+            if self.structured_world_model and self.current_state_labels:
+                current_state = self.current_state_labels[0] if self.current_state_labels else None
+                if current_state:
+                    action = system_reply  # the action we just took
+                    predicted_next = self.structured_world_model.predict_next_state(current_state, action)
+                    if predicted_next:
+                        # Compare predicted vs actual next state (which we don't have yet – would need next turn)
+                        # For now, we store the prediction to be checked later.
+                        self._expected_next_state = predicted_next
             if "What does" in system_reply and "'" in system_reply:
                 import re
                 match = re.search(r"'([^']+)'", system_reply)
@@ -8070,15 +8318,15 @@ class CuriosityEngine:
                         candidates.append(("semantic", hyp, logic_id))
 
         # 3. Recently labeled states (if they have a stored embedding)
-        if self.current_state_label and self.current_state_embedding is not None:
-            state_id = f"state_{self.current_state_label}"
+        if self.current_state_labels and self.current_state_embedding is not None:
+            state_id = f"state_{self.current_state_labels[0]}"
             if state_id not in self.logic_inheritance.generated_code_paths:
                 state_rule = {
                     "logic_id": state_id,
                     "rule_type": "state_definition",
-                    "label": self.current_state_label,
+                    "label": self.current_state_labels[0],
                     "prototype": self.current_state_embedding.tolist(),
-                    "description": f"Recognize the '{self.current_state_label}' state"
+                    "description": f"Recognize the '{self.current_state_labels[0]}' state"
                 }
                 candidates.append(("state", state_rule, state_id))
 
@@ -8312,6 +8560,11 @@ class CuriosityEngine:
 
         kg._save()
 
+    def form_meta_concepts_from_concepts(self):
+        """Call the concept model's meta‑concept formation."""
+        if hasattr(self.concept_model, 'form_meta_concepts'):
+            self.concept_model.form_meta_concepts()
+
     def perform_all_idle_tasks(self):
         """Orchestrate all idle‑time tasks, respecting configuration."""
         now = time.time()
@@ -8355,7 +8608,10 @@ class CuriosityEngine:
             self._metabolic_maintenance,
             self.converge_knowledge_graph,
             self.train_language_model,
-            self.propose_lm_improvement,            
+            self.propose_lm_improvement,
+            self.reasoner.run_symbolic_inference,
+            self.form_meta_concepts_from_concepts,
+            self.build_world_model_transitions,            
         ]
         for task in tasks:
             try:
@@ -9089,35 +9345,40 @@ class ActionGenerator:
         # --- Priority 0: Chat mode (overrides most other behaviours) ---
         if self.engine.chat_mode_active:
             return self.generate_chat_response(user_input, state)
+
         # --- Priority 0.5: Logic doubt (already handled in process_input, but keep as safeguard) ---
         doubt = self.engine.logic_inheritance.get_next_doubt()
         if doubt:
             rule = doubt['rule']
             description = rule.get('description', f"a logical rule")
             return f"I have a doubt about some logic I wrote: {description} Is this correct?"
+
         # --- Priority 0.7: Conscience relevance ---
         for belief in self.engine.conscience_manager.get_active_conscience():
             if self._matches_conscience_condition(belief, user_input, state):
                 return f"My conscience suggests that {belief.description}. Is that appropriate?"
+
         # ---- Express guilt if significant ----
         if self.guilt_tracker and self.guilt_tracker.guilt_level > 0.3 and np.random.rand() < 0.4:
             guilt_expr = self.generate_guilt_expression(self.guilt_tracker.guilt_level)
             if guilt_expr:
                 return guilt_expr
+
         # --- Priority 1.5: Pending sentence query ---
         if self.engine.pending_sentence_query:
             query = self.engine.pending_sentence_query
             self.engine.pending_sentence_query = None   # consume
             return query
 
-        # --- Priority 2: Pending hypotheses (synonym, category, analogy) ---
+        # --- Priority 2: Pending hypotheses (synonym, category, analogy, inference) ---
         for hyp in self.reasoner.hypotheses:
             if hyp.get('type') in ('synonym', 'category', 'analogy', 'inference') and not hyp.get('asked', False):
                 hyp['asked'] = True
                 hyp['last_used'] = time.time()
                 hyp['recent_usage'] = hyp.get('recent_usage', 0.0) * 0.99 + 0.1
                 return hyp['text']
-        # --- Priority 2: Parallel reasoning thoughts (if multiple chains available) ---
+
+        # --- Priority 2.5: Parallel reasoning thoughts (if multiple chains available) ---
         if 'token_analyses' in state and state['token_analyses']:
             # pick the most curious token
             token_analyses = state['token_analyses']
@@ -9129,13 +9390,7 @@ class ActionGenerator:
                 # present the most confident one
                 best = max(thoughts, key=lambda t: t['confidence'])
                 return best['hypothesis']
-        # --- Priority 2.5: Pending hypotheses (synonym, category, analogy) ---
-        for hyp in self.reasoner.hypotheses:
-            if hyp.get('type') in ('synonym', 'category', 'analogy', 'inference') and not hyp.get('asked', False):
-                hyp['asked'] = True
-                hyp['last_used'] = time.time()
-                hyp['recent_usage'] = hyp.get('recent_usage', 0.0) * 0.99 + 0.1
-                return hyp['text']
+
         # --- Priority 3: High curiosity words (unknown words) ---
         if 'token_analyses' in state:
             high_curiosity = [ta for ta in state['token_analyses'] if ta.get('curiosity_score', 0) > 0.5]
@@ -9147,8 +9402,8 @@ class ActionGenerator:
         # --- Priority 4: State awareness utterance (30% chance) ---
         if self.engine.current_state_labels and np.random.rand() < 0.3:
             # pick one of the active states to mention
-            state = np.random.choice(self.engine.current_state_labels)
-            return f"I feel like I'm in a '{state}' state right now."
+            chosen_state = np.random.choice(self.engine.current_state_labels)
+            return f"I feel like I'm in a '{chosen_state}' state right now."
 
         # --- Priority 5: Spontaneous emotional utterance (based on state) ---
         factor_vec = state.get('factor_vector', {})
@@ -9172,8 +9427,10 @@ class ActionGenerator:
 
         if np.random.rand() < trigger_prob:
             utterance = self.generate_trust_utterance(trust)  # now handles all emotional tones
-            if self.engine.current_state_label is not None:
-                utterance = f"As I'm {self.engine.current_state_label}, {utterance[0].lower()}{utterance[1:]}"
+            if self.engine.current_state_labels:
+                # Prepend state information
+                state_str = ', '.join(self.engine.current_state_labels)
+                utterance = f"As I'm {state_str}, {utterance[0].lower()}{utterance[1:]}"
             self.engine.expecting_feedback = True
             self.engine.feedback_attempt_word = None
             self.engine.feedback_attempt_response = utterance
