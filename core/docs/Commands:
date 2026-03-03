@@ -5,7 +5,7 @@ ffmpeg -f v4l2 -i /dev/video1        -map 0 -f v4l2 /dev/video10        -map 0 -
 Propt 
 give me exact find and replace copy paste to implement changes ,do not giver refrences give exact changes
 {change}
- , do deep research on research papers available on how to make these work (by not eliminating features instead applying them in most efficient way possible loosing near zero reliability) apply them fully as far as possible etc here is code to expand  ,do not remove old functions use them to enhance outputs and their accuracy more practically
+ , do deep research on research papers available on how to make these work (by not eliminating features instead applying them in most efficient way possible loosing near zero reliability) apply them fully as far as possible etc here is code to expand  ,do not remove old functions use them to enhance outputs and their accuracy more practicallyNote this is just example , it shouldnt be harcoded , ability to make such relations must be hard coded .
 
 
  

@@ -29,7 +29,6 @@ import os
 from collections import defaultdict, Counter
 from typing import Dict, List, Optional, Tuple, Any, Set
 from dataclasses import dataclass, field
-
 import numpy as np
 from scipy.stats import beta as beta_dist, dirichlet, norm, gamma, multivariate_normal
 from scipy.special import digamma, gammaln, rel_entr
@@ -46,6 +45,8 @@ import importlib.util
 import traceback
 import io
 from contextlib import redirect_stdout, redirect_stderr
+import re
+import itertools
 # ------------------------------------------------------------
 # Real CI, Phonotactic, Diagnostic engines from backend.ci
 # ------------------------------------------------------------
@@ -177,7 +178,11 @@ class ConfigManager:
             # no parameters currently, placeholder
         },
         "reasoning_engine": {
-            # no parameters currently, placeholder
+            "enable_type_hierarchy": True,
+            "enable_operators": True,
+            "enable_rule_engine": True,
+            "enable_constraint_propagation": True,
+            "enable_schema_learning": True,
         },
         "factor_engine": {
             # no parameters currently, placeholder
@@ -812,68 +817,6 @@ class SemanticLearner:
             self.word_logsigma = data['logsigma']
             self.word_counts = data['counts']
 # ------------------------------------------------------------
-# Syntax Learner – Bayesian grammar induction
-# ------------------------------------------------------------
-class SyntaxLearner:
-    """
-    Incrementally learns a probabilistic context-free grammar (PCFG)
-    from observed sentences. Uses a Dirichlet process prior over rules
-    to allow unbounded rule creation.
-
-    Now config‑aware (placeholder for future parameters).
-    """
-
-    def __init__(self, config_manager: Optional['ConfigManager'] = None):
-        self.config_manager = config_manager
-        # rule probabilities: (A -> BC) or (A -> word)
-        self.nonterminals = {'S', 'NP', 'VP', 'PP', 'N', 'V', 'Adj', 'Det'}
-        self.lexicon = {}        # word -> set of POS tags
-        self.rule_counts = defaultdict(Counter)  # LHS -> RHS -> count
-        self.rule_total = Counter()              # LHS -> total count
-        self.dp_alpha = 1.0     # Dirichlet process concentration
-
-    def update_parameters_from_config(self):
-        """Placeholder for hot reload."""
-        pass
-
-    def add_sentence(self, sentence: str):
-        """
-        Use a simple CYK parser with current grammar to parse the sentence.
-        If parsing fails, hypothesise new rules based on POS tags from CI engine?
-        Simplified: we'll just record word–tag co-occurrences from existing lexicon.
-        """
-        tokens = sentence.split()
-        # for now, just add to lexicon if unknown
-        for t in tokens:
-            if t not in self.lexicon:
-                # assign a default tag (NN) and count
-                self.lexicon[t] = {'NN': 1}
-
-    def generate_response(self, target: str) -> str:
-        """
-        Generate a grammatical sentence about `target`.
-        Very simple template for now – expand later.
-        """
-        # Example: "I think [target] might be related to ..."
-        return f"I think '{target}' might be related to something."
-
-    def save(self, path: str):
-        tmp = path + ".tmp"
-        with open(tmp, 'wb') as f:
-            pickle.dump({
-                'lexicon': self.lexicon,
-                'rule_counts': self.rule_counts,
-                'rule_total': self.rule_total,
-            }, f)
-        os.replace(tmp, path)
-
-    def load(self, path: str):
-        with open(path, 'rb') as f:
-            data = pickle.load(f)
-            self.lexicon = data['lexicon']
-            self.rule_counts = data['rule_counts']
-            self.rule_total = data['rule_total']
-# ------------------------------------------------------------
 # Consciousness Model – Global Workspace with Attention
 # ------------------------------------------------------------
 class ConsciousnessModel:
@@ -893,8 +836,10 @@ class ConsciousnessModel:
         self.attention_weights = {}   # module -> weight
 
     def update_parameters_from_config(self):
-        """Placeholder for hot reload."""
-        pass
+        """Reload configuration parameters."""
+        if self.config_manager:
+            # You could enable/disable features here, but we'll keep it simple for now.
+            pass
 
     def update(self, coalitions: List[Dict], factors: Dict[str, float]):
         """
@@ -1036,6 +981,676 @@ class CuriosityFactors:
     def as_array(self, factor_names: List[str]) -> np.ndarray:
         """Return values for the given factor names in order."""
         return np.array([self.factor_dict.get(name, 0.0) for name in factor_names])
+# =============================================================================
+# TYPED SYMBOL & OPERATOR CLASSES
+# =============================================================================
+class SymbolType:
+    """Represents a type in the type hierarchy."""
+    def __init__(self, name: str, parent: Optional['SymbolType'] = None, 
+                 properties: Dict[str, Any] = None):
+        self.name = name
+        self.parent = parent          # for single inheritance
+        self.properties = properties or {}
+        self.instances = set()        # words/phrases that are of this type
+
+    def is_subtype_of(self, other: 'SymbolType') -> bool:
+        if self == other:
+            return True
+        if self.parent is None:
+            return False
+        return self.parent.is_subtype_of(other)
+
+    def __repr__(self):
+        return f"SymbolType({self.name})"
+
+
+class TypeHierarchy:
+    """Manages a tree of types and assigns types to symbols."""
+    def __init__(self):
+        self.types: Dict[str, SymbolType] = {}
+        # Predefine some basic types
+        self.add_type("Entity")           # root
+        self.add_type("Word", parent="Entity")
+        self.add_type("Phrase", parent="Entity")
+        self.add_type("Number", parent="Entity")
+        self.add_type("Operator", parent="Entity")
+        self.add_type("State", parent="Entity")
+
+    def add_type(self, name: str, parent: Optional[str] = None, 
+                 properties: Dict[str, Any] = None) -> SymbolType:
+        if name in self.types:
+            return self.types[name]
+        parent_type = self.types.get(parent) if parent else None
+        typ = SymbolType(name, parent_type, properties)
+        self.types[name] = typ
+        return typ
+
+    def get_type(self, name: str) -> Optional[SymbolType]:
+        return self.types.get(name)
+
+    def assign_type(self, symbol: str, type_name: str):
+        """Mark a symbol (word/phrase) as being of a given type."""
+        typ = self.get_type(type_name)
+        if typ:
+            typ.instances.add(symbol)
+
+    def get_symbols_of_type(self, type_name: str) -> Set[str]:
+        typ = self.get_type(type_name)
+        if typ is None:
+            return set()
+        # include subtypes?
+        result = set(typ.instances)
+        # add instances of all subtypes (optional)
+        for t in self.types.values():
+            if t.is_subtype_of(typ):
+                result.update(t.instances)
+        return result
+
+    def infer_type(self, symbol: str) -> Optional[SymbolType]:
+        """Find the most specific type that contains this symbol."""
+        for typ in self.types.values():
+            if symbol in typ.instances:
+                return typ
+        return None
+
+
+class Operator:
+    """Formal definition of an operator (e.g., +, -, =, >)."""
+    def __init__(self, symbol: str, arity: int, precedence: int,
+                 evaluator: Optional[Callable] = None):
+        self.symbol = symbol
+        self.arity = arity          # number of arguments (infix operators have arity 2)
+        self.precedence = precedence
+        self.evaluator = evaluator  # function that takes arguments and returns a value
+
+    def evaluate(self, *args):
+        if self.evaluator is None:
+            raise NotImplementedError(f"Operator {self.symbol} has no evaluator")
+        return self.evaluator(*args)
+
+    def __repr__(self):
+        return f"Operator({self.symbol})"
+
+
+class Expression:
+    """
+    Tree‑structured expression built from symbols and operators.
+    """
+    def __init__(self, root, left=None, right=None):
+        self.root = root          # can be a symbol string or an Operator
+        self.left = left          # left child (Expression or None)
+        self.right = right        # right child (Expression or None)
+
+    def is_leaf(self) -> bool:
+        return self.left is None and self.right is None
+
+    def __repr__(self):
+        if self.is_leaf():
+            return str(self.root)
+        return f"({self.left} {self.root} {self.right})"
+
+
+class SyntaxTree:
+    """
+    Represents a parse tree for a sentence, with nodes as symbols and operators.
+    """
+    def __init__(self, root: str, children: List['SyntaxTree'] = None):
+        self.root = root          # the symbol at this node
+        self.children = children or []
+
+    def to_expression(self, type_hierarchy: TypeHierarchy, 
+                      operator_registry: Dict[str, Operator]) -> Optional[Expression]:
+        """
+        Convert the syntax tree to an expression, using the type system
+        and operator definitions.
+        """
+        # if root is an operator, build an expression with children as sub‑expressions
+        if self.root in operator_registry:
+            op = operator_registry[self.root]
+            if op.arity == 2 and len(self.children) == 2:
+                left_expr = self.children[0].to_expression(type_hierarchy, operator_registry)
+                right_expr = self.children[1].to_expression(type_hierarchy, operator_registry)
+                if left_expr and right_expr:
+                    return Expression(op, left_expr, right_expr)
+            # unary operators can be added later
+        # otherwise it's a leaf symbol
+        # Check if it's a variable (single lowercase letter)
+        if isinstance(self.root, str):
+            # Check if it's a number
+            try:
+                float(self.root)
+                return Expression(self.root)  # treat as constant number
+            except ValueError:
+                # Not a number
+                if re.match(r'^[a-z]$', self.root):
+                    # Single lowercase letter -> variable
+                    return Expression(Variable(self.root))
+        # default: treat as constant symbol
+        return Expression(self.root)
+# =============================================================================
+# SYMBOL REGISTRY – Formal symbol grounding
+# =============================================================================
+class Symbol:
+    """A formal symbol with type, arity, and semantics."""
+    def __init__(self, name: str, sym_type: str, arity: Optional[int] = None, semantics: Optional[Callable] = None):
+        self.name = name
+        self.sym_type = sym_type  # one of: 'number', 'operator', 'variable', 'predicate', 'relation'
+        self.arity = arity
+        self.semantics = semantics  # callable for operators, value for numbers, etc.
+
+    def __repr__(self):
+        return f"Symbol({self.name}, {self.sym_type})"
+
+class SymbolRegistry:
+    """Registry of all formal symbols known to the system."""
+    def __init__(self):
+        self.symbols: Dict[str, Symbol] = {}
+
+    def register(self, symbol: Symbol):
+        self.symbols[symbol.name] = symbol
+
+    def get(self, name: str) -> Optional[Symbol]:
+        return self.symbols.get(name)
+
+    def has(self, name: str) -> bool:
+        return name in self.symbols
+
+    def get_all_of_type(self, sym_type: str) -> List[Symbol]:
+        return [s for s in self.symbols.values() if s.sym_type == sym_type]
+
+    def save(self, path: str):
+        """Save symbol metadata (semantics not included)."""
+        data = {}
+        for name, sym in self.symbols.items():
+            data[name] = {
+                'name': sym.name,
+                'sym_type': sym.sym_type,
+                'arity': sym.arity,
+            }
+        with open(path, 'w') as f:
+            json.dump(data, f, indent=2)
+
+    def load(self, path: str):
+        """Load symbol metadata (semantics must be re‑registered separately)."""
+        if not os.path.exists(path):
+            return
+        with open(path, 'r') as f:
+            data = json.load(f)
+        for name, d in data.items():
+            sym = Symbol(d['name'], d['sym_type'], arity=d['arity'], semantics=None)
+            self.symbols[name] = sym
+# =============================================================================
+# RULE SCHEMA LEARNING – Variable‑based rule generalization
+# =============================================================================
+class Variable:
+    """Represents a variable symbol in a rule schema (e.g., a, b)."""
+    def __init__(self, name: str, type_constraint: Optional[str] = None):
+        self.name = name
+        self.type_constraint = type_constraint  # e.g., 'Number', 'Word', etc.
+
+    def __repr__(self):
+        return f"Var({self.name})"
+
+    def __eq__(self, other):
+        if not isinstance(other, Variable):
+            return False
+        return self.name == other.name and self.type_constraint == other.type_constraint
+
+    def __hash__(self):
+        return hash((self.name, self.type_constraint))
+
+class RuleSchema:
+    """
+    A parameterized rule: For all variables X1..Xn, conclusion holds if premises are true.
+    Example: For all a,b: Add(a,b) = Sum(a,b)
+    """
+    def __init__(self, conclusion: Expression, premises: List[Expression] = None,
+                 variables: List[Variable] = None, confidence: float = 0.5,
+                 evidence: int = 0):
+        self.conclusion = conclusion
+        self.premises = premises or []
+        self.variables = variables or []
+        self.confidence = confidence
+        self.evidence = evidence
+        self.id = f"schema_{id(self)}"
+
+    def instantiate(self, bindings: Dict[str, Any]) -> Tuple[Expression, List[Expression]]:
+        """Replace variables with concrete values in conclusion and premises."""
+        def substitute(expr: Expression) -> Expression:
+            if expr.is_leaf():
+                if isinstance(expr.root, Variable):
+                    root = bindings[expr.root.name]
+                else:
+                    root = expr.root
+                return Expression(root)
+            else:
+                left = substitute(expr.left) if expr.left else None
+                right = substitute(expr.right) if expr.right else None
+                return Expression(expr.root, left, right)
+
+        new_conc = substitute(self.conclusion)
+        new_prems = [substitute(p) for p in self.premises]
+        return new_conc, new_prems
+
+    def __repr__(self):
+        vars_str = ','.join(str(v) for v in self.variables)
+        return f"RuleSchema({vars_str}: {self.conclusion} <- {self.premises})"
+
+class SchemaLearner:
+    """
+    Induces rule schemas from observed expressions and user feedback.
+    Uses anti‑unification to find common patterns with variables.
+    """
+    def __init__(self, engine: 'ReasoningEngine'):
+        self.engine = engine
+        self.schema_counter = 0
+
+    def anti_unify(self, expr1: Expression, expr2: Expression) -> Optional[Tuple[Expression, List[Variable]]]:
+        """
+        Find the most specific generalization of two expressions, introducing variables.
+        Returns (generalized_expression, list_of_variables) or None if no common structure.
+        """
+        # If both are leaves
+        if expr1.is_leaf() and expr2.is_leaf():
+            if expr1.root == expr2.root:
+                # same constant → no variable
+                return expr1, []
+            else:
+                # different constants → introduce a variable
+                var_name = f"x{self.engine.variable_counter}"
+                self.engine.variable_counter += 1
+                var = Variable(var_name)
+                return Expression(var), [var]
+
+        # If both are operators with same root and same structure
+        if (not expr1.is_leaf() and not expr2.is_leaf() and
+                expr1.root == expr2.root and
+                ((expr1.left is None) == (expr2.left is None)) and
+                ((expr1.right is None) == (expr2.right is None))):
+
+            # Recursively anti‑unify children
+            new_left = None
+            new_right = None
+            all_vars = []
+
+            if expr1.left is not None:
+                left_gen, left_vars = self.anti_unify(expr1.left, expr2.left)
+                if left_gen is None:
+                    return None
+                new_left = left_gen
+                all_vars.extend(left_vars)
+
+            if expr1.right is not None:
+                right_gen, right_vars = self.anti_unify(expr1.right, expr2.right)
+                if right_gen is None:
+                    return None
+                new_right = right_gen
+                all_vars.extend(right_vars)
+
+            return Expression(expr1.root, new_left, new_right), all_vars
+
+        return None
+
+    def learn_from_pair(self, expr1: Expression, expr2: Expression, result_expr: Expression = None):
+        """
+        Given two similar expressions, try to induce a schema.
+        If a result_expr is provided (e.g., from an equation), we learn a rule.
+        """
+        gen, vars_found = self.anti_unify(expr1, expr2)
+        if gen is None or not vars_found:
+            return None
+
+        # If we have a result expression, anti‑unify that too?
+        # For now, we assume expr1 and expr2 are two instances of a pattern.
+        # We'll create a schema: For all vars, pattern holds? But we need a conclusion.
+        # In the example "1+1=2", we have two expressions: the left side (Add(1,1)) and the right side (2).
+        # So we anti‑unify left1 and left2? Actually we have one equation: left = right.
+        # To learn Add(a,b) = Sum(a,b), we need multiple examples of the form left = right.
+        # We'll collect equations.
+
+        # For now, we just store the generalized pattern as a potential schema.
+        schema = RuleSchema(gen, variables=vars_found, confidence=0.3)
+        self.engine.schemas.append(schema)
+        return schema
+
+    def incorporate_equation(self, left_expr: Expression, right_expr: Expression):
+        """
+        Called when an equation (e.g., "2 + 3 = 5") is observed.
+        Tries to match existing schemas or induce new ones.
+        """
+        # Check if we already have a schema that can be instantiated to this equation
+        for schema in self.engine.schemas:
+            # Try to bind variables in conclusion to left and right?
+            # For a schema of the form Add(a,b) = Sum(a,b), the conclusion is the whole equation.
+            # But our schema stores the conclusion as a single expression (the left side?) – we need to store both sides.
+            # Better: store a rule as (antecedent, consequent) or as an equivalence.
+            # For simplicity, we'll store the left pattern and right pattern separately.
+
+            # For now, skip; we'll implement later with more structure.
+            pass
+
+        # Attempt to anti‑unify left with something? Not yet.
+
+        # For now, we just note the equation.
+        pass
+# =============================================================================
+# UNIFICATION ENGINE – Bidirectional constraint solving
+# =============================================================================
+class UnificationEngine:
+    """
+    Performs unification of expressions with variables.
+    """
+    def unify(self, expr1: Expression, expr2: Expression, subs: Optional[Dict] = None) -> Optional[Dict]:
+        """
+        Unify two expressions and return a substitution dict mapping variable names to expressions.
+        Returns None if unification fails.
+        """
+        if subs is None:
+            subs = {}
+
+        # If both are leaves
+        if expr1.is_leaf() and expr2.is_leaf():
+            # If expr1 is a variable
+            if isinstance(expr1.root, Variable):
+                return self._bind_variable(expr1.root.name, expr2, subs)
+            # If expr2 is a variable
+            if isinstance(expr2.root, Variable):
+                return self._bind_variable(expr2.root.name, expr1, subs)
+            # Both constants: must be equal
+            if expr1.root == expr2.root:
+                return subs
+            else:
+                return None
+
+        # If one is leaf and other is not
+        if expr1.is_leaf() and not expr2.is_leaf():
+            if isinstance(expr1.root, Variable):
+                return self._bind_variable(expr1.root.name, expr2, subs)
+            else:
+                return None
+        if expr2.is_leaf() and not expr1.is_leaf():
+            if isinstance(expr2.root, Variable):
+                return self._bind_variable(expr2.root.name, expr1, subs)
+            else:
+                return None
+
+        # Both are non‑leaves
+        if expr1.root != expr2.root:
+            return None
+        # Check same arity (both have left and right or both missing)
+        if (expr1.left is None) != (expr2.left is None) or (expr1.right is None) != (expr2.right is None):
+            return None
+
+        # Recursively unify children
+        if expr1.left is not None:
+            subs = self.unify(expr1.left, expr2.left, subs)
+            if subs is None:
+                return None
+        if expr1.right is not None:
+            subs = self.unify(expr1.right, expr2.right, subs)
+            if subs is None:
+                return None
+        return subs
+
+    def _bind_variable(self, var_name: str, expr: Expression, subs: Dict) -> Optional[Dict]:
+        """Bind var_name to expr in subs, checking for consistency."""
+        if var_name in subs:
+            # Already bound, unify the existing binding with expr
+            return self.unify(subs[var_name], expr, subs)
+        else:
+            # Check for occurs check (optional) – skip for now
+            subs = subs.copy()
+            subs[var_name] = expr
+            return subs
+
+    def substitute(self, expr: Expression, subs: Dict) -> Expression:
+        """Apply substitution to expression."""
+        if expr.is_leaf():
+            if isinstance(expr.root, Variable) and expr.root.name in subs:
+                return subs[expr.root.name]
+            else:
+                return expr
+        else:
+            left = self.substitute(expr.left, subs) if expr.left else None
+            right = self.substitute(expr.right, subs) if expr.right else None
+            return Expression(expr.root, left, right)
+
+# =============================================================================
+# PROCEDURAL LEARNING – Step‑by‑step problem solving
+# =============================================================================
+class Procedure:
+    """
+    A sequence of steps to solve a class of problems.
+    Each step is a transformation of an expression.
+    """
+    def __init__(self, name: str, steps: List[Dict], variables: List['Variable'] = None):
+        self.name = name
+        self.steps = steps   # each step: {'action': str, 'args': list}
+        self.variables = variables or []
+        self.confidence = 0.5
+        self.uses = 0
+
+    def apply(self, expr: Expression, engine: 'ReasoningEngine') -> Optional[Expression]:
+        """Apply procedure steps to expression. Returns final expression or None if fails."""
+        current = expr
+        for step in self.steps:
+            action = step['action']
+            args = step.get('args', [])
+            if action == 'isolate_variable':
+                # e.g., move terms to isolate variable
+                # This is a placeholder; real implementation would use rule schemas.
+                pass
+            elif action == 'simplify':
+                # evaluate constant parts
+                pass
+            # ... more actions
+        return current
+
+
+class ProceduralLearner:
+    """
+    Learns step‑by‑step solution procedures from user explanations.
+    """
+    def __init__(self, engine: 'ReasoningEngine'):
+        self.engine = engine
+        self.procedures: Dict[str, Procedure] = {}  # problem pattern -> procedure
+
+    def learn_procedure(self, problem: Expression, steps: List[str], solution: Expression):
+        """
+        Record a procedure from user‑provided steps.
+        steps: list of natural language descriptions (for now).
+        """
+        # Convert steps to internal representation (simplified)
+        proc = Procedure(f"proc_{len(self.procedures)}", steps)
+        self.procedures[str(problem)] = proc
+        return proc
+
+    def find_procedure(self, problem: Expression) -> Optional[Procedure]:
+        """Find a procedure that matches the problem structure."""
+        # For now, exact match on string representation.
+        return self.procedures.get(str(problem))
+
+    def apply_procedure(self, problem: Expression) -> Optional[Expression]:
+        proc = self.find_procedure(problem)
+        if proc:
+            return proc.apply(problem, self.engine)
+        return None
+# ------------------------------------------------------------
+# Syntax Learner – Bayesian grammar induction
+# ------------------------------------------------------------
+class SyntaxLearner:
+    """
+    Incrementally learns a probabilistic context-free grammar (PCFG)
+    from observed sentences. Uses a Dirichlet process prior over rules
+    to allow unbounded rule creation.
+
+    Now config‑aware (placeholder for future parameters).
+    Extended with simple CYK parser to produce syntax trees.
+    """
+
+    def __init__(self, config_manager: Optional['ConfigManager'] = None):
+        self.config_manager = config_manager
+        # rule probabilities: (A -> BC) or (A -> word)
+        self.nonterminals = {'S', 'NP', 'VP', 'PP', 'N', 'V', 'Adj', 'Det'}
+        self.lexicon = {}        # word -> set of POS tags
+        self.rule_counts = defaultdict(Counter)  # LHS -> RHS -> count
+        self.rule_total = Counter()              # LHS -> total count
+        self.dp_alpha = 1.0     # Dirichlet process concentration
+
+    def parse(self, tokens: List[str]) -> Optional[SyntaxTree]:
+        """
+        Simple CYK parser returning the highest‑probability parse tree.
+        Returns None if no parse found.
+        """
+        n = len(tokens)
+        if n == 0:
+            return None
+
+        # Chart: table[i][j] = list of (nonterminal, tree) for span i..j (inclusive)
+        chart = [[[] for _ in range(n)] for _ in range(n)]
+
+        # Fill lexical rules (terminals)
+        for i, word in enumerate(tokens):
+            # find POS tags for word from lexicon
+            tags = self.lexicon.get(word, {'NN'})  # default noun
+            for tag in tags:
+                tree = SyntaxTree(root=tag, children=[SyntaxTree(word)])
+                chart[i][i].append((tag, tree))
+
+        # Dynamic programming over lengths
+        for length in range(2, n+1):
+            for i in range(n - length + 1):
+                j = i + length - 1
+                for k in range(i, j):
+                    for A_rule in self.rule_counts:
+                        for (B, C), count in self.rule_counts[A_rule].items():
+                            # look for B in chart[i][k] and C in chart[k+1][j]
+                            for (B_tag, left_tree) in chart[i][k]:
+                                if B_tag != B:
+                                    continue
+                                for (C_tag, right_tree) in chart[k+1][j]:
+                                    if C_tag != C:
+                                        continue
+                                    tree = SyntaxTree(root=A_rule, children=[left_tree, right_tree])
+                                    chart[i][j].append((A_rule, tree))
+        # Return best S covering entire sentence
+        if chart[0][n-1]:
+            # choose one with highest probability? For simplicity, return first S
+            for nonterm, tree in chart[0][n-1]:
+                if nonterm == 'S':
+                    return tree
+            # fallback: first tree
+            return chart[0][n-1][0][1]
+        return None
+
+    def update_parameters_from_config(self):
+        """Placeholder for hot reload."""
+        pass
+
+    def add_sentence(self, sentence: str):
+        """
+        Use a simple CYK parser with current grammar to parse the sentence.
+        If parsing fails, hypothesise new rules based on POS tags from CI engine?
+        Simplified: we'll just record word–tag co-occurrences from existing lexicon.
+        """
+        tokens = sentence.split()
+        # for now, just add to lexicon if unknown
+        for t in tokens:
+            if t not in self.lexicon:
+                # assign a default tag (NN) and count
+                self.lexicon[t] = {'NN': 1}
+                # also assign a basic type in the type hierarchy (if accessible)
+
+    def generate_response(self, target: str) -> str:
+        """
+        Generate a grammatical sentence about `target`.
+        Very simple template for now – expand later.
+        """
+        # Example: "I think [target] might be related to ..."
+        return f"I think '{target}' might be related to something."
+
+    def save(self, path: str):
+        tmp = path + ".tmp"
+        with open(tmp, 'wb') as f:
+            pickle.dump({
+                'lexicon': self.lexicon,
+                'rule_counts': self.rule_counts,
+                'rule_total': self.rule_total,
+            }, f)
+        os.replace(tmp, path)
+
+    def load(self, path: str):
+        with open(path, 'rb') as f:
+            data = pickle.load(f)
+            self.lexicon = data['lexicon']
+            self.rule_counts = data['rule_counts']
+            self.rule_total = data['rule_total']
+
+# =============================================================================
+# RULE ENGINE & CONSTRAINT PROPAGATOR
+# =============================================================================
+
+class Rule:
+    """Deterministic rule with conditions and actions."""
+    def __init__(self, name: str, condition: Expression, action: Callable, reasoning_engine: 'ReasoningEngine'):
+        self.name = name
+        self.condition = condition   # an Expression that must evaluate to True
+        self.action = action         # function that modifies the knowledge base
+        self.reasoning_engine = reasoning_engine
+
+    def matches(self, context: Dict) -> bool:
+        """Evaluate the condition in the given context."""
+        try:
+            result = self.reasoning_engine.eval_expression(self.condition, context)
+            return bool(result)
+        except:
+            return False
+
+    def execute(self, context: Dict):
+        self.action(context)
+
+
+class RuleEngine:
+    """Executes deterministic rules when conditions are met."""
+    def __init__(self):
+        self.rules: List[Rule] = []
+
+    def add_rule(self, rule: Rule):
+        self.rules.append(rule)
+
+    def run(self, context: Dict):
+        for rule in self.rules:
+            if rule.matches(context):
+                rule.execute(context)
+
+
+class ConstraintPropagator:
+    """
+    Simple constraint propagation over typed symbols.
+    Maintains a set of constraints and repeatedly applies them until fixpoint.
+    """
+    def __init__(self, knowledge_graph):
+        self.kg = knowledge_graph
+        self.constraints = []   # list of callables that return new facts
+
+    def add_constraint(self, constraint_func: Callable):
+        """constraint_func receives knowledge_graph and returns list of new edges."""
+        self.constraints.append(constraint_func)
+
+    def propagate(self, max_iter=10):
+        changed = True
+        for _ in range(max_iter):
+            if not changed:
+                break
+            changed = False
+            for constraint in self.constraints:
+                new_edges = constraint(self.kg)
+                for (n1, n2, rel, conf) in new_edges:
+                    # check if already exists with higher or equal confidence
+                    existing = self.kg.edges.get(n1, {}).get(n2, {}).get(rel, 0)
+                    if conf > existing:
+                        self.kg.add_edge(n1, n2, rel, conf)
+                        changed = True
 
 class MetaCuriosityLearner:
     """
@@ -3849,6 +4464,8 @@ class ReasoningEngine:
     Generates hypotheses about word meanings and plans queries.
 
     Now config‑aware and supports definition learning & synonym detection.
+    Extended with typed symbols, formal operators, expression trees,
+    deterministic rules, and constraint propagation.
     """
 
     def __init__(self, config_manager: Optional['ConfigManager'] = None):
@@ -3865,6 +4482,46 @@ class ReasoningEngine:
         self.definitions: Dict[str, str] = {}           # word -> definition text
         self.definition_embeddings: Dict[str, np.ndarray] = {}
 
+        # --- NEW: Typed symbols & operators ---
+        self.type_hierarchy = TypeHierarchy()
+        self.operators: Dict[str, Operator] = {}
+        self.symbol_registry = SymbolRegistry()
+        self._register_builtin_operators()
+
+        # --- NEW: Rule engine & constraint propagation ---
+        self.rule_engine = RuleEngine()
+        self.constraint_propagator = ConstraintPropagator(self.knowledge_graph)
+        self._add_builtin_constraints()
+
+
+    def _register_builtin_operators(self):
+        """Define basic arithmetic and comparison operators and register them as symbols."""
+        self.operators['+'] = Operator('+', 2, 10, lambda a,b: a+b)
+        self.operators['-'] = Operator('-', 2, 10, lambda a,b: a-b)
+        self.operators['*'] = Operator('*', 2, 20, lambda a,b: a*b)
+        self.operators['/'] = Operator('/', 2, 20, lambda a,b: a/b if b!=0 else float('inf'))
+        self.operators['='] = Operator('=', 2, 5, lambda a,b: a==b)
+        self.operators['>'] = Operator('>', 2, 5, lambda a,b: a>b)
+        self.operators['<'] = Operator('<', 2, 5, lambda a,b: a<b)
+
+        # Register them in the symbol registry
+        for op_name, op in self.operators.items():
+            sym = Symbol(op_name, 'operator', arity=op.arity, semantics=op.evaluator)
+            self.symbol_registry.register(sym)
+
+    def _add_builtin_constraints(self):
+        """Example constraints: if X is_a Y and Y is_a Z, then X is_a Z."""
+        def transitive_is_a(kg):
+            new_edges = []
+            for n1, n2dict in kg.edges.items():
+                for n2, rels in n2dict.items():
+                    if 'is_a' in rels:
+                        for n3, rels2 in kg.edges.get(n2, {}).items():
+                            if 'is_a' in rels2 and n3 != n1:
+                                conf = rels['is_a'] * rels2['is_a']
+                                new_edges.append((n1, n3, 'is_a', conf))
+            return new_edges
+        self.constraint_propagator.add_constraint(transitive_is_a)
         # --- NEW: conversational pattern memory ---
         self.context_patterns = defaultdict(lambda: {
             "sentence_initial": 0,
@@ -3894,7 +4551,200 @@ class ReasoningEngine:
         self.means_relations: Dict[str, Set[str]] = defaultdict(set)  # subject -> set of objects (for "means")
         # ---- Knowledge graph for connected reasoning ----
         self.structural_patterns = StructuralPatternLearner()
+        # ---- Expression store for ASTs ----
+        self.expressions: Dict[str, Expression] = {}  # sentence hash -> expression
+        # ---- Rule schema learning ----
+        self.schemas: List['RuleSchema'] = []          # learned rule schemas
+        self.variable_counter: int = 0                  # for generating variable names
+        self.schema_learner = SchemaLearner(self)       # the learner engine
+        # ---- Unification engine for constraint solving ----
+        self.unifier = UnificationEngine()
+        self.constraints = []  # list of (left, right) equations
+        # ---- Procedural learning ----
+        self.procedural_learner = ProceduralLearner(self)
+    # ------------------------------------------------------------------
+    # Unification and constraint solving
+    # ------------------------------------------------------------------
+    def solve_equation(self, left: Expression, right: Expression) -> Optional[Dict]:
+        """
+        Solve an equation left = right by unification or arithmetic solving.
+        Returns a substitution dict if solvable, else None.
+        """
+        # Try unification first (for logical equations)
+        subs = self.unifier.unify(left, right)
+        if subs is not None:
+            return subs
+        # Try arithmetic solving
+        return self.solve_arithmetic(left, right)
 
+    def add_constraint(self, left: Expression, right: Expression):
+        """Add an equation to the constraint store and attempt to simplify."""
+        self.constraints.append((left, right))
+
+    def substitute_in_expression(self, expr: Expression, subs: Dict) -> Expression:
+        """Apply a substitution to an expression."""
+        return self.unifier.substitute(expr, subs)
+
+    def is_constant(self, expr: Expression) -> bool:
+        """Check if expression contains no variables."""
+        if expr.is_leaf():
+            if isinstance(expr.root, Variable):
+                return False
+            try:
+                float(expr.root)
+                return True
+            except:
+                return False
+        else:
+            left_const = self.is_constant(expr.left) if expr.left else True
+            right_const = self.is_constant(expr.right) if expr.right else True
+            return left_const and right_const
+
+    def find_single_variable(self, expr: Expression) -> Optional[str]:
+        """If expression contains exactly one variable, return its name, else None."""
+        if expr.is_leaf():
+            if isinstance(expr.root, Variable):
+                return expr.root.name
+            else:
+                return None
+        else:
+            left_var = self.find_single_variable(expr.left) if expr.left else None
+            right_var = self.find_single_variable(expr.right) if expr.right else None
+            if left_var and right_var:
+                return None
+            if left_var:
+                return left_var
+            if right_var:
+                return right_var
+            return None
+
+    def eval_constant(self, expr: Expression) -> Optional[float]:
+        """Evaluate a constant expression to a number. Return None if not constant."""
+        if not self.is_constant(expr):
+            return None
+        return self.eval_expression(expr, {})
+
+    def solve_arithmetic(self, left: Expression, right: Expression) -> Optional[Dict[str, Expression]]:
+        """
+        Solve a linear arithmetic equation with one variable.
+        Returns a dict mapping variable name to an Expression (constant), or None if unsolvable.
+        """
+        # If both sides constant
+        if self.is_constant(left) and self.is_constant(right):
+            left_val = self.eval_constant(left)
+            right_val = self.eval_constant(right)
+            if left_val is not None and right_val is not None and abs(left_val - right_val) < 1e-9:
+                return {}  # no variables, equation holds
+            else:
+                return None
+
+        # If left is variable
+        if left.is_leaf() and isinstance(left.root, Variable):
+            if self.is_constant(right):
+                val = self.eval_constant(right)
+                if val is not None:
+                    return {left.root.name: Expression(str(val))}
+            return None
+
+        # If right is variable
+        if right.is_leaf() and isinstance(right.root, Variable):
+            if self.is_constant(left):
+                val = self.eval_constant(left)
+                if val is not None:
+                    return {right.root.name: Expression(str(val))}
+            return None
+
+        # If left is an operation and right is constant, and left has exactly one variable
+        if not left.is_leaf() and self.is_constant(right) and self.find_single_variable(left) is not None:
+            return self._solve_recursive(left, right)
+
+        return None
+
+    def _solve_recursive(self, left: Expression, right: Expression) -> Optional[Dict[str, Expression]]:
+        """
+        Helper for solve_arithmetic.
+        Assumes right is constant, left contains exactly one variable.
+        Returns substitution.
+        """
+        # If left is variable
+        if left.is_leaf() and isinstance(left.root, Variable):
+            val = self.eval_constant(right)
+            if val is not None:
+                return {left.root.name: Expression(str(val))}
+            return None
+
+        # left must be an operation
+        if left.is_leaf():
+            return None
+
+        op = left.root
+        if left.left is None or left.right is None:
+            return None
+
+        left_has_var = self.find_single_variable(left.left) is not None
+        right_has_var = self.find_single_variable(left.right) is not None
+
+        if left_has_var and right_has_var:
+            return None
+
+        if left_has_var:
+            var_child = left.left
+            const_child = left.right
+            if op == '+':
+                new_right_expr = Expression('-', right, const_child)
+            elif op == '-':
+                new_right_expr = Expression('+', right, const_child)
+            elif op == '*':
+                if self.eval_constant(const_child) == 0:
+                    return None
+                new_right_expr = Expression('/', right, const_child)
+            elif op == '/':
+                new_right_expr = Expression('*', right, const_child)
+            else:
+                return None
+            return self._solve_recursive(var_child, new_right_expr)
+
+        elif right_has_var:
+            var_child = left.right
+            const_child = left.left
+            if op == '+':
+                new_right_expr = Expression('-', right, const_child)
+            elif op == '-':
+                new_right_expr = Expression('-', const_child, right)
+            elif op == '*':
+                if self.eval_constant(const_child) == 0:
+                    return None
+                new_right_expr = Expression('/', right, const_child)
+            elif op == '/':
+                new_right_expr = Expression('/', const_child, right)
+            else:
+                return None
+            return self._solve_recursive(var_child, new_right_expr)
+
+        return None
+
+    def eval_expression(self, expr: Expression, context: Dict) -> Any:
+        """Evaluate an expression tree using the operator registry and context."""
+        if expr.is_leaf():
+            # leaf can be a constant or a variable from context
+            if isinstance(expr.root, str):
+                # Try to convert to number
+                try:
+                    return float(expr.root)
+                except ValueError:
+                    return context.get(expr.root, expr.root)  # fallback to string
+            return expr.root
+        else:
+            op = expr.root
+            if not isinstance(op, Operator):
+                # maybe it's a string that should be an operator
+                op = self.operators.get(expr.root)
+                if op is None:
+                    raise ValueError(f"Unknown operator: {expr.root}")
+            left_val = self.eval_expression(expr.left, context)
+            right_val = self.eval_expression(expr.right, context)
+            return op.evaluate(left_val, right_val)
+        
     def update_parameters_from_config(self):
         """Placeholder for hot reload."""
         pass
@@ -3969,6 +4819,10 @@ class ReasoningEngine:
         # Add edge
         self.knowledge_graph.add_edge(subj_nid, obj_nid, rel_type, confidence=confidence)
         self._check_transitive_inferences(subject, object, rel_type)
+
+    def run_constraint_propagation(self):
+        """Apply constraint propagation to derive new edges."""
+        self.constraint_propagator.propagate()
 
     def _check_transitive_inferences(self, subject: str, object: str, rel_type: str):
         """
@@ -4158,7 +5012,6 @@ class ReasoningEngine:
                 'sentence_embeddings': sent_emb_serializable,
                 'sentence_metadata': self.sentence_metadata,
                 'sentence_asked': self.sentence_asked,
-                # NEW fields
                 'phrase_definitions': self.phrase_definitions,
                 'phrase_embeddings': phrase_embed_serializable,
                 'phrase_relations': self.phrase_relations,
@@ -4167,8 +5020,13 @@ class ReasoningEngine:
                 'is_a_relations': dict(self.is_a_relations),
                 'means_relations': dict(self.means_relations),
                 'structural_patterns': self.structural_patterns,
+                'type_hierarchy': self.type_hierarchy,
+                'schemas': self.schemas,
+                'procedures': self.procedural_learner.procedures,
             }, f)
         os.replace(tmp, path)
+        # Save symbol registry
+        self.symbol_registry.save(os.path.join(STATE_DIR, 'symbol_registry.json'))
         # Save word-state associations separately
         self.word_state.save(os.path.join(STATE_DIR, 'word_state.json'))
         self.knowledge_graph._save()
@@ -4204,6 +5062,9 @@ class ReasoningEngine:
             self.is_a_relations = defaultdict(set, data.get('is_a_relations', {}))
             self.means_relations = defaultdict(set, data.get('means_relations', {}))
             self.phrase_metadata = data.get('phrase_metadata', {})
+            self.type_hierarchy = data.get('type_hierarchy', TypeHierarchy())
+            self.schemas = data.get('schemas', [])
+            self.procedural_learner.procedures = data.get('procedures', {})
         # Load word-state associations
         self.word_state.load(os.path.join(STATE_DIR, 'word_state.json'))
         self.knowledge_graph._load()
@@ -4212,6 +5073,8 @@ class ReasoningEngine:
             self.structural_patterns = data['structural_patterns']
         else:
             self.structural_patterns = StructuralPatternLearner()
+        # Load symbol registry
+        self.symbol_registry.load(os.path.join(STATE_DIR, 'symbol_registry.json'))
 
     def detect_pattern_and_query(self, word: str) -> Optional[str]:
         pat = self.context_patterns[word]
@@ -4354,6 +5217,12 @@ class ReasoningEngine:
     def register_response_template(self, template_id: str, template_text: str):
         """Store a response template for future learning."""
         self.response_template_registry[template_id] = template_text
+
+    def store_expression(self, sentence: str, expr: Expression):
+        """Store an expression for a sentence."""
+        # Use sentence hash as key to avoid duplicates
+        key = str(hash(sentence))
+        self.expressions[key] = expr
 # ------------------------------------------------------------
 # ParallelReasoner – generates multiple reasoning paths
 # ------------------------------------------------------------
@@ -5325,7 +6194,7 @@ class StructuredWorldModel:
 # Core Curiosity Engine (Enhanced with Factor Engine & State Learning)
 # ------------------------------------------------------------
 class CuriosityEngine:
-    """
+    """ss
     Integrates all components: HDP, GP uncertainty, Bayesian surprise,
     intrinsic reward, meta-learner, reasoning, AND now factor-based
     state snapshots with interactive human labeling.
@@ -5452,11 +6321,32 @@ class CuriosityEngine:
         # State manifold centroids (macro‑states)
         self.state_manifold = None     # list of centroid vectors
         # Flag to avoid running all idle tasks at once
+        # ---- Structural entropy gate: token behavioral profiles ----
+        self.token_profile = {}  # token -> dict with count, context_set, avg_surprise, avg_info_gain, embedding_drift, last_embedding
+        self.token_profile_stats = {
+            'count_mean': 0.0,
+            'count_std': 1.0,
+            'ctx_mean': 0.0,
+            'ctx_std': 1.0,
+            'surp_mean': 0.0,
+            'surp_std': 1.0,
+            'drift_mean': 0.0,
+            'drift_std': 1.0,
+        }
+        self._cold_start_threshold = 100  # number of unique tokens before cold start bias ends
         self._idle_tasks_last_run = 0
         self.pending_sentence_query = None   # used by ActionGenerator
+        self.pending_solution = None   # for equation solving results
         # ---- Logic doubt feedback ----
         self.expecting_logic_feedback = False
         self.pending_logic_doubt = None
+
+        # ---- Procedure learning ----
+        self.expecting_procedure_steps = False
+        self.pending_problem_expr = None
+        self.recorded_steps = []
+        self.pending_teaching_request = False
+        self.pending_teaching_expr = None
 
         # ========== CHAT MODE ==========
         self.chat_mode_active = False
@@ -5753,6 +6643,35 @@ class CuriosityEngine:
         else:
             self.current_state_labels = []
             self.current_state_embedding = None
+        token_profile_path = os.path.join(STATE_DIR, 'token_profile.pkl')
+        if os.path.exists(token_profile_path):
+            try:
+                with open(token_profile_path, 'rb') as f:
+                    data = pickle.load(f)
+                    self.token_profile = data.get('token_profile', {})
+                    loaded_stats = data.get('token_profile_stats', {})
+                    # Ensure new stats exist (backward compatibility)
+                    self.token_profile_stats = {
+                        'count_mean': loaded_stats.get('count_mean', 0.0),
+                        'count_std': loaded_stats.get('count_std', 1.0),
+                        'ctx_mean': loaded_stats.get('ctx_mean', 0.0),
+                        'ctx_std': loaded_stats.get('ctx_std', 1.0),
+                        'surp_mean': loaded_stats.get('surp_mean', 0.0),
+                        'surp_std': loaded_stats.get('surp_std', 1.0),
+                        'drift_mean': loaded_stats.get('drift_mean', 0.0),
+                        'drift_std': loaded_stats.get('drift_std', 1.0),
+                    }
+                    self._cold_start_threshold = data.get('_cold_start_threshold', 100)
+            except Exception as e:
+                print(f"Could not load token profiles: {e}")
+                self.token_profile = {}
+                self.token_profile_stats = {
+                    'count_mean': 0.0, 'count_std': 1.0,
+                    'ctx_mean': 0.0, 'ctx_std': 1.0,
+                    'surp_mean': 0.0, 'surp_std': 1.0,
+                    'drift_mean': 0.0, 'drift_std': 1.0,
+                }
+                self._cold_start_threshold = 100
 
     def _save_state(self):
         """Persist current state, including the persistent latent state concept."""
@@ -5800,6 +6719,14 @@ class CuriosityEngine:
             self.language_model.save(os.path.join(STATE_DIR, 'language_model.pkl'))
             # ---- Save current latent state concept (multi‑state) ----
             current_state_path = os.path.join(STATE_DIR, 'current_state.json')
+            # ---- Save token profiles ----
+            token_profile_path = os.path.join(STATE_DIR, 'token_profile.pkl')
+            with open(token_profile_path, 'wb') as f:
+                pickle.dump({
+                    'token_profile': self.token_profile,
+                    'token_profile_stats': self.token_profile_stats,
+                    '_cold_start_threshold': self._cold_start_threshold,
+                }, f)
             data = {
                 'labels': self.current_state_labels,
                 'embedding': self.current_state_embedding.tolist() if self.current_state_embedding is not None else None
@@ -5904,7 +6831,94 @@ class CuriosityEngine:
         base_factors['complexity'] = min(1.0, base_factors.get('complexity', 0.5) + 0.1 * rel_diversity)
 
         return base_factors
+
+    def _update_token_profile(self, token: str, context_tokens: List[str], bayes_surprise: float, info_gain: float, embedding: np.ndarray):
+        """Update token behavioral statistics for structural scoring."""
+        if token not in self.token_profile:
+            self.token_profile[token] = {
+                'count': 0,
+                'context_set': set(),
+                'avg_surprise': 0.0,
+                'avg_info_gain': 0.0,
+                'embedding_drift': 0.0,
+                'embedding_centroid': None,
+            }
+        prof = self.token_profile[token]
+
+        # Update count
+        prof['count'] += 1
+
+        # Update context set with cap (prevent explosion)
+        for ct in context_tokens:
+            if len(prof['context_set']) < 200:
+                prof['context_set'].add(ct)
+
+        # Update moving averages (exponential with alpha=0.1)
+        alpha = 0.1
+        prof['avg_surprise'] = (1 - alpha) * prof['avg_surprise'] + alpha * bayes_surprise
+        prof['avg_info_gain'] = (1 - alpha) * prof['avg_info_gain'] + alpha * info_gain
+
+        # Centroid-based embedding drift
+        if embedding is not None:
+            if prof['embedding_centroid'] is None:
+                prof['embedding_centroid'] = embedding.copy()
+            else:
+                # Update centroid (exponential moving average)
+                centroid = prof['embedding_centroid']
+                centroid = (1 - alpha) * centroid + alpha * embedding
+                prof['embedding_centroid'] = centroid
+
+                # Compute drift as 1 - cosine similarity between current embedding and centroid
+                norm_cent = np.linalg.norm(centroid)
+                norm_emb = np.linalg.norm(embedding)
+                if norm_cent > 0 and norm_emb > 0:
+                    cos_sim = np.dot(centroid, embedding) / (norm_cent * norm_emb)
+                    drift = 1 - cos_sim
+                else:
+                    drift = 0.0
+
+                # Update moving average of drift
+                prof['embedding_drift'] = (1 - alpha) * prof['embedding_drift'] + alpha * drift
+
+        # Update running statistics (global)
+        stats = self.token_profile_stats
+        def _update_running_stat(old_mean, old_std, new_value):
+            new_mean = (1 - alpha) * old_mean + alpha * new_value
+            new_std = (1 - alpha) * old_std + alpha * abs(new_value - new_mean)
+            return new_mean, new_std
+
+        stats['count_mean'], stats['count_std'] = _update_running_stat(stats['count_mean'], stats['count_std'], prof['count'])
+        stats['ctx_mean'], stats['ctx_std'] = _update_running_stat(stats['ctx_mean'], stats['ctx_std'], len(prof['context_set']))
+        stats['surp_mean'], stats['surp_std'] = _update_running_stat(stats['surp_mean'], stats['surp_std'], prof['avg_surprise'])
+        stats['drift_mean'], stats['drift_std'] = _update_running_stat(stats['drift_mean'], stats['drift_std'], prof['embedding_drift'])
+
+    def _normalize_stat(self, value, mean, std):
+        """Sigmoid normalization using running statistics."""
+        z = (value - mean) / (std + 1e-8)
+        return 1 / (1 + np.exp(-z))
     
+    def structural_score(self, token: str) -> float:
+        """Compute structural score for a token (high = glue-like)."""
+        prof = self.token_profile.get(token)
+        if not prof:
+            return 0.5  # neutral for unseen
+
+        stats = self.token_profile_stats
+
+        freq = self._normalize_stat(prof['count'], stats['count_mean'], stats['count_std'])
+        ctx = self._normalize_stat(len(prof['context_set']), stats['ctx_mean'], stats['ctx_std'])
+        surp = 1 - self._normalize_stat(prof['avg_surprise'], stats['surp_mean'], stats['surp_std'])
+        drift = 1 - self._normalize_stat(prof['embedding_drift'], stats['drift_mean'], stats['drift_std'])
+
+        score = 0.35 * freq + 0.35 * ctx + 0.15 * surp + 0.15 * drift
+
+        # Cold start bootstrap: if few unique tokens, boost score for short tokens
+        unique_tokens = len(self.token_profile)
+        if unique_tokens < self._cold_start_threshold and len(token) <= 2:
+            score = min(1.0, score + 0.2)
+
+        return float(np.clip(score, 0, 1))        
+
     def _compute_curiosity_factors(self, token: str, token_ci: Dict, token_phon: float,
                                    diag: Dict, features_array: np.ndarray,
                                    global_factor_dict: Optional[Dict] = None) -> CuriosityFactors:
@@ -6771,7 +7785,49 @@ class CuriosityEngine:
                     self.last_asked_word = None
                     handled_definition = True
                     # Fall through to main processing so the sentence is still analyzed
-
+            # 9. Procedure explanation (when user is teaching step by step)
+            if not self.chat_mode_active and self.expecting_procedure_steps:
+                # Record the step provided by user
+                step_text = text.strip()
+                self.recorded_steps.append(step_text)
+                print(f"📝 [Step Recorded] {step_text}")
+                # Simple heuristic: if step ends with '.' or we have a solution, maybe stop.
+                # We'll just continue until user says "done" or "that's it".
+                if "done" in step_text.lower() or "that's it" in step_text.lower() or "finish" in step_text.lower():
+                    # End of teaching
+                    if self.pending_problem_expr is not None:
+                        # Store procedure
+                        proc = self.reasoner.procedural_learner.learn_procedure(
+                            self.pending_problem_expr, self.recorded_steps, None
+                        )
+                        print(f"🧠 [Procedure Learned] I've learned a new procedure for {self.pending_problem_expr}")
+                    self.expecting_procedure_steps = False
+                    self.pending_problem_expr = None
+                    self.recorded_steps = []
+                    return {
+                        "ci_report": {},
+                        "phon_score": 0,
+                        "diagnostic": {},
+                        "token_analyses": [],
+                        "curiosity_artifacts": ["Procedure recorded."],
+                        "meta_weights": self.meta_learner.get_weights(),
+                        "total_intrinsic_reward": self.reward_tracker.total_reward,
+                        "episode_reward": 0.0,
+                        "factor_vector": {},
+                    }
+                else:
+                    # Continue expecting more steps
+                    return {
+                        "ci_report": {},
+                        "phon_score": 0,
+                        "diagnostic": {},
+                        "token_analyses": [],
+                        "curiosity_artifacts": ["Step recorded. Continue."],
+                        "meta_weights": self.meta_learner.get_weights(),
+                        "total_intrinsic_reward": self.reward_tracker.total_reward,
+                        "episode_reward": 0.0,
+                        "factor_vector": {},
+                    }
             # ----------------- MAIN PROCESSING -----------------
             # If we reach here, we are not in a waiting state (or we handled a definition and continue).
             self.interaction_counter += 1
@@ -6825,9 +7881,15 @@ class CuriosityEngine:
                 })
 
                 factor_array = self._align_factor_vector(factors.as_array(self.meta_learner.factor_names))
-                self.meta_learner.update(factor_array, igain)
+
+                struct_score = self.structural_score(token)
+
+                # Adjust information gain for meta-learner to avoid structural contamination
+                igain_adjusted = igain * (1 - struct_score)
+                self.meta_learner.update(factor_array, igain_adjusted)
 
                 curiosity_score = self.meta_learner.predict_curiosity(factor_array)
+                curiosity_score *= (1 - struct_score)
 
                 token_analyses.append({
                     'token': token,
@@ -6840,17 +7902,106 @@ class CuriosityEngine:
                     'gp_uncertainty': factors.gp_uncertainty,
                     'bayesian_surprise': factors.bayesian_surprise,
                 })
-
+            # ---- Update token profiles for structural scoring ----
+            for token in tokens:
+                # Get embedding (if available)
+                emb = self.semantic_learner.word_embeddings.get(token)
+                if emb is None:
+                    emb = np.zeros(self.semantic_learner.emb_dim)  # fallback
+                # Find the corresponding token analysis entry for this token (to get bayes_surprise and igain)
+                ta = next((t for t in token_analyses if t['token'] == token), None)
+                if ta:
+                    bayes = ta.get('bayesian_surprise', 0.0)
+                    igain = ta.get('igain', 0.0)
+                else:
+                    bayes = 0.0
+                    igain = 0.0
+                # Context: all other tokens in this input
+                context = [t for t in tokens if t != token]
+                self._update_token_profile(token, context, bayes, igain, emb)
             # ---- Sentence-level reasoning (if all tokens known) ----
             if self._all_tokens_known(tokens):
                 sentence_emb = self.semantic_learner.text_to_embedding(text)
                 if sentence_emb is not None:
                     self._process_sentence_reasoning(text, tokens, token_analyses, sentence_emb)
 
+            # ---- Build expression from syntax tree ----
+            syntax_tree = self.syntax_learner.parse(tokens)
+            if syntax_tree is not None:
+                expr = syntax_tree.to_expression(self.reasoner.type_hierarchy, self.reasoner.operators)
+                if expr is not None and isinstance(expr.root, Operator):
+                    self.reasoner.store_expression(text, expr)
+
+                # ---- Detect equations (left = right) ----
+                # Heuristic: if the top node is '=' and has two children, it's an equation.
+                if expr is not None and expr.root == '=' and expr.left and expr.right:
+                    left = expr.left
+                    right = expr.right
+                    # Feed to schema learner
+                    self.reasoner.schema_learner.incorporate_equation(left, right)
+
+                    # Try to solve the equation
+                    subs = self.reasoner.solve_equation(left, right)
+                    if subs is not None:
+                        # Build a readable result
+                        result_parts = []
+                        for var_name, val_expr in subs.items():
+                            # Convert value expression to string
+                            if val_expr.is_leaf():
+                                val_str = str(val_expr.root)
+                            else:
+                                val_str = str(val_expr)
+                            result_parts.append(f"{var_name} = {val_str}")
+                        if result_parts:
+                            self.pending_solution = ", ".join(result_parts)
+                        else:
+                            self.pending_solution = None
+                    else:
+                        self.pending_solution = None
+                        # If we couldn't solve and user asked a question, consider teaching
+                        if '?' in text:
+                            if expr is not None:
+                                proc = self.reasoner.procedural_learner.find_procedure(expr)
+                                if proc:
+                                    # Apply procedure (placeholder)
+                                    result_expr = proc.apply(expr, self.reasoner)
+                                    if result_expr:
+                                        self.pending_solution = f"Using learned procedure: {result_expr}"
+                                else:
+                                    # No procedure, ask user to teach us
+                                    self.pending_teaching_request = True
+                                    self.pending_teaching_expr = expr
+            if syntax_tree is not None:
+                expr = syntax_tree.to_expression(self.reasoner.type_hierarchy, self.reasoner.operators)
+                if expr is not None and isinstance(expr.root, Operator):
+                    self.reasoner.store_expression(text, expr)
+
             # ----------------- DECIDE WHETHER TO ASK A QUESTION -----------------
             # These checks are in priority order; the first that triggers will ask and return early.
 
             # 4. Logic doubt (ask about a generated logic rule)
+            # 4.5 Teaching request (ask user to teach us)
+            if not self.chat_mode_active and self.pending_teaching_request:
+                self.pending_teaching_request = False
+                expr = self.pending_teaching_expr
+                self.pending_teaching_expr = None
+                self.expecting_procedure_steps = True
+                self.pending_problem_expr = expr
+                self.recorded_steps = []
+                teach_question = f"I don't know how to solve {expr}. Could you teach me step by step?"
+                print(f"\n🧠 [Teaching Request] {teach_question}")
+                print(f"🤖 AGI> {teach_question}")
+                return {
+                    "ci_report": ci_report,
+                    "phon_score": phon_score,
+                    "diagnostic": diag_explanation,
+                    "token_analyses": token_analyses,
+                    "curiosity_artifacts": ["Teaching mode activated."],
+                    "meta_weights": self.meta_learner.get_weights(),
+                    "total_intrinsic_reward": self.reward_tracker.total_reward,
+                    "episode_reward": 0.0,
+                    "factor_vector": {},
+                }
             if not self.chat_mode_active:
                 doubt = self.logic_inheritance.get_next_doubt()
                 if doubt:
@@ -6877,24 +8028,29 @@ class CuriosityEngine:
             if not self.chat_mode_active:
                 unknown_tokens = [t for t in tokens if t not in self.semantic_learner.word_embeddings]
                 unknown_ratio = len(unknown_tokens) / max(len(tokens), 1)
-                if unknown_ratio > 0.5:
-                    target = unknown_tokens[0]
-                    self.last_asked_word = target
-                    system_reply = f"What does '{target}' mean?"
-                    print(f"\n🧠 [Knowledge Gap] {system_reply}")
-                    print(f"🤖 AGI> {system_reply}")
-                    return {
-                        "ci_report": ci_report,
-                        "phon_score": phon_score,
-                        "diagnostic": diag_explanation,
-                        "token_analyses": token_analyses,
-                        "curiosity_artifacts": ["Knowledge gap detected — waiting for definition."],
-                        "meta_weights": self.meta_learner.get_weights(),
-                        "total_intrinsic_reward": self.reward_tracker.total_reward,
-                        "episode_reward": 0.0,
-                        "factor_vector": {},
-                    }
-
+                if unknown_ratio > 0.5 and unknown_tokens:
+                    # Score each unknown token (structural score)
+                    scored_unknowns = [(t, self.structural_score(t)) for t in unknown_tokens]
+                    # Sort by score ascending (most semantic first)
+                    scored_unknowns.sort(key=lambda x: x[1])
+                    target, struct_score = scored_unknowns[0]
+                    # Only ask if structural score is not too high (i.e., it's likely semantic)
+                    if struct_score <= 0.65:
+                        self.last_asked_word = target
+                        system_reply = f"What does '{target}' mean?"
+                        print(f"\n🧠 [Knowledge Gap] {system_reply}")
+                        print(f"🤖 AGI> {system_reply}")
+                        return {
+                            "ci_report": ci_report,
+                            "phon_score": phon_score,
+                            "diagnostic": diag_explanation,
+                            "token_analyses": token_analyses,
+                            "curiosity_artifacts": ["Knowledge gap detected — waiting for definition."],
+                            "meta_weights": self.meta_learner.get_weights(),
+                            "total_intrinsic_reward": self.reward_tracker.total_reward,
+                            "episode_reward": 0.0,
+                            "factor_vector": {},
+                        }
             # 6. Pattern discovery (ask for category label)
             if not self.chat_mode_active:
                 for token in set(tokens):
@@ -7107,6 +8263,9 @@ class CuriosityEngine:
                 'token_analyses': token_analyses,
                 'factor_vector': factor_dict,
             })
+            if self.pending_solution is not None:
+                system_reply = f"Solution: {self.pending_solution}. " + system_reply
+                self.pending_solution = None   # reset
             self._last_action = system_reply
             # ---- Top‑down expectation: predict next state using world model ----
             if self.structured_world_model and self.current_state_labels:
@@ -7219,10 +8378,39 @@ class CuriosityEngine:
                 'factor_vector': factor_dict,
             }
 
-    @staticmethod
-    def _tokenize(text: str) -> List[str]:
-        return [t.lower() for t in text.split() if len(t) >= 2]
 
+    def _tokenize(self, text: str) -> List[str]:
+            import re
+
+            # --- Base tokenization ---
+            raw = [t.lower() for t in re.findall(r"[a-zA-Z']+|\d+\.?\d*|[+\-*/=<>%^()]", text) if len(t) >= 2]
+
+            # --- State-based min-length gate (adapts as vocabulary grows) ---
+            vocab_size = len(self.semantic_learner.word_embeddings) if hasattr(self, 'semantic_learner') else 0
+            min_len = 1 if vocab_size < 50 else 2
+
+            tokens = [t for t in raw if len(t) >= min_len]
+
+            # --- Self-developing: learn which token patterns are useful ---
+            # Boost tokens that already exist in semantic learner (known = useful)
+            known = [t for t in tokens if t in getattr(self, 'semantic_learner', {}).word_embeddings if hasattr(self, 'semantic_learner')]
+            unknown = [t for t in tokens if t not in known]
+
+            # If we have very few known tokens, relax filter to include shorter unknowns
+            if len(known) == 0 and unknown:
+                tokens = [t for t in raw if len(t) >= 1]
+
+            # --- Track tokenization stats for self-improvement ---
+            if not hasattr(self, '_tokenizer_stats'):
+                self._tokenizer_stats = {'total': 0, 'known_ratio_history': []}
+            self._tokenizer_stats['total'] += 1
+            if tokens:
+                ratio = len(known) / len(tokens)
+                self._tokenizer_stats['known_ratio_history'].append(ratio)
+                if len(self._tokenizer_stats['known_ratio_history']) > 200:
+                    self._tokenizer_stats['known_ratio_history'].pop(0)
+            return tokens if tokens else raw
+    
     def _generate_artifacts(
         self,
         tokens: List[str],
@@ -8552,7 +9740,7 @@ class CuriosityEngine:
         # 3. Prune weak edges (confidence < 0.1)
         kg.prune_weak_edges(threshold=0.1)
         print("   Pruned weak edges.")
-
+        self.reasoner.run_constraint_propagation()
         # 4. Identify central nodes to influence curiosity (store in a separate structure)
         central = kg.get_central_nodes(top_k=10)
         self.central_graph_nodes = central
@@ -9353,6 +10541,23 @@ class ActionGenerator:
             description = rule.get('description', f"a logical rule")
             return f"I have a doubt about some logic I wrote: {description} Is this correct?"
 
+        # --- Priority 0.75: Evaluate expressions in user input ---
+        # If user input contains an operator and all symbols have known values,
+        # try to evaluate it and return result.
+        if self.engine.reasoner.operators:
+            tokens = self.engine._tokenize(user_input)
+            # crude check: if tokens contain an operator and all others are numbers or known symbols
+            op_symbols = set(self.engine.reasoner.operators.keys())
+            if any(t in op_symbols for t in tokens):
+                # attempt to parse as expression – for now just simple arithmetic
+                try:
+                    # Very simple evaluation: if input looks like "2 + 2", evaluate
+                    # (This is a placeholder; a real parser would use syntax trees)
+                    result = eval(user_input, {"__builtins__": None}, {})
+                    return f"The result is {result}."
+                except:
+                    pass
+
         # --- Priority 0.7: Conscience relevance ---
         for belief in self.engine.conscience_manager.get_active_conscience():
             if self._matches_conscience_condition(belief, user_input, state):
@@ -9498,7 +10703,7 @@ class IdleReasoner(threading.Thread):
 # ------------------------------------------------------------
 def main():
     print("=" * 80)
-    print("🧠 AGI Curiosity Engine v0.4 - Information-Theoretic & Intrinsically Motivated")
+    print("🧠 AGI Curiosity Engine v0.9 - Information-Theoretic & Intrinsically Motivated")
     print("Integrated with backend.ci (Akkadian transliteration models)")
     print("State persists in ./curiosity_state/ - the system grows over time.")
     print("with: Gaussian Process uncertainty, Bayesian surprise, Intrinsic Reward.")
