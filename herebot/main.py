@@ -19,73 +19,8 @@ All maths is probabilistic; decisions are sampled from posteriors.
 # - Oudeyer, P-Y. & Kaplan, F. (2007). "What is intrinsic motivation? A typology of computational approaches".
 # - Schmidhuber, J. (1991). "A possibility for implementing curiosity and boredom in model-building neural controllers".
 """
-
-import sys
-import time
-import threading
-import math
-import pickle
-import os
-from collections import defaultdict, Counter
-from typing import Dict, List, Optional, Tuple, Any, Set
-from dataclasses import dataclass, field
-import numpy as np
-from scipy.stats import beta as beta_dist, dirichlet, norm, gamma, multivariate_normal
-from scipy.special import digamma, gammaln, rel_entr
-from scipy.spatial.distance import cdist, cosine
-import heapq
-from scipy.cluster.vq import kmeans2
-import psutil
-import json
-from scipy.special import logsumexp
-from scipy.optimize import minimize
-from typing import Callable
-import copy
-import importlib.util
-import traceback
-import io
-from contextlib import redirect_stdout, redirect_stderr
-import re
-import itertools
-# ------------------------------------------------------------
-# Real CI, Phonotactic, Diagnostic engines from backend.ci
-# ------------------------------------------------------------
-from backend.ci import (
-    CIEngine,
-    PhonotacticEngine,
-    DiagnosticEngine,
-    add_sentence_to_memory,
-)
-# ------------------------------------------------------------
-# Persistent state directory
-# ------------------------------------------------------------
-STATE_DIR = "curiosity_state"
-try:
-    os.makedirs(STATE_DIR, exist_ok=True)
-except Exception as e:
-    print(f"[WARN] Could not create STATE_DIR: {e}")
-# ------------------------------------------------------------
-# Logic directory for inheritance – AGI writes own logic here
-# ------------------------------------------------------------
-LOGIC_DIR = os.path.join(os.path.dirname(__file__), "logic")
-try:
-    os.makedirs(LOGIC_DIR, exist_ok=True)
-except Exception as e:
-    print(f"[WARN] Could not create LOGIC_DIR: {e}")
-# ------------------------------------------------------------
-# Generated code directory – AGI writes its own executable logic here
-# ------------------------------------------------------------
-CODE_GEN_DIR = os.path.join(os.path.dirname(__file__), "generated_code")
-try:
-    os.makedirs(CODE_GEN_DIR, exist_ok=True)
-except Exception as e:
-    print(f"[WARN] Could not create CODE_GEN_DIR: {e}")
-# Shadow test logs – store execution traces of generated code
-SHADOW_LOG_DIR = os.path.join(STATE_DIR, "shadow_test_logs")
-try:
-    os.makedirs(SHADOW_LOG_DIR, exist_ok=True)
-except Exception as e:
-    print(f"[WARN] Could not create SHADOW_LOG_DIR: {e}")
+from .importglobal import *
+from .directory_handler import *
 def safe_choice(a):
     """
     Robust replacement for np.random.choice that accepts
