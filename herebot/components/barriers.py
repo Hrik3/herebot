@@ -1,6 +1,6 @@
 from importglobal import Optional,copy,Dict, Any,List,json,os,Tuple,dataclass,field,time,pickle,np
 from .config_manager import ConfigManager
-from directory_handler import STATE_DIR, LOGIC_DIR, SHADOW_LOG_DIR
+from components.directory_handler import STATE_DIR, LOGIC_DIR, SHADOW_LOG_DIR
 from traits.code_generator import CodeGenerator,ShadowExecutor,GeneratedCodeFeedback
 
 # ------------------------------------------------------------

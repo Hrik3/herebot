@@ -1,8 +1,9 @@
 from importglobal import Optional, Dict, Any, Set, Callable, List,json,os,Tuple,dataclass,field,time
 from .config_manager import ConfigManager
-from .traits.traits_global import Expression
-from .concepts.concepts_global import *
+from traits.traits_global import Expression
+from concepts.concepts_global import *
 from .resoning import ReasoningEngine
+from heart import CuriosityEngine
 # =============================================================================
 # RULE ENGINE & CONSTRAINT PROPAGATOR
 # =============================================================================

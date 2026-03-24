@@ -1,5 +1,5 @@
 from importglobal import np,List,Dict,Optional
-from config_manager import ConfigManager
+from components.config_manager import ConfigManager
 # ------------------------------------------------------------
 # Consciousness Model – Global Workspace with Attention
 # ------------------------------------------------------------

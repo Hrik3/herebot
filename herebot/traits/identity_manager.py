@@ -1,5 +1,5 @@
 from importglobal import np,os
-from directory_handler import STATE_DIR
+from components.directory_handler import STATE_DIR
 # ------------------------------------------------------------
 # Identity Manager – persistent self-identity representation
 # ------------------------------------------------------------

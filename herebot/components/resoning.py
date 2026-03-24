@@ -1,6 +1,6 @@
 from concepts.meta_learner import MetaCuriosityLearner
-from .importglobal import Set,Dict,List,Any,Tuple, Optional, Counter, defaultdict, pickle, np, os, time, math
-from learner import Expression,KnowledgeGraph, Variable, ConfigManager, STATE_DIR, StructuralPatternLearner,UnificationEngine, ProceduralLearner, WordStateAssociator
+from importglobal import Set,Dict,List,Any,Tuple, Optional, Counter, defaultdict, pickle, np, os, time, math
+from components.learner import Expression,KnowledgeGraph, Variable, ConfigManager, STATE_DIR, StructuralPatternLearner,UnificationEngine, ProceduralLearner, WordStateAssociator
 from traits.traits_global import TypeHierarchy, Operator, Symbol, SymbolRegistry, RuleSchema,SchemaLearner
 from .rules import RuleEngine, ConstraintPropagator
 from .feedback_process import ContextualSentimentCorpus, FeedbackEntry
