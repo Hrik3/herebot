@@ -1,6 +1,6 @@
 from importglobal import Optional, Dict,Callable,time,np,os,traceback
-from config_manager import ConfigManager
-from directory_handler  import STATE_DIR
+from components.config_manager import ConfigManager
+from components.directory_handler  import STATE_DIR
 from functionsglobal import align_factor_vector
 class MetaCuriosityLearner:
     """

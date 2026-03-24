@@ -1,5 +1,5 @@
 from importglobal import Optional,float,Dict,Counter,defaultdict,np,math,pickle,os,time
-from config_manager import ConfigManager
+from components.config_manager import ConfigManager
 # ------------------------------------------------------------
 # Hierarchical Probabilistic Concept Model (Dirichlet Process)
 # ------------------------------------------------------------

@@ -1,6 +1,8 @@
-from importglobal import Optional,Dict,defaultdict,json,Callable,List,os,time,traceback,np
-from config_manager import ConfigManager
-from directory_handler import STATE_DIR
+from importglobal import Optional,Dict,defaultdict,json,Callable,List,os,time,traceback,np,Counter
+from components.config_manager import ConfigManager
+from components.directory_handler import STATE_DIR
+from components.learner import KnowledgeGraph
+from components.factor_handler import StateManager
 # ------------------------------------------------------------
 # Adaptive Control Space – dynamic expansion of control factors
 # ------------------------------------------------------------
@@ -143,3 +145,49 @@ class AdaptiveControlSpace:
         # but there is still unexplained variance in the state space, propose a new factor.
         # For now, we return None (no auto‑expansion) – you can enable it later.
         return None
+    
+# ------------------------------------------------------------
+# StructuredWorldModel – uses knowledge graph and episodic memory to simulate state transitions
+# ------------------------------------------------------------
+class StructuredWorldModel:
+    """
+    Models transitions between states and actions, using the knowledge graph
+    to represent possible outcomes. Can generate synthetic future episodes.
+    """
+    def __init__(self, kg: KnowledgeGraph, state_manager: StateManager):
+        self.kg = kg
+        self.state_manager = state_manager
+        self.transition_counts = defaultdict(lambda: defaultdict(Counter))  # state_label -> action -> next_state_label -> count
+
+    def observe_episode(self, state_label, action, next_state_label):
+        """Record a transition from episodic memory."""
+        self.transition_counts[state_label][action][next_state_label] += 1
+
+    def predict_next_state(self, state_label, action):
+        """Return the most probable next state given current state and action."""
+        if state_label not in self.transition_counts or action not in self.transition_counts[state_label]:
+            return None
+        next_states = self.transition_counts[state_label][action]
+        return max(next_states, key=next_states.get) if next_states else None
+
+    def generate_synthetic_episode(self, start_state_label, max_steps=5):
+        """Walk through the transition graph to create a synthetic sequence."""
+        if not self.transition_counts:
+            return []
+        current = start_state_label
+        sequence = [current]
+        for _ in range(max_steps):
+            # Choose a random action from known actions for this state
+            if current not in self.transition_counts:
+                break
+            actions = list(self.transition_counts[current].keys())
+            if not actions:
+                break
+            action = np.random.choice(actions)
+            next_state = self.predict_next_state(current, action)
+            if next_state is None or next_state == current:
+                break
+            sequence.append((action, next_state))
+            current = next_state
+        return sequence
+

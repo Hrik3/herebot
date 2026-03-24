@@ -1,5 +1,5 @@
 from importglobal import Optional,Tuple,np
-from config_manager import ConfigManager
+from components.config_manager import ConfigManager
 # ------------------------------------------------------------
 # Gaussian Process Uncertainty Model (Bayesian Linear Regression with RBF features)
 # ------------------------------------------------------------

@@ -1,5 +1,5 @@
 from importglobal import json,time,os,traceback,io,importlib,redirect_stderr,redirect_stdout
-from directory_handler import CODE_GEN_DIR, STATE_DIR
+from components.directory_handler import CODE_GEN_DIR, STATE_DIR
 # ------------------------------------------------------------
 # CodeGenerator – writes Python code from confirmed logic rules
 # Enhanced with resource monitoring, error handling, and dynamic code generation

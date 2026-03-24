@@ -1,5 +1,5 @@
 from importglobal import os,pickle,np,Counter,List,Optional
-from config_manager import ConfigManager
+from components.config_manager import ConfigManager
 # ------------------------------------------------------------
 # Semantic Learner – Bayesian model of word meanings
 # ------------------------------------------------------------
