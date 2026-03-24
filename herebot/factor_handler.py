@@ -1,6 +1,7 @@
-from .importglobal import List,Dict,np,dataclass,field,json,os,Optional,time,Tuple
+from .importglobal import List,Dict,np,dataclass,field,json,os,Optional,time,Tuple,psutil
 from .config_manager import ConfigManager
 from .directory_handler import STATE_DIR
+from concepts.concepts_global import AdaptiveControlSpace
 # ------------------------------------------------------------
 # Multi-Factor Curiosity with Meta-Learned Weights (extended)
 # ------------------------------------------------------------
@@ -442,4 +443,120 @@ class StateManager:
     def get_unresolved_conflicts(self) -> List[Dict]:
         """Return conflicts that are not yet resolved."""
         return [c for c in self.conflicts if not c.get("resolved", False)]
+# ------------------------------------------------------------
+# Factor Engine – computes the base control signals
+# ------------------------------------------------------------
+class FactorEngine:
+    """
+    Derives the base control signals from the current system state.
+    All outputs are in [0,1].
+
+    Now uses AdaptiveControlSpace to allow dynamic expansion.
+    """
+
+    def __init__(self, control_space: AdaptiveControlSpace,
+                 config_manager: Optional['ConfigManager'] = None):
+        self.control_space = control_space
+        self.config_manager = config_manager
+
+    def update_parameters_from_config(self):
+        """Placeholder for hot reload."""
+        pass
+
+    def compute(self,
+                token_analyses: List[Dict],
+                ci_report: Dict,
+                phon_score: float,
+                diag: Dict,
+                concept_model,
+                meta_learner,
+                reward_total: float,
+                semantic_learner) -> Dict[str, float]:
+        """
+        Returns a dict with all control signals (base + dynamic).
+        """
+        result = {}
+
+        # 1. curiosity – max curiosity score among tokens
+        result['curiosity'] = max([ta.get("curiosity_score", 0.0) for ta in token_analyses], default=0.0)
+
+        # 2. threat – based on negative diagnostics, low confidence, low phon_score
+        neg_count = len(diag.get("negatives", []))
+        result['threat'] = np.clip(0.3 * (neg_count / 3.0) +
+                                   0.4 * (1.0 - ci_report.get("confidence", 0.5)) +
+                                   0.3 * (1.0 - phon_score), 0, 1)
+
+        # 3. trust – from CI confidence and stability (computed after comprehension)
+        result['trust'] = 0.0
+
+        # 4. confidence – CI confidence directly
+        result['confidence'] = ci_report.get("confidence", 0.5)
+
+        # 5. uncertainty – average entropy of all known words (global)
+        if concept_model.word_concept_counts:
+            uncertainties = [concept_model.entropy_word(w) for w in concept_model.word_concept_counts]
+            result['uncertainty'] = np.clip(np.mean(uncertainties) / 5.0, 0, 1)
+        else:
+            result['uncertainty'] = 0.5
+
+        # 6. energy – compute budget proxy (inverse of recent CPU usage)
+        try:
+            cpu_percent = psutil.cpu_percent(interval=0.1) / 100.0
+            result['energy'] = 1.0 - np.clip(cpu_percent, 0, 1)
+        except:
+            result['energy'] = 0.8
+
+        # 7. attention – based on input length and number of tokens
+        token_count = len(token_analyses)
+        result['attention'] = np.clip(token_count / 20.0, 0, 1)
+
+        # ---- Language factors ----
+        # comprehension: average semantic similarity among words in input
+        if token_analyses and semantic_learner:
+            sims = []
+            for ta in token_analyses:
+                w = ta['token']
+                others = [t['token'] for t in token_analyses if t['token'] != w]
+                if others:
+                    oth_sims = [semantic_learner.similarity(w, o) for o in others
+                                if o in semantic_learner.word_embeddings]
+                    if oth_sims:
+                        sims.append(np.mean(oth_sims))
+            result['comprehension'] = np.mean(sims) if sims else 0.5
+        else:
+            result['comprehension'] = 0.5
+
+        # fluency: placeholder
+        result['fluency'] = 0.7
+
+        # cognitive load: inverse of energy * attention
+        result['cognitive_load'] = np.clip(1.0 - (result['energy'] * result['attention']), 0, 1)
+
+        # ---- Recompute trust using comprehension ----
+        result['trust'] = (
+            0.4 * result['confidence'] +
+            0.3 * ci_report.get("stability", 0.5) +
+            0.3 * result['comprehension']
+        )
+
+        # ---- Compute dynamic factors (if any) ----
+        state = {
+            'token_analyses': token_analyses,
+            'ci_report': ci_report,
+            'phon_score': phon_score,
+            'diag': diag,
+            'concept_model': concept_model,
+            'meta_learner': meta_learner,
+            'reward_total': reward_total,
+            'semantic_learner': semantic_learner,
+            **result
+        }
+        for factor_name in self.control_space.dynamic_factors:
+            result[factor_name] = self.control_space.compute_factor(factor_name, state)
+            self.control_space.record_value(factor_name, result[factor_name])
+        # ensure numeric stability
+        for k, v in result.items():
+            if not isinstance(v, (int, float)) or np.isnan(v) or np.isinf(v):
+                result[k] = 0.0
+        return result
 
