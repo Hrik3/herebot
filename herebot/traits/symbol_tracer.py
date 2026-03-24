@@ -1,5 +1,6 @@
 from importglobal import Optional, Dict, Any, Set, Callable, List,json,os,Tuple
 from .expression import Expression
+from resoning import ReasoningEngine
 # =============================================================================
 # SYMBOL REGISTRY – Formal symbol grounding
 # =============================================================================

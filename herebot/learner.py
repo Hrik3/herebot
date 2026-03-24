@@ -2,6 +2,7 @@ from importglobal import Optional,Dict,time,Set,np,List,json,os,Tuple,defaultdic
 from traits.traits_global import Expression, Variable, SyntaxTree
 from .config_manager import ConfigManager
 from .directory_handler import STATE_DIR
+from .resoning import ReasoningEngine
 # =============================================================================
 # UNIFICATION ENGINE – Bidirectional constraint solving
 # =============================================================================
