@@ -3,7 +3,7 @@ from .config_manager import ConfigManager
 from traits.traits_global import Expression
 from concepts.concepts_global import *
 from .resoning import ReasoningEngine
-from heart import CuriosityEngine
+from core.heart import CuriosityEngine
 # =============================================================================
 # RULE ENGINE & CONSTRAINT PROPAGATOR
 # =============================================================================
