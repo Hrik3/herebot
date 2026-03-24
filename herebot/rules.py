@@ -2,6 +2,7 @@ from importglobal import Optional, Dict, Any, Set, Callable, List,json,os,Tuple,
 from .config_manager import ConfigManager
 from .traits.traits_global import Expression
 from .concepts.concepts_global import *
+from .resoning import ReasoningEngine
 # =============================================================================
 # RULE ENGINE & CONSTRAINT PROPAGATOR
 # =============================================================================
