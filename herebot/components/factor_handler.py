@@ -1,7 +1,11 @@
+from __future__ import annotations
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from concepts.concepts_global import AdaptiveControlSpace
 from importglobal import List,Dict,np,dataclass,field,json,os,Optional,time,Tuple,psutil
 from components.config_manager import ConfigManager
 from components.directory_handler import STATE_DIR
-from concepts.concepts_global import AdaptiveControlSpace
+
 # ------------------------------------------------------------
 # Multi-Factor Curiosity with Meta-Learned Weights (extended)
 # ------------------------------------------------------------
