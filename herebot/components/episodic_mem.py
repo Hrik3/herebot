@@ -1,6 +1,6 @@
-from .importglobal import Optional,np,os,json,Dict,time,List
-from .directory_handler import STATE_DIR
-from .config_manager import ConfigManager
+from importglobal import Optional,np,os,json,Dict,time,List
+from components.directory_handler import STATE_DIR
+from components.config_manager import ConfigManager
 # ------------------------------------------------------------
 # Episodic Memory – stores complete interaction episodes
 # ------------------------------------------------------------

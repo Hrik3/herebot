@@ -1,6 +1,6 @@
-from .importglobal import List,Dict,np,dataclass,field,json,os,Optional,time,Tuple,psutil
-from .config_manager import ConfigManager
-from .directory_handler import STATE_DIR
+from importglobal import List,Dict,np,dataclass,field,json,os,Optional,time,Tuple,psutil
+from components.config_manager import ConfigManager
+from components.directory_handler import STATE_DIR
 from concepts.concepts_global import AdaptiveControlSpace
 # ------------------------------------------------------------
 # Multi-Factor Curiosity with Meta-Learned Weights (extended)

@@ -19,12 +19,14 @@ All maths is probabilistic; decisions are sampled from posteriors.
 # - Oudeyer, P-Y. & Kaplan, F. (2007). "What is intrinsic motivation? A typology of computational approaches".
 # - Schmidhuber, J. (1991). "A possibility for implementing curiosity and boredom in model-building neural controllers".
 """
-from .importglobal import *
-from .functionsglobal import *
+import sys, os
+sys.path.insert(0, os.path.dirname(__file__))
+from importglobal import *
+from functionsglobal import *
 from concepts.concepts_global import *
 from traits.traits_global import *
-from .components_global import *
-from .core.mind import *
+from components_global import *
+from core.mind import *
 
 # ------------------------------------------------------------
 # Idle Reasoner (background thread) – now with long-idle introspection

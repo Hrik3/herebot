@@ -1,4 +1,4 @@
-from .config_manager import ConfigManager
+from components.config_manager import ConfigManager
 from importglobal import Dict,Optional, pickle, os  
 # ------------------------------------------------------------
 # Intrinsic Motivation: Reward based on Prediction Error / Information Gain

@@ -5,8 +5,8 @@ import numpy as np
 # import duckdb   # DISABLED (DB OFF)
 import sys, os
 sys.path.insert(0, os.getcwd())
-from . import SystemStats as system_stats
-from . incremental_csr_lib import IncrementalCSR
+import SystemStats as system_stats
+from incremental_csr_lib import IncrementalCSR
 
 
 class AdaptiveSearchBackend:

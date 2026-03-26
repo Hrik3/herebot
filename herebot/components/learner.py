@@ -1,8 +1,8 @@
 from importglobal import Optional,Dict,time,Set,np,List,json,os,Tuple,defaultdict,Counter,pickle
 from traits.traits_global import Expression, Variable, SyntaxTree
-from .config_manager import ConfigManager
-from .directory_handler import STATE_DIR
-from .resoning import ReasoningEngine
+from components.config_manager import ConfigManager
+from components.directory_handler import STATE_DIR
+from components.resoning import ReasoningEngine
 # =============================================================================
 # UNIFICATION ENGINE – Bidirectional constraint solving
 # =============================================================================

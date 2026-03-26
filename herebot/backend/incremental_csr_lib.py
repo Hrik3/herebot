@@ -481,7 +481,7 @@ class IncrementalCSR:
         stats["rows_in_shards"] = rows_in_shards
         stats["nnz_in_shards"] = nnz_in_shards
 
-        # Main matrix – read shape & nnz from .npz without full load
+        # Main matrix – read shape & nnz from npz without full load
         rows_main = 0
         nnz_main = 0
         if os.path.exists(self.main_npz):
