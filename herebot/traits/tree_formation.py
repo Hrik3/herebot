@@ -1,6 +1,6 @@
 from importglobal import Optional, Dict, Any, Set, Callable, List,re
-from .expression import Expression
-from symbol_tracer import Variable
+from traits.expression import Expression
+from traits.symbol_tracer import Variable
 # =============================================================================
 # TYPED SYMBOL & OPERATOR CLASSES
 # =============================================================================

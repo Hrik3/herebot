@@ -45,7 +45,7 @@ class CuriosityEngine:
         # ---- Language & consciousness modules ----
         self.semantic_learner = SemanticLearner(config_manager=self.config_manager)
         self.syntax_learner = SyntaxLearner(config_manager=self.config_manager)
-        from .mind import ActionGenerator
+        from core.mind import ActionGenerator
         self.action_generator = ActionGenerator(
             self.semantic_learner, self.syntax_learner, self.reasoner, self, config_manager=self.config_manager
         )

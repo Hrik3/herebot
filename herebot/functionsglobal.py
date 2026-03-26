@@ -1,4 +1,4 @@
-from .importglobal import np
+from importglobal import np
 def safe_choice(a):
     """
     Robust replacement for np.random.choice that accepts

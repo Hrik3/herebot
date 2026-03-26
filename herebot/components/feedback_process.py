@@ -1,5 +1,5 @@
-from .importglobal import dataclass,field,Dict,List,Any,Optional,pickle,os
-from .directory_handler import STATE_DIR
+from importglobal import dataclass,field,Dict,List,Any,Optional,pickle,os
+from components.directory_handler import STATE_DIR
 # ------------------------------------------------------------
 # Contextual Sentiment Corpus – emergent learning from user feedback
 # ------------------------------------------------------------

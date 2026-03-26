@@ -28,7 +28,7 @@ import itertools
 # ------------------------------------------------------------
 # Real CI, Phonotactic, Diagnostic engines from backend.ci
 # ------------------------------------------------------------
-from .backend.ci import (
+from backend.ci import (
     CIEngine,
     PhonotacticEngine,
     DiagnosticEngine,

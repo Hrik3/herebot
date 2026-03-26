@@ -1,4 +1,4 @@
-from .importglobal import os
+from importglobal import os
 # ------------------------------------------------------------
 # Persistent state directory
 # ------------------------------------------------------------

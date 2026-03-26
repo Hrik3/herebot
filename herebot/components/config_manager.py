@@ -1,5 +1,5 @@
-from .importglobal import os, json,copy,np,Optional,List
-from .directory_handler import STATE_DIR
+from importglobal import os, json,copy,np,Optional,List
+from components.directory_handler import STATE_DIR
 # ------------------------------------------------------------
 # Configuration Manager – loads parameters from active_config.json
 # ------------------------------------------------------------

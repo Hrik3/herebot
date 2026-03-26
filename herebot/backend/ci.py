@@ -10,7 +10,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.ensemble import IsolationForest
 import string
-from . incremental_csr_lib import IncrementalCSR
+from backend.incremental_csr_lib import IncrementalCSR
 
 # =====================================================
 # Loading Database (text.csv)

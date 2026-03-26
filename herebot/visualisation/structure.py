@@ -2,7 +2,6 @@ import json
 import time
 import sys
 
-# Change this to your actual code2flow output filename
 input_file = sys.argv[1] if len(sys.argv) > 1 else "raw.json"
 output_file = "output.json"
 
@@ -12,7 +11,7 @@ with open(input_file) as f:
 raw_nodes = data["graph"]["nodes"]
 raw_edges = data["graph"]["edges"]
 
-# nodes is a dict
+# --- Nodes (dict in this file) ---
 nodes = []
 if isinstance(raw_nodes, dict):
     for uid, node in raw_nodes.items():
@@ -34,23 +33,27 @@ else:
             "original_id": uid
         })
 
-# edges is a list
+# --- Edges (list in this file, keys are "source"/"target", no "uid") ---
 edges = []
 if isinstance(raw_edges, dict):
     for uid, edge in raw_edges.items():
+        # dict format: try src/dst first, fall back to source/target
         edges.append({
             "id": uid,
-            "source": edge.get("src", ""),
-            "target": edge.get("dst", ""),
+            "source": edge.get("src") or edge.get("source", ""),
+            "target": edge.get("dst") or edge.get("target", ""),
             "original_id": uid
         })
 else:
-    for edge in raw_edges:
-        uid = edge.get("uid", "")
+    for idx, edge in enumerate(raw_edges):
+        # list format: try source/target first, fall back to src/dst
+        source = edge.get("source") or edge.get("src", "")
+        target = edge.get("target") or edge.get("dst", "")
+        uid = edge.get("uid") or edge.get("id") or f"edge_{idx}"
         edges.append({
             "id": uid,
-            "source": edge.get("src", ""),
-            "target": edge.get("dst", ""),
+            "source": source,
+            "target": target,
             "original_id": uid
         })
 

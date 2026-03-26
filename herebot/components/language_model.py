@@ -1,4 +1,4 @@
-from .importglobal import np,pickle
+from importglobal import np,pickle
 # ------------------------------------------------------------
 # Language Model – base class for all self‑expanding language models
 # ------------------------------------------------------------
