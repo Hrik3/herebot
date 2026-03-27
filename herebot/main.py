@@ -87,8 +87,8 @@ class IdleReasoner(threading.Thread):
 # ------------------------------------------------------------
 def main():
     print("=" * 80)
-    print("🧠 AGI Curiosity Engine v0.9 - Information-Theoretic & Intrinsically Motivated")
-    print("Integrated with backend.ci (Akkadian transliteration models)")
+    print(" AGI Curiosity Engine v0.9 - Information-Theoretic & Intrinsically Motivated")
+    print("Integrated with backend.ci ")
     print("State persists in ./curiosity_state/ - the system grows over time.")
     print("with: Gaussian Process uncertainty, Bayesian surprise, Intrinsic Reward.")
     print("Type your message or press Ctrl+C to exit.")
@@ -101,7 +101,7 @@ def main():
     try:
         while True:
             try:
-                user_input = input("\n🧠 AGI> ").strip()
+                user_input = input("\n AGI> ").strip()
                 if not user_input:
                     continue
                 if user_input.lower() in ("exit", "quit"):

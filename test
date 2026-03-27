@@ -1,5 +1,0 @@
-git diff -- changes in file 
-git commit -m "{name}" -- naming a commit
-git status --view changes made
-git add . --add all changes in current folder(pre commit command)
-git log 

@@ -231,7 +231,7 @@ class ConscienceManager:
                 'timestamp': time.time()
             })
             self.save()
-            print(f"🧠 [Conscience] New belief integrated: {belief.description[:60]}...")
+            print(f" [Conscience] New belief integrated: {belief.description[:60]}...")
             return True
         return False
 

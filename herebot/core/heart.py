@@ -40,6 +40,7 @@ class CuriosityEngine:
         self.reward_tracker = IntrinsicRewardTracker(config_manager=self.config_manager)
 
         # Reasoning engine
+        from components.resoning import ReasoningEngine
         self.reasoner = ReasoningEngine(config_manager=self.config_manager)
         self._last_state_learning_time = 0
         # ---- Language & consciousness modules ----
@@ -52,6 +53,7 @@ class CuriosityEngine:
         self.consciousness = ParameterRevision(config_manager=self.config_manager)
         self.episodic_memory = EpisodicMemory(config_manager=self.config_manager)
         # ---- Parallel reasoning ----
+        from components.resoning import ParallelReasoner
         self.parallel_reasoner = ParallelReasoner(self.reasoner, self.meta_learner)
         # ------------------------------------------
         self._last_feedback_ask_time = 0
@@ -169,6 +171,7 @@ class CuriosityEngine:
         self.chat_history = []                  # recent turns for context
         # ================================
         # ========== BEHAVIORAL RULE LEARNER ==========
+        from components.rules import BehavioralRuleLearner
         self.behavioral_learner = BehavioralRuleLearner(config_manager=self.config_manager)
         # ---- Conscience & Logic Inheritance ----
         self.conscience_manager = ConscienceManager(config_manager=self.config_manager)
@@ -218,945 +221,9 @@ class CuriosityEngine:
     # ------------------------------------------------------------------
     # Persistence (now with config_manager passed to .load() methods)
     # ------------------------------------------------------------------
-    def _update_dynamic_limits(self):
-        """Adapt internal limits to available system RAM."""
-        try:
-            mem = psutil.virtual_memory()
-            avail_gb = mem.available / (1024**3)
-
-            # scale factors
-            scale = max(0.5, min(8.0, avail_gb / 4.0))  # normalize around ~4GB baseline
-
-            self._max_cycles_per_session = int(100000 * scale)
-            self._max_hypotheses = int(5000 * scale)
-            self._max_logic_rules = int(2000 * scale)
-
-        except Exception:
-            # fallback defaults
-            self._max_cycles_per_session = 100000
-            self._max_hypotheses = 5000
-            self._max_logic_rules = 2000
-
-    def _metabolic_maintenance(self):
-        """
-        Apply metabolic cost and phase transitions to all persistent structures.
-        Called during idle introspection.
-        """
-        now = time.time()
-
-        # --- 1. Behavioral rules ---
-        for rule in self.behavioral_learner.rules.values():
-            self._apply_metabolic_to_item(rule, now)
-
-        # --- 2. Conscience beliefs ---
-        for belief in self.conscience_manager.beliefs.values():
-            self._apply_metabolic_to_item(belief, now)
-
-        # --- 3. Hypotheses in reasoner ---
-        for hyp in self.reasoner.hypotheses:
-            self._apply_metabolic_to_dict_item(hyp, now)
-
-        # --- 4. Dynamic curiosity factors ---
-        for factor_name, meta in self.meta_learner.factor_metadata.items():
-            self._apply_metabolic_to_dict_item(meta, now, key_prefix=("factor", factor_name))
-
-        # --- 5. States ---
-        for label, meta in self.state_manager.state_metadata.items():
-            self._apply_metabolic_to_dict_item(meta, now, key_prefix=("state", label))
-
-        # --- 6. Logic rules ---
-        for logic_id, rule in self.logic_inheritance.confirmed_logic.items():
-            self._apply_metabolic_to_dict_item(rule, now, key_prefix=("logic", logic_id))
-        for doubt in self.logic_inheritance.pending_doubts:
-            rule = doubt['rule']
-            self._apply_metabolic_to_dict_item(rule, now, key_prefix=("doubt", doubt['doubt_id']))
-
-    def _apply_metabolic_to_item(self, item, now):
-        """Apply metabolic rules to an object with attributes."""
-        if item.phase == 'deleted':
-            return
-        dt = now - (item.last_used if item.last_used else item.created)
-        # decay recent_usage exponentially
-        decay_factor = 0.99 ** dt
-        item.recent_usage *= decay_factor
-
-        # compute effective predictive_gain (could be based on recent_usage and confidence)
-        effective_gain = item.predictive_gain * item.recent_usage / (1 + dt)
-
-        # maintenance cost (could be type-dependent)
-        cost = item.energy_cost
-
-        if effective_gain < cost:
-            # move to next phase
-            if item.phase == 'active':
-                item.phase = 'weak'
-                print(f"   [Metabolic] {item} moved to weak")
-            elif item.phase == 'weak':
-                item.phase = 'dormant'
-                print(f"   [Metabolic] {item} moved to dormant")
-            elif item.phase == 'dormant':
-                item.phase = 'archived'
-                print(f"   [Metabolic] {item} archived")
-            elif item.phase == 'archived':
-                item.phase = 'deleted'
-                print(f"   [Metabolic] {item} deleted")
-                # actually remove from its container? We'll handle separately.
-
-    def _apply_metabolic_to_dict_item(self, d, now, key_prefix=None):
-        """Apply metabolic rules to a dictionary item."""
-        if d.get('phase') == 'deleted':
-            return
-        last_used = d.get('last_used')
-        created = d.get('created', now - 86400)  # fallback
-        dt = now - (last_used if last_used else created)
-        recent_usage = d.get('recent_usage', 0.0)
-        recent_usage *= (0.99 ** dt)
-        d['recent_usage'] = recent_usage
-
-        predictive_gain = d.get('predictive_gain', 0.0)
-        cost = d.get('energy_cost', 0.5)
-        effective_gain = predictive_gain * recent_usage / (1 + dt)
-
-        if effective_gain < cost:
-            phase = d.get('phase', 'active')
-            if phase == 'active':
-                d['phase'] = 'weak'
-            elif phase == 'weak':
-                d['phase'] = 'dormant'
-            elif phase == 'dormant':
-                d['phase'] = 'archived'
-            elif phase == 'archived':
-                d['phase'] = 'deleted'
-                # Optionally remove from container – we'll leave that for later cleanup.
-
-    def _align_factor_vector(self, vec: np.ndarray) -> np.ndarray:
-        return align_vector(vec, len(self.meta_learner.factor_names))
-
-    def _memory_pressure_backoff(self):
-        """Slow cognition when memory is low."""
-        try:
-            mem = psutil.virtual_memory()
-            if mem.available / mem.total < 0.12:   # <12% free
-                time.sleep(0.15)
-                return True
-        except Exception:
-            pass
-        return False
-
-    def _load_state(self):
-        """Load persistent state from disk, including the latent state concept."""
-        concept_path = os.path.join(STATE_DIR, 'concept_model.pkl')
-        meta_path = os.path.join(STATE_DIR, 'meta_learner.npz')
-        gp_path = os.path.join(STATE_DIR, 'gp_model.pkl')
-        reward_path = os.path.join(STATE_DIR, 'reward_tracker.pkl')
-        reasoner_path = os.path.join(STATE_DIR, 'reasoner.pkl')
-        history_path = os.path.join(STATE_DIR, 'history.pkl')
-        semantic_path = os.path.join(STATE_DIR, 'semantic_learner.pkl')
-        syntax_path = os.path.join(STATE_DIR, 'syntax_learner.pkl')
-        # ---- Load Conscience & Logic ----
-        conscience_path = os.path.join(STATE_DIR, 'conscience_manager.pkl')
-        if os.path.exists(conscience_path):
-            self.conscience_manager._load()
-        self.logic_inheritance._load()
-        if os.path.exists(concept_path):
-            self.concept_model = HierarchicalConceptModel.load(concept_path, config_manager=self.config_manager)
-        if os.path.exists(meta_path):
-            self.meta_learner.load(meta_path)
-        if os.path.exists(gp_path):
-            with open(gp_path, 'rb') as f:
-                self.gp_model = pickle.load(f)
-            self.gp_model.config_manager = self.config_manager
-        if os.path.exists(reward_path):
-            self.reward_tracker.load(reward_path)
-            self.reward_tracker.config_manager = self.config_manager
-        if os.path.exists(reasoner_path):
-            self.reasoner.load(reasoner_path)
-            self.reasoner.config_manager = self.config_manager
-        if os.path.exists(history_path):
-            with open(history_path, 'rb') as f:
-                self.word_history = pickle.load(f)
-        if os.path.exists(semantic_path):
-            self.semantic_learner.load(semantic_path)
-            self.semantic_learner.config_manager = self.config_manager
-        if os.path.exists(syntax_path):
-            self.syntax_learner.load(syntax_path)
-            self.syntax_learner.config_manager = self.config_manager
-        # Load new idle‑task related data
-        world_model_path = os.path.join(STATE_DIR, 'world_model.pkl')
-        if os.path.exists(world_model_path):
-            with open(world_model_path, 'rb') as f:
-                self.world_model = pickle.load(f)
-        policy_path = os.path.join(STATE_DIR, 'policy_model.pkl')
-        if os.path.exists(policy_path):
-            with open(policy_path, 'rb') as f:
-                self.policy_model = pickle.load(f)
-        user_model_path = os.path.join(STATE_DIR, 'user_model.pkl')
-        if os.path.exists(user_model_path):
-            with open(user_model_path, 'rb') as f:
-                self.user_model = pickle.load(f)
-        research_queue_path = os.path.join(STATE_DIR, 'research_queue.pkl')
-        if os.path.exists(research_queue_path):
-            with open(research_queue_path, 'rb') as f:
-                self.research_queue = pickle.load(f)
-        identity_history_path = os.path.join(STATE_DIR, 'identity_history.pkl')
-        if os.path.exists(identity_history_path):
-            with open(identity_history_path, 'rb') as f:
-                self.identity_history = pickle.load(f)
-        state_manifold_path = os.path.join(STATE_DIR, 'state_manifold.pkl')
-        if os.path.exists(state_manifold_path):
-            with open(state_manifold_path, 'rb') as f:
-                self.state_manifold = pickle.load(f)
-        # ---- Load identity aliases ----
-        aliases_path = os.path.join(STATE_DIR, 'identity_aliases.json')
-        if os.path.exists(aliases_path):
-            try:
-                with open(aliases_path, 'r') as f:
-                    self.identity_aliases = set(json.load(f))
-            except Exception as e:
-                print(f"Could not load identity aliases: {e}")
-        guilt_path = os.path.join(STATE_DIR, 'guilt_tracker.pkl')
-        if os.path.exists(guilt_path):
-            self.guilt_tracker.load(guilt_path)
-        # Ensure conscience_manager shares the same guilt_tracker instance
-        if self.conscience_manager:
-            self.conscience_manager.guilt_tracker = self.guilt_tracker
-        # Load generated code feedback
-        self.generated_code_feedback._load()
-        # ---- Load language model ----
-        lm_path = os.path.join(STATE_DIR, 'language_model.pkl')
-        if os.path.exists(lm_path):
-            try:
-                self.language_model.load(lm_path)
-                print(f"📖 Loaded language model with {self.language_model.vocab_size} words, {self.language_model.steps} steps.")
-            except Exception as e:
-                print(f"Could not load language model: {e}")
-        else:
-            # Build initial vocabulary from existing word embeddings
-            for word in self.semantic_learner.word_embeddings:
-                self.language_model.add_word_to_vocab(word)
-        # ---- Load current latent state concept (multi‑state) ----
-        current_state_path = os.path.join(STATE_DIR, 'current_state.json')
-        if os.path.exists(current_state_path):
-            try:
-                with open(current_state_path, 'r') as f:
-                    data = json.load(f)
-                labels = data.get('labels', [])
-                if labels:
-                    self.current_state_labels = labels
-                else:
-                    # backward compatibility with old single-label format
-                    single = data.get('label')
-                    if single:
-                        self.current_state_labels = [single]
-                emb = data.get('embedding')
-                if emb is not None:
-                    self.current_state_embedding = np.array(emb)
-            except Exception as e:
-                print(f"Could not load current state: {e}")
-                self.current_state_labels = []
-                self.current_state_embedding = None
-        else:
-            self.current_state_labels = []
-            self.current_state_embedding = None
-        token_profile_path = os.path.join(STATE_DIR, 'token_profile.pkl')
-        if os.path.exists(token_profile_path):
-            try:
-                with open(token_profile_path, 'rb') as f:
-                    data = pickle.load(f)
-                    self.token_profile = data.get('token_profile', {})
-                    loaded_stats = data.get('token_profile_stats', {})
-                    # Ensure new stats exist (backward compatibility)
-                    self.token_profile_stats = {
-                        'count_mean': loaded_stats.get('count_mean', 0.0),
-                        'count_std': loaded_stats.get('count_std', 1.0),
-                        'ctx_mean': loaded_stats.get('ctx_mean', 0.0),
-                        'ctx_std': loaded_stats.get('ctx_std', 1.0),
-                        'surp_mean': loaded_stats.get('surp_mean', 0.0),
-                        'surp_std': loaded_stats.get('surp_std', 1.0),
-                        'drift_mean': loaded_stats.get('drift_mean', 0.0),
-                        'drift_std': loaded_stats.get('drift_std', 1.0),
-                    }
-                    self._cold_start_threshold = data.get('_cold_start_threshold', 100)
-            except Exception as e:
-                print(f"Could not load token profiles: {e}")
-                self.token_profile = {}
-                self.token_profile_stats = {
-                    'count_mean': 0.0, 'count_std': 1.0,
-                    'ctx_mean': 0.0, 'ctx_std': 1.0,
-                    'surp_mean': 0.0, 'surp_std': 1.0,
-                    'drift_mean': 0.0, 'drift_std': 1.0,
-                }
-                self._cold_start_threshold = 100
-
-    def _save_state(self):
-        """Persist current state, including the persistent latent state concept."""
-        now = time.time()
-        if now - getattr(self, "_last_save_time", 0) < getattr(self, "_min_save_interval", 20):
-            return
-        self._last_save_time = now
-
-        try:
-            self.concept_model.save(os.path.join(STATE_DIR, 'concept_model.pkl'))
-            self.meta_learner.save(os.path.join(STATE_DIR, 'meta_learner.npz'))
-            with open(os.path.join(STATE_DIR, 'gp_model.pkl'), 'wb') as f:
-                pickle.dump(self.gp_model, f)
-            self.reward_tracker.save(os.path.join(STATE_DIR, 'reward_tracker.pkl'))
-            self.reasoner.save(os.path.join(STATE_DIR, 'reasoner.pkl'))
-            with open(os.path.join(STATE_DIR, 'history.pkl'), 'wb') as f:
-                pickle.dump(self.word_history, f)
-            self.semantic_learner.save(os.path.join(STATE_DIR, 'semantic_learner.pkl'))
-            self.syntax_learner.save(os.path.join(STATE_DIR, 'syntax_learner.pkl'))
-            self.identity_manager.save()
-            # ---- Save behavioral rule learner ----
-            self.behavioral_learner.save()
-            # ---- Save identity aliases ----
-            aliases_path = os.path.join(STATE_DIR, 'identity_aliases.json')
-            with open(aliases_path, 'w') as f:
-                json.dump(list(self.identity_aliases), f)
-            # Save new idle‑task related data
-            with open(os.path.join(STATE_DIR, 'world_model.pkl'), 'wb') as f:
-                pickle.dump(self.world_model, f)
-            with open(os.path.join(STATE_DIR, 'policy_model.pkl'), 'wb') as f:
-                pickle.dump(self.policy_model, f)
-            with open(os.path.join(STATE_DIR, 'user_model.pkl'), 'wb') as f:
-                pickle.dump(self.user_model, f)
-            with open(os.path.join(STATE_DIR, 'research_queue.pkl'), 'wb') as f:
-                pickle.dump(self.research_queue, f)
-            with open(os.path.join(STATE_DIR, 'identity_history.pkl'), 'wb') as f:
-                pickle.dump(self.identity_history, f)
-            with open(os.path.join(STATE_DIR, 'state_manifold.pkl'), 'wb') as f:
-                pickle.dump(self.state_manifold, f)
-            self.conscience_manager.save()
-            self.logic_inheritance.save()
-            self.guilt_tracker.save(os.path.join(STATE_DIR, 'guilt_tracker.pkl'))
-            self.generated_code_feedback.save()
-            # ---- Save language model ----
-            self.language_model.save(os.path.join(STATE_DIR, 'language_model.pkl'))
-            # ---- Save current latent state concept (multi‑state) ----
-            current_state_path = os.path.join(STATE_DIR, 'current_state.json')
-            # ---- Save token profiles ----
-            token_profile_path = os.path.join(STATE_DIR, 'token_profile.pkl')
-            with open(token_profile_path, 'wb') as f:
-                pickle.dump({
-                    'token_profile': self.token_profile,
-                    'token_profile_stats': self.token_profile_stats,
-                    '_cold_start_threshold': self._cold_start_threshold,
-                }, f)
-            data = {
-                'labels': self.current_state_labels,
-                'embedding': self.current_state_embedding.tolist() if self.current_state_embedding is not None else None
-            }
-            with open(current_state_path, 'w') as f:
-                json.dump(data, f, indent=2)
-        except Exception as e:
-            print(f"Error saving state: {e}. State may be incomplete.")
-            print(traceback.format_exc())
-    # ------------------------------------------------------------------
-    # Hot‑reload: refresh all components from config file
-    # ------------------------------------------------------------------
-    def reload_config(self):
-        """Reload the configuration file and update all component parameters."""
-        self.config_manager.reload()
-        # Update each component
-        self.concept_model.update_parameters_from_config()
-        self.gp_model.update_parameters_from_config()
-        self.meta_learner.update_parameters_from_config()
-        self.reward_tracker.update_parameters_from_config()
-        self.semantic_learner.update_parameters_from_config()
-        self.syntax_learner.update_parameters_from_config()
-        self.consciousness.update_parameters_from_config()
-        self.action_generator.update_parameters_from_config()
-        self.reasoner.update_parameters_from_config()
-        self.factor_engine.update_parameters_from_config()
-        self.state_manager.update_parameters_from_config()
-        self.episodic_memory.update_parameters_from_config()
-        if hasattr(self, '_idle_reasoner'):
-            self._idle_reasoner.update_parameters_from_config()
-        # Update engine parameters
-        self.reconfigure_interval = self.config_manager.get('engine.reconfigure_interval', 20)
-    # ------------------------------------------------------------------
-    # Emotional self‑reconfiguration
-    # ------------------------------------------------------------------
-    def _maybe_reconfigure(self):
-        """Generate a new config based on the current factor vector and reload it."""
-        # Obtain the latest factor vector (we don't store it, so recompute from last token analyses?)
-        # Since this is called at the end of process_input, we have factor_dict.
-        # We'll access it from the local variable in process_input – we need to pass it.
-        # To keep it simple, we recompute factor vector from the latest state.
-        # In practice, we store the last factor_vector in self.last_factor_vector.
-        if hasattr(self, '_last_factor_vector'):
-            factor_vector = self._last_factor_vector
-            self.config_manager.generate_modulated_config(factor_vector)
-            self.reload_config()
-            # Allow conscience to adjust its own thresholds
-            self.conscience_manager.evolve_parameters()
-            print("🧬 [Emotional Reconfiguration] Configuration updated based on internal state.")
-    # ------------------------------------------------------------------
-    # Feature extraction helpers (unchanged)
-    # ------------------------------------------------------------------
-    def _extract_features(self, token: str, ci_report: Dict, phon_score: float, diag: Dict) -> Dict[str, float]:
-        """Convert token analysis into a feature vector for the concept model."""
-        features = {
-            'confidence': ci_report.get('confidence', 0.5),
-            'stability': ci_report.get('stability', 0.5),
-            'phon_score': phon_score,
-            'char_valid': ci_report.get('mean', 0.5),
-            'structure': phon_score,
-        }
-        for neg in diag.get('negatives', []):
-            if 'character' in neg.lower():
-                features['char_valid'] = 0.1
-            if 'vowel' in neg.lower():
-                features['structure'] = 0.2
-        return features
-
-    def _features_to_array(self, features: Dict[str, float]) -> np.ndarray:
-        """Convert feature dict to fixed-length array for GP."""
-        keys = ['confidence', 'stability', 'phon_score', 'char_valid', 'structure']
-        return np.array([features.get(k, 0.5) for k in keys])
-
-    def _apply_knowledge_graph_curiosity(self, token: str, base_factors: Dict[str, float]) -> Dict[str, float]:
-        """
-        Modify curiosity factors based on knowledge graph structure.
-        - If token has many connections (high degree), boost novelty and uncertainty.
-        - If token is a bridge between clusters, boost curiosity further.
-        """
-        # Get node ID for token
-        nid = self.reasoner.knowledge_graph.get_node_id(token, "word")
-        if nid is None:
-            return base_factors
-
-        # Compute degree
-        neighbors = self.reasoner.knowledge_graph.get_neighbors(nid)
-        degree = len(neighbors)
-        # Normalize degree (max expected degree maybe 100)
-        degree_factor = min(1.0, degree / 50.0)
-
-        # Boost novelty and uncertainty based on degree
-        base_factors['novelty'] = min(1.0, base_factors.get('novelty', 0.5) + 0.2 * degree_factor)
-        base_factors['uncertainty'] = min(1.0, base_factors.get('uncertainty', 0.5) + 0.15 * degree_factor)
-        # Boost surprise a little
-        base_factors['surprise'] = min(1.0, base_factors.get('surprise', 0.5) + 0.1 * degree_factor)
-
-        # Optionally, if token appears in many different relation types, boost more
-        rel_types = set()
-        for _, rt, _ in neighbors:
-            rel_types.add(rt)
-        rel_diversity = len(rel_types) / 5.0  # max 5 types
-        base_factors['complexity'] = min(1.0, base_factors.get('complexity', 0.5) + 0.1 * rel_diversity)
-
-        return base_factors
-
-    def _update_token_profile(self, token: str, context_tokens: List[str], bayes_surprise: float, info_gain: float, embedding: np.ndarray):
-        """Update token behavioral statistics for structural scoring."""
-        if token not in self.token_profile:
-            self.token_profile[token] = {
-                'count': 0,
-                'context_set': set(),
-                'avg_surprise': 0.0,
-                'avg_info_gain': 0.0,
-                'embedding_drift': 0.0,
-                'embedding_centroid': None,
-            }
-        prof = self.token_profile[token]
-
-        # Update count
-        prof['count'] += 1
-
-        # Update context set with cap (prevent explosion)
-        for ct in context_tokens:
-            if len(prof['context_set']) < 200:
-                prof['context_set'].add(ct)
-
-        # Update moving averages (exponential with alpha=0.1)
-        alpha = 0.1
-        prof['avg_surprise'] = (1 - alpha) * prof['avg_surprise'] + alpha * bayes_surprise
-        prof['avg_info_gain'] = (1 - alpha) * prof['avg_info_gain'] + alpha * info_gain
-
-        # Centroid-based embedding drift
-        if embedding is not None:
-            if prof['embedding_centroid'] is None:
-                prof['embedding_centroid'] = embedding.copy()
-            else:
-                # Update centroid (exponential moving average)
-                centroid = prof['embedding_centroid']
-                centroid = (1 - alpha) * centroid + alpha * embedding
-                prof['embedding_centroid'] = centroid
-
-                # Compute drift as 1 - cosine similarity between current embedding and centroid
-                norm_cent = np.linalg.norm(centroid)
-                norm_emb = np.linalg.norm(embedding)
-                if norm_cent > 0 and norm_emb > 0:
-                    cos_sim = np.dot(centroid, embedding) / (norm_cent * norm_emb)
-                    drift = 1 - cos_sim
-                else:
-                    drift = 0.0
-
-                # Update moving average of drift
-                prof['embedding_drift'] = (1 - alpha) * prof['embedding_drift'] + alpha * drift
-
-        # Update running statistics (global)
-        stats = self.token_profile_stats
-        def _update_running_stat(old_mean, old_std, new_value):
-            new_mean = (1 - alpha) * old_mean + alpha * new_value
-            new_std = (1 - alpha) * old_std + alpha * abs(new_value - new_mean)
-            return new_mean, new_std
-
-        stats['count_mean'], stats['count_std'] = _update_running_stat(stats['count_mean'], stats['count_std'], prof['count'])
-        stats['ctx_mean'], stats['ctx_std'] = _update_running_stat(stats['ctx_mean'], stats['ctx_std'], len(prof['context_set']))
-        stats['surp_mean'], stats['surp_std'] = _update_running_stat(stats['surp_mean'], stats['surp_std'], prof['avg_surprise'])
-        stats['drift_mean'], stats['drift_std'] = _update_running_stat(stats['drift_mean'], stats['drift_std'], prof['embedding_drift'])
-
-    def _normalize_stat(self, value, mean, std):
-        """Sigmoid normalization using running statistics."""
-        z = (value - mean) / (std + 1e-8)
-        return 1 / (1 + np.exp(-z))
-    
-    def structural_score(self, token: str) -> float:
-        """Compute structural score for a token (high = glue-like)."""
-        prof = self.token_profile.get(token)
-        if not prof:
-            return 0.5  # neutral for unseen
-
-        stats = self.token_profile_stats
-
-        freq = self._normalize_stat(prof['count'], stats['count_mean'], stats['count_std'])
-        ctx = self._normalize_stat(len(prof['context_set']), stats['ctx_mean'], stats['ctx_std'])
-        surp = 1 - self._normalize_stat(prof['avg_surprise'], stats['surp_mean'], stats['surp_std'])
-        drift = 1 - self._normalize_stat(prof['embedding_drift'], stats['drift_mean'], stats['drift_std'])
-
-        score = 0.35 * freq + 0.35 * ctx + 0.15 * surp + 0.15 * drift
-
-        # Cold start bootstrap: if few unique tokens, boost score for short tokens
-        unique_tokens = len(self.token_profile)
-        if unique_tokens < self._cold_start_threshold and len(token) <= 2:
-            score = min(1.0, score + 0.2)
-
-        return float(np.clip(score, 0, 1))        
-
-    def _compute_curiosity_factors(self, token: str, token_ci: Dict, token_phon: float,
-                                   diag: Dict, features_array: np.ndarray,
-                                   global_factor_dict: Optional[Dict] = None) -> CuriosityFactors:
-        """Compute all curiosity factors for a single token and return a dynamic CuriosityFactors object."""
-        try:
-            uncertainty = self.concept_model.entropy_word(token)
-
-            learning_progress = 0.0
-            if token in self.word_history and len(self.word_history[token]) > 1:
-                prev_entropy = self.word_history[token][-2].get('entropy', 0.0)
-                curr_entropy = self.word_history[token][-1].get('entropy', uncertainty)
-                learning_progress = max(0, prev_entropy - curr_entropy)
-
-            novelty = 1.0 - token_ci.get('confidence', 0.5)
-
-            stability = token_ci.get('stability', 0.5)
-            complexity = 1.0 - stability + (min(len(token), 20) / 20.0) * 0.3
-            complexity = np.clip(complexity, 0, 1)
-
-            predicted = self.concept_model.predict_features(token)
-            observed = self._extract_features(token, token_ci, token_phon, diag)
-            surprise = 0.0
-            all_keys = set(predicted.keys()) | set(observed.keys())
-            for k in all_keys:
-                p = predicted.get(k, 0.01)
-                o = observed.get(k, 0.01)
-                surprise += o * math.log(o / p) if o > 0 and p > 0 else 0
-            surprise = np.clip(surprise, 0, 1)
-
-            phon_anomaly = 1.0 - token_phon
-            neg_count = len(diag.get('negatives', []))
-            diag_neg = min(neg_count / 5.0, 1.0)
-
-            bayes_surprise = self.concept_model.bayesian_surprise(token)
-            gp_uncertainty = self.gp_model.uncertainty(features_array)
-
-            factor_dict = {
-                "uncertainty": uncertainty,
-                "learning_progress": learning_progress,
-                "novelty": novelty,
-                "complexity": complexity,
-                "surprise": surprise,
-                "phonotactic_anomaly": phon_anomaly,
-                "diagnostic_negatives": diag_neg,
-                "bayesian_surprise": bayes_surprise,
-                "gp_uncertainty": gp_uncertainty,
-            }
-            # Apply knowledge graph based curiosity boost
-            factor_dict = self._apply_knowledge_graph_curiosity(token, factor_dict)
-            # If word has a definition, reduce its curiosity significantly
-            if self.reasoner and self.reasoner.definitions.get(token):
-                factor_dict["novelty"] *= 0.1
-                factor_dict["surprise"] *= 0.1
-                factor_dict["bayesian_surprise"] *= 0.1
-                factor_dict["gp_uncertainty"] *= 0.1
-                factor_dict["uncertainty"] *= 0.1
-                factor_dict["learning_progress"] *= 0.1
-
-            for dyn_factor in self.meta_learner.dynamic_factor_names:
-                val = self.meta_learner.compute_dynamic_factor(
-                    dyn_factor, token, token_ci, token_phon, diag,
-                    features_array, global_factor_dict
-                )
-                factor_dict[dyn_factor] = val
-
-            # Create CuriosityFactors object
-            factors = CuriosityFactors(factor_dict=factor_dict)
-
-            # Apply top‑down modulation (expects a CuriosityFactors object)
-            factors = self._apply_top_down_modulation(token, factors)
-
-            return factors
-
-        except Exception as e:
-            print(f"Error computing curiosity factors for '{token}': {e}. Returning neutral factors.")
-            print(traceback.format_exc())
-            # Return neutral factors to avoid crash
-            neutral = {name: 0.5 for name in self.meta_learner.factor_names}
-            return CuriosityFactors(factor_dict=neutral)
-
-    def _apply_top_down_modulation(self, token: str, factors: CuriosityFactors) -> CuriosityFactors:
-        """
-        Modulate curiosity factors using top‑down signals:
-        - Current state embedding
-        - Identity embedding
-        - Conscience beliefs
-        """
-        if self.current_state_embedding is not None:
-            # Compute similarity between token embedding and current state
-            token_emb = self.semantic_learner.word_embeddings.get(token)
-            if token_emb is not None:
-                state_emb = self._align_vector_to_emb_dim(self.current_state_embedding)
-                token_emb_aligned = self._align_vector_to_emb_dim(token_emb)
-                sim = np.dot(state_emb, token_emb_aligned) / (np.linalg.norm(state_emb)*np.linalg.norm(token_emb_aligned)+1e-12)
-                # Boost curiosity if token is state‑relevant (already handled by state_relevance factor)
-                # Here we also modulate novelty based on identity consistency
-                identity_sim = self.identity_manager.get_stability_bonus(token_emb_aligned)
-                # If token aligns with identity, reduce novelty (it's familiar)
-                factors.factor_dict['novelty'] *= (1.0 - 0.5 * identity_sim)
-
-        # Modulate by conscience: if a belief forbids asking about certain topics, reduce curiosity
-        for belief in self.conscience_manager.get_active_conscience():
-            if belief.rule_type == 'ethical' and belief.action.get('effect') == 'reduce_curiosity':
-                # Simple keyword match
-                if belief.condition.get('keyword') in token.lower():
-                    factors.factor_dict['curiosity'] *= 0.3
-                    factors.factor_dict['novelty'] *= 0.5
-        return factors
-    
-    def _information_gain(self, token: str, new_entropy: float) -> float:
-        if token not in self.word_history or len(self.word_history[token]) < 2:
-            return 0.0
-        old_entropy = self.word_history[token][-2].get('entropy', 1.0)
-        return max(0, old_entropy - new_entropy)
     # ------------------------------------------------------------------
     # State learning (unchanged logic, but uses configurable threshold)
     # ------------------------------------------------------------------
-    def _handle_state_learning(self, factor_vector: np.ndarray, metadata: dict):
-        """
-        Compare current factor vector with known states. Update active states list.
-        """
-        if factor_vector is None or len(factor_vector) == 0:
-            print("   [State Learning] Empty factor vector – skipping.")
-            return
-
-        if time.time() - self._last_state_learning_time < 30:
-            return
-
-        sim_threshold = self.config_manager.get('engine.state_similarity_threshold', 0.97)
-        n_states = max(1, len(self.state_manager.states))
-        maturity = np.clip(np.log1p(n_states) / 5.0, 0.2, 1.0)
-        novelty_dist_threshold = 0.35 * (1.2 - maturity)
-
-        # Find all states above similarity threshold
-        similar = self.state_manager.find_similar_states(factor_vector, threshold=sim_threshold)
-
-        # Apply meta novelty gate per candidate – keep only those within distance threshold
-        active_labels = []
-        active_embeddings = []
-        for label, sim in similar:
-            stored_vec = self.state_manager.states.get(label)
-            if stored_vec is not None:
-                v1 = self.state_manager._normalize_vector(factor_vector)
-                v2 = self.state_manager._normalize_vector(stored_vec)
-                if v1.shape != v2.shape:
-                    max_len = max(len(v1), len(v2))
-                    v1 = np.pad(v1, (0, max_len - len(v1)))
-                    v2 = np.pad(v2, (0, max_len - len(v2)))
-                dist = np.linalg.norm(v1 - v2)
-                if dist <= novelty_dist_threshold:
-                    active_labels.append(label)
-                    active_embeddings.append(self._align_vector_to_emb_dim(v2))
-
-        if active_labels:
-            print(f"\n🔍 [State Recognition] This state matches: {', '.join(active_labels)}.")
-            # Combine embeddings (average)
-            combined = np.mean(active_embeddings, axis=0) if active_embeddings else None
-            self._update_state_embedding(active_labels, combined)
-            return
-
-        # No close match – create new state
-        vec_variance = np.var(factor_vector)
-        if vec_variance < 0.05:
-            print("   [State Learning] Factor vector too uniform – skipping state creation.")
-            return
-
-        print("\n🧠 [State Learning] I encountered a new internal state.")
-        print("    Factor vector: " + " ".join(f"{v:.2f}" for v in factor_vector))
-        print("    How do humans call this state? (e.g., 'confident exploration', 'cautious inquiry')")
-        label = input("    🏷️  Label: ").strip()
-        if not label:
-            label = "unnamed_state"
-
-        metadata['tokens'] = self._tokenize(metadata.get('input_text', ''))
-        self.state_manager.save_state(label, factor_vector, metadata)
-        print(f"    ✅ State saved as '{label}'.")
-        self._last_state_learning_time = time.time()
-        self._reinforce_identity(factor_vector, reward_signal=0.2)
-        self._update_state_embedding([label], self._align_vector_to_emb_dim(factor_vector))
-
-    def _detect_semantic_relations(self, tokens: List[str], token_analyses: List[Dict]):
-        """
-        After processing tokens, check for words that have definitions and look for
-        similar definitions among other words. Generate hypotheses for synonymy.
-        """
-        # Only process words that are in token_analyses (i.e., were in the input)
-        for ta in token_analyses:
-            word = ta['token']
-            # If this word has a stored definition, check for similar definitions
-            if word in self.reasoner.definitions:
-                hypothesis = self.reasoner.generate_synonym_hypothesis(word)
-                if hypothesis:
-                    # Hypothesis is already added to reasoner.hypotheses; we may print it or log it.
-                    print(f"💡 [Semantic Hypothesis] {hypothesis}")
-    # ------------------------------------------------------------------
-    # Identity reinforcement
-    # ------------------------------------------------------------------
-    def _reinforce_identity(self, factor_vector: np.ndarray, reward_signal: float):
-        """
-        Reinforce the self-identity when a positive interaction occurs.
-        Called after successful definition learning, hypothesis confirmation,
-        or when user provides a label for a state.
-        """
-        self.identity_manager.reinforce(factor_vector, reward_signal)
-        
-        # Optionally log identity drift
-        drift = self.identity_manager.detect_drift(factor_vector)
-        if drift > 0.5:
-            print(f"🧠 [Identity Drift] Current state diverges from learned identity (drift={drift:.3f}).")
-    # ------------------------------------------------------------------
-    # State embedding helpers (persistent latent concept)
-    # ------------------------------------------------------------------
-    def _align_vector_to_emb_dim(self, vector: np.ndarray) -> np.ndarray:
-        """Truncate or pad a vector to match the semantic learner's embedding dimension."""
-        target_dim = self.semantic_learner.emb_dim
-        if len(vector) == target_dim:
-            return vector.copy()
-        elif len(vector) > target_dim:
-            return vector[:target_dim].copy()
-        else:
-            # pad with zeros
-            padded = np.zeros(target_dim)
-            padded[:len(vector)] = vector
-            return padded
-
-    def _compute_state_relevance(self,
-                                 token: str,
-                                 token_ci: Dict,
-                                 token_phon: float,
-                                 diag: Dict,
-                                 features_array: np.ndarray,
-                                 global_factor_dict: Optional[Dict] = None) -> float:
-        """
-        Dynamic curiosity factor: similarity between the token's embedding
-        and the current state embedding.
-        Returns 0.0 if no state embedding or token embedding is available.
-        """
-        if self.current_state_embedding is None:
-            return 0.0
-        token_emb = self.semantic_learner.word_embeddings.get(token)
-        if token_emb is None:
-            return 0.0
-
-        # align both embeddings to the same dimension (emb_dim)
-        state_emb = self._align_vector_to_emb_dim(self.current_state_embedding)
-        token_emb = self._align_vector_to_emb_dim(token_emb)
-
-        norm_state = np.linalg.norm(state_emb)
-        norm_token = np.linalg.norm(token_emb)
-        if norm_state == 0 or norm_token == 0:
-            return 0.0
-        sim = np.dot(state_emb, token_emb) / (norm_state * norm_token)
-        # scale from [-1,1] to [0,1]
-        # update state usage
-        if self.current_state_labels:
-            current_label = self.current_state_labels[0]  # use first active state for metadata
-            meta = self.state_manager.state_metadata.get(current_label)
-            if meta:
-                now = time.time()
-                if meta.get('last_used'):
-                    dt = now - meta['last_used']
-                    meta['recent_usage'] *= 0.99 ** dt
-                meta['recent_usage'] += 0.05
-                meta['last_used'] = now
-                self.state_manager._save_state_metadata()
-        return (sim + 1.0) * 0.5
-
-    def _update_state_embedding(self, labels: List[str], combined_vector: Optional[np.ndarray] = None):
-        """
-        Set the current active state labels and combined embedding.
-        If combined_vector is None, compute it as the average of each label's embedding.
-        Also store each label's embedding in the semantic learner.
-        """
-        if combined_vector is None:
-            # compute average of embeddings for all labels
-            embs = []
-            for lbl in labels:
-                if lbl in self.semantic_learner.word_embeddings:
-                    embs.append(self.semantic_learner.word_embeddings[lbl])
-                else:
-                    # label not yet in semantic learner – create it
-                    self.semantic_learner.initialize_word(lbl)
-                    embs.append(self.semantic_learner.word_embeddings[lbl])
-            if embs:
-                combined = np.mean(embs, axis=0)
-            else:
-                combined = np.zeros(self.semantic_learner.emb_dim)
-        else:
-            combined = combined_vector
-
-        # Ensure each label has an embedding in semantic learner
-        for lbl in labels:
-            if lbl not in self.semantic_learner.word_embeddings:
-                self.semantic_learner.initialize_word(lbl)
-                # use the combined vector as a rough embedding (or could use a stored state vector)
-                if lbl in self.state_manager.states:
-                    vec = self.state_manager.states[lbl]
-                    self.semantic_learner.word_embeddings[lbl] = self._align_vector_to_emb_dim(vec)
-
-        self.current_state_labels = labels
-        self.current_state_embedding = self._align_vector_to_emb_dim(combined)
-
-    def _process_sentence_reasoning(self, sentence: str, tokens: List[str],
-                                    token_analyses: List[Dict], sentence_emb: np.ndarray):
-        """
-        Called only when all tokens are known.
-        Stores sentence, generates hypotheses, detects relational statements,
-        and updates word-state associations.
-        """
-        # Store sentence with embedding
-        self.reasoner.store_sentence(sentence, tokens, embedding=sentence_emb,
-                                     metadata={'timestamp': time.time(), 'source': 'user'})
-
-        # --- Detect categorical or definitional statement ---
-        # Find main verb: look for 'is' or 'means' in tokens
-        verb_pos = None
-        verb = None
-        for i, tok in enumerate(tokens):
-            if tok in ['is', 'are', 'was', 'were', 'means', 'like']:
-                verb_pos = i
-                verb = tok
-                break
-        if verb_pos is not None:
-            subject = ' '.join(tokens[:verb_pos]).strip()
-            object = ' '.join(tokens[verb_pos+1:]).strip()
-            if subject and object:
-                if verb in ['is', 'are', 'was', 'were']:
-                    rel_type = 'is_a'
-                elif verb == 'means':
-                    rel_type = 'means'
-                elif verb == 'like':
-                    rel_type = 'similar'
-                else:
-                    rel_type = 'unknown'
-                # Store relation in reasoner
-                self.reasoner.store_phrase_relation(subject, object, rel_type, confidence=1.0)
-                # Also generate a direct hypothesis about this relation if it's new
-                key = f"relation:{rel_type}:{subject}:{object}"
-                if not any(h.get('key') == key for h in self.reasoner.hypotheses):
-                    hyp = {
-                        'key': key,
-                        'type': 'relation',
-                        'subject': subject,
-                        'predicate': rel_type,
-                        'object': object,
-                        'text': f"Did I understand correctly: '{subject}' {verb} '{object}'?",
-                        'asked': False,
-                    }
-                    self.reasoner.hypotheses.append(hyp)
-
-                # ---- Word-state association ----
-                # If subject is a word/phrase and object is a state label (single word), associate
-                # Also handle "X like Y" as suggesting similarity
-                if rel_type in ('means', 'is_a'):
-                    # Treat object as a label for subject
-                    self.reasoner.word_state.add_association(subject, object, confidence=1.0, source="explicit")
-                    print(f"📝 [Word-State] Associated '{subject}' with label '{object}'")
-                    
-                    # ---- IMMEDIATE PROPAGATION: if object has labels, propagate them to subject ----
-                    object_labels = self.reasoner.word_state.get_labels(object, threshold=0.3)
-                    for lab in object_labels:
-                        if lab != object:  # avoid self‑propagation
-                            self.reasoner.word_state.add_association(subject, lab, confidence=0.9, source="inheritance")
-                            print(f"   ↪ Propagated label '{lab}' from '{object}' to '{subject}'")
-                            
-                elif rel_type == 'similar':
-                    # If subject and object are both words, they should share labels
-                    subj_labels = self.reasoner.word_state.get_labels(subject)
-                    obj_labels = self.reasoner.word_state.get_labels(object)
-                    # Propagate labels from object to subject with lower confidence
-                    for lab in obj_labels:
-                        self.reasoner.word_state.add_association(subject, lab, confidence=0.7, source="similarity")
-                    for lab in subj_labels:
-                        self.reasoner.word_state.add_association(object, lab, confidence=0.7, source="similarity")
-                    print(f"📝 [Word-State] Propagated labels between '{subject}' and '{object}'")
-                # ---- Also add to knowledge graph ----
-                # Get node for subject (word/phrase) and object (label)
-                subj_nid = self.reasoner.knowledge_graph.get_node_id(subject, "word" if len(subject.split())==1 else "phrase")
-                if subj_nid is None:
-                    subj_nid = self.reasoner.knowledge_graph.add_node(subject, "word" if len(subject.split())==1 else "phrase")
-                obj_nid = self.reasoner.knowledge_graph.get_node_id(object, "state")
-                if obj_nid is None:
-                    obj_nid = self.reasoner.knowledge_graph.add_node(object, "state")
-                self.reasoner.knowledge_graph.add_edge(subj_nid, obj_nid, "associated", confidence=1.0)
-
-        # Generate other hypotheses (existing logic)
-        hypothesis = self.reasoner.generate_sentence_hypothesis(sentence, tokens, sentence_emb)
-        if hypothesis:
-            print(f"💡 [Sentence Hypothesis] {hypothesis}")
-            # Hypothesis is already in self.reasoner.hypotheses
-        # Store phrase embedding for future similarity
-        if sentence_emb is not None:
-            self.reasoner.store_phrase(sentence, sentence_emb, metadata={'source': 'user', 'timestamp': time.time()})
-
-        # Check if we should ask about this sentence (low comprehension)
-        if token_analyses:
-            avg_novelty = np.mean([ta['factors'].factor_dict.get('novelty', 0.5) for ta in token_analyses])
-            comprehension = 1.0 - avg_novelty
-            if comprehension < 0.5:   # threshold
-                query = self.reasoner.plan_sentence_query(sentence, uncertainty=1.0 - comprehension)
-                if query:
-                    self.pending_sentence_query = query
-                    print(f"❓ [Pending Sentence Query] {query}")
-
-    def _derive_inferences_from_definition(self, subject: str, definition_text: str):
-        """
-        Given a definition of subject (word or phrase), try to derive transitive inferences.
-        For example, if we have "X means Y" and later "Y means Z", we can infer "X means Z".
-        This method is called after a definition is stored.
-        """
-        # For now, we rely on the reasoner's relation graphs; the actual inference is
-        # triggered when a relation is added via store_phrase_relation.
-        # Here we just log that a definition was added (no direct action needed).
-        pass
-    
-    def _normalize_vector(self, vector: np.ndarray) -> np.ndarray:
-        """Pad or truncate vector to match the current reference dimension (from StateManager)."""
-        return self.state_manager._normalize_vector(vector)    
-
-    def _all_tokens_known(self, tokens: List[str]) -> bool:
-        """Return True iff every token in the list has a semantic embedding."""
-        return all(t in self.semantic_learner.word_embeddings for t in tokens)
-
     def _integrate_behavioral_rule(self, rule_id: str):
         """Permanently integrate a confirmed behavioral rule."""
         rule = self.behavioral_learner.rules.get(rule_id)
@@ -1171,7 +238,7 @@ class CuriosityEngine:
                 i_emb = self.semantic_learner.word_embeddings['i']
                 self.semantic_learner.initialize_word(alias)
                 self.semantic_learner.word_embeddings[alias] = i_emb.copy()
-                print(f"🧠 [Rule Integration] Learned self-alias: '{alias}'")
+                print(f" [Rule Integration] Learned self-alias: '{alias}'")
             if 'i' in self.semantic_learner.word_embeddings:
                 i_emb = self.semantic_learner.word_embeddings['i']
                 self.reasoner.store_definition(alias, f"a name for myself", i_emb)
@@ -1215,45 +282,6 @@ class CuriosityEngine:
     # ------------------------------------------------------------------
     # Automatic drive creation: control factor → curiosity factor
     # ------------------------------------------------------------------
-    def _on_new_control_factor(self, factor_name: str, compute_function: Callable, metadata: dict = None):
-        """
-        Callback when a new dynamic control factor is added.
-        Creates a corresponding curiosity factor with a per‑token compute function.
-        """
-        def curiosity_compute_function(token: str, token_ci: Dict, token_phon: float,
-                                       diag: Dict, features_array: np.ndarray,
-                                       global_factor_dict: Optional[Dict] = None) -> float:
-            """
-            Compute the curiosity value for this token based on the control factor.
-            Heuristic: absolute deviation of the control factor from neutral (0.5),
-            multiplied by the token's own novelty/uncertainty (approximated by 1 - confidence).
-            This creates a drive to explore tokens that are relevant to the current control state.
-            """
-            # Get current global value of this control factor (default 0.5)
-            if global_factor_dict is not None:
-                ctrl_val = global_factor_dict.get(factor_name, 0.5)
-            else:
-                ctrl_val = 0.5
-            
-            # Deviation from neutral (0.5) – how "active" this factor is
-            deviation = abs(ctrl_val - 0.5) * 2.0  # scale to [0,1]
-            
-            # Token's own uncertainty (novelty)
-            novelty = 1.0 - token_ci.get('confidence', 0.5)
-            
-            # Combine: curiosity is high when the control factor is active AND the token is novel
-            curiosity = deviation * novelty
-            return np.clip(curiosity, 0, 1)
-        
-        # Add this as a new curiosity factor with initial weight 0.0 (neutral prior)
-        self.meta_learner.add_factor(
-            factor_name=f"ctrl_{factor_name}",
-            initial_mu=0.0,
-            compute_function=curiosity_compute_function,
-            metadata={'source': 'control_space', 'original_factor': factor_name}
-        )
-        print(f"🧠 [Drive Creation] New curiosity factor 'ctrl_{factor_name}' created from control dimension '{factor_name}'.")  
-
     def build_world_model_transitions(self):
         """Scan episodic memory to build transition counts for the structured world model."""
         episodes = self.episodic_memory.episodes[-500:]
@@ -1333,7 +361,7 @@ class CuriosityEngine:
                     system_reply = "Chat mode activated. I'll try to talk with you naturally. What shall we discuss?"
                 else:
                     system_reply = "Chat mode deactivated. Returning to normal learning mode."
-                print(f"🤖 AGI> {system_reply}")
+                print(f"AGI> {system_reply}")
                 return {
                     "ci_report": {},
                     "phon_score": 0,
@@ -1615,7 +643,7 @@ class CuriosityEngine:
                         proc = self.reasoner.procedural_learner.learn_procedure(
                             self.pending_problem_expr, self.recorded_steps, None
                         )
-                        print(f"🧠 [Procedure Learned] I've learned a new procedure for {self.pending_problem_expr}")
+                        print(f" [Procedure Learned] I've learned a new procedure for {self.pending_problem_expr}")
                     self.expecting_procedure_steps = False
                     self.pending_problem_expr = None
                     self.recorded_steps = []
@@ -1804,8 +832,8 @@ class CuriosityEngine:
                 self.pending_problem_expr = expr
                 self.recorded_steps = []
                 teach_question = f"I don't know how to solve {expr}. Could you teach me step by step?"
-                print(f"\n🧠 [Teaching Request] {teach_question}")
-                print(f"🤖 AGI> {teach_question}")
+                print(f"\n [Teaching Request] {teach_question}")
+                print(f"AGI> {teach_question}")
                 return {
                     "ci_report": ci_report,
                     "phon_score": phon_score,
@@ -1823,8 +851,8 @@ class CuriosityEngine:
                     rule = doubt['rule']
                     description = rule.get('description', f"I wrote a logical rule: {rule}")
                     query = f"I have a doubt about some logic I wrote: {description} Is this correct?"
-                    print(f"\n🧠 [Logic Doubt] {query}")
-                    print(f"🤖 AGI> {query}")
+                    print(f"\n [Logic Doubt] {query}")
+                    print(f"AGI> {query}")
                     self.expecting_logic_feedback = True
                     self.pending_logic_doubt = doubt
                     return {
@@ -1853,8 +881,8 @@ class CuriosityEngine:
                     if struct_score <= 0.65:
                         self.last_asked_word = target
                         system_reply = f"What does '{target}' mean?"
-                        print(f"\n🧠 [Knowledge Gap] {system_reply}")
-                        print(f"🤖 AGI> {system_reply}")
+                        print(f"\n [Knowledge Gap] {system_reply}")
+                        print(f"AGI> {system_reply}")
                         return {
                             "ci_report": ci_report,
                             "phon_score": phon_score,
@@ -1873,8 +901,8 @@ class CuriosityEngine:
                     if pattern_query:
                         self.last_asked_word = token
                         self.expecting_pattern_label = True
-                        print(f"\n🧠 [Pattern Discovery] {pattern_query}")
-                        print(f"🤖 AGI> {pattern_query}")
+                        print(f"\n [Pattern Discovery] {pattern_query}")
+                        print(f"AGI> {pattern_query}")
                         return {
                             "ci_report": ci_report,
                             "phon_score": phon_score,
@@ -1891,7 +919,7 @@ class CuriosityEngine:
             if not self.chat_mode_active:
                 unresolved = self.state_manager.get_unresolved_conflicts()
                 if unresolved:
-                    print("\n🧠 [Conflict Resolution] I have some unresolved state conflicts from previous idle introspection.")
+                    print("\n [Conflict Resolution] I have some unresolved state conflicts from previous idle introspection.")
                     for conflict in unresolved[:2]:
                         l1, l2 = conflict["labels"]
                         sim = conflict["similarity"]
@@ -2016,8 +1044,8 @@ class CuriosityEngine:
                     self.behavioral_learner.save()
                     self.expecting_rule_confirmation = True
                     self.pending_rule_id = rule.rule_id
-                    print(f"\n🧠 [Rule Hypothesis] {query}")
-                    print(f"🤖 AGI> {query}")
+                    print(f"\n [Rule Hypothesis] {query}")
+                    print(f"AGI> {query}")
                     return {
                         "ci_report": ci_report,
                         "phon_score": phon_score,
@@ -2097,7 +1125,7 @@ class CuriosityEngine:
                 match = re.search(r"'([^']+)'", system_reply)
                 if match:
                     self.last_asked_word = match.group(1)
-            print(f"🤖 AGI> {system_reply}")
+            print(f"AGI> {system_reply}")
 
             # Possibly ask for feedback on the response we just generated
             if not self.chat_mode_active and not self.expecting_response_feedback and not self.expecting_feedback and not self.expecting_rule_confirmation and not self.expecting_logic_feedback:
@@ -2105,7 +1133,7 @@ class CuriosityEngine:
                 self.reasoner.register_response_template(template_id, system_reply)
                 if self._should_ask_feedback(tokens, factor_dict, template_id):
                     feedback_question = self._generate_feedback_question()
-                    print(f"🤖 AGI> {feedback_question}")
+                    print(f"AGI> {feedback_question}")
                     entry = FeedbackEntry(
                         timestamp=time.time(),
                         user_input=text,
@@ -2137,8 +1165,8 @@ class CuriosityEngine:
                     if conflicts:
                         label1, label2 = conflicts[0]
                         question = f"I'm unsure whether '{token}' means '{label1}' or '{label2}'. Which one is correct?"
-                        print(f"\n🧠 [Word Conflict] {question}")
-                        print(f"🤖 AGI> {question}")
+                        print(f"\n [Word Conflict] {question}")
+                        print(f"AGI> {question}")
                         self.expecting_word_conflict = True
                         self._pending_conflict = (token, label1, label2)
                         return {
@@ -2159,7 +1187,7 @@ class CuriosityEngine:
                 multiplier = self._compute_chat_reward_multiplier(factor_dict)
                 original_reward = self.reward_tracker.episode_reward
                 self.reward_tracker.episode_reward *= multiplier
-                print(f"🤖 [Chat Mode] Reward multiplier: {multiplier:.2f} (original: {original_reward:.3f} → boosted: {self.reward_tracker.episode_reward:.3f})")
+                print(f"[Chat Mode] Reward multiplier: {multiplier:.2f} (original: {original_reward:.3f} → boosted: {self.reward_tracker.episode_reward:.3f})")
 
             # Store episode
             safe_factor_dict = factor_dict if isinstance(factor_dict, dict) else {}
@@ -2192,7 +1220,6 @@ class CuriosityEngine:
                 'episode_reward': self.reward_tracker.episode_reward,
                 'factor_vector': factor_dict,
             }
-
 
     def _tokenize(self, text: str) -> List[str]:
             import re
@@ -2237,7 +1264,7 @@ class CuriosityEngine:
     ) -> List[str]:
         """Generate rich artifacts including dynamic factor state."""
         artifacts = []
-        artifacts.append("🧠 [Meta-Curiosity Analysis v0.5 – Adaptive Control Space]")
+        artifacts.append(" [Meta-Curiosity Analysis v0.5 – Adaptive Control Space]")
         artifacts.append(f"   Input tokens: {tokens}")
 
         artifacts.append(f"   • CI confidence: {ci_report.get('confidence', 0.5):.3f} | Stability: {ci_report.get('stability', 0.5):.3f}")
@@ -2319,71 +1346,9 @@ class CuriosityEngine:
     # ------------------------------------------------------------------
     # Idle reflection and introspection (unchanged logic)
     # ------------------------------------------------------------------
-    def perform_state_introspection(self):
-        """
-        Long-idle task:
-        1. Detect conflicts among saved states, create shadow resolutions.
-        2. Offline learning from episodic memory.
-        """
-        print("\n🧠 [Deep State Introspection] Examining saved states for conflicts...")
-        threshold = self.config_manager.get('state_manager.conflict_threshold', 0.85)
-        self.state_manager.refresh_conflicts(threshold=threshold)
-        unresolved = self.state_manager.get_unresolved_conflicts()
-        if not unresolved:
-            print("    No unresolved conflicts found.")
-        else:
-            print(f"    Found {len(unresolved)} unresolved conflict(s).")
-            for conflict in unresolved[:3]:
-                l1, l2 = conflict["labels"]
-                sim = conflict["similarity"]
-                words1 = conflict.get("words1", [])
-                words2 = conflict.get("words2", [])
-                print(f"    Conflict: '{l1}' ↔ '{l2}' (similarity={sim:.3f})")
-                if words1:
-                    print(f"      Words that led to '{l1}': {', '.join(words1)}")
-                if words2:
-                    print(f"      Words that led to '{l2}': {', '.join(words2)}")
-                shadow_label = self.state_manager.create_shadow_resolution(conflict)
-                self.state_manager.apply_shadow_to_conflict(conflict, shadow_label)
-                print(f"      → Created shadow state '{shadow_label}'. Will ask user at next interaction.")
-            self.state_manager._save_conflicts()
-
-        # ---- Offline learning from episodic memory ----
-        print("    Consolidating knowledge from recent episodes...")
-        episodes = self.episodic_memory.replay_sequence()
-        for ep in episodes[-20:]:   # last 20
-            user_input = ep['user_input']
-            tokens = self._tokenize(user_input)
-            for t in tokens:
-                context = [w for w in tokens if w != t]
-                self.semantic_learner.observe_context(t, context)
-            self.syntax_learner.add_sentence(user_input)
-        print("    Offline consolidation complete.\n")
     # =========================================================================
     # IDLE TASK METHODS (called by IdleReasoner)
     # =========================================================================
-    def _get_resource_status(self):
-        """
-        Returns (cpu_ok, mem_ok, throttle_factor, cpu_percent, mem_percent).
-        throttle_factor ∈ [0.3, 1.0] – used to reduce workload when resources are strained.
-        """
-        try:
-            cpu_percent = psutil.cpu_percent(interval=0.1)
-            mem = psutil.virtual_memory()
-            mem_percent = mem.percent
-        except Exception:
-            # if psutil fails, assume everything is fine (but throttle a little)
-            return True, True, 0.8, 0.0, 0.0
-
-        cpu_ok = cpu_percent < 80.0          # CPU below 80%
-        mem_ok = mem_percent < 90.0          # memory below 90%
-
-        if not cpu_ok or not mem_ok:
-            throttle = 0.3                  # severely reduce workload
-        else:
-            throttle = 1.0                 # full workload
-
-        return cpu_ok, mem_ok, throttle, cpu_percent, mem_percent
 
     def _compute_chat_reward_multiplier(self, factor_dict: Dict) -> float:
         """
@@ -3233,7 +2198,7 @@ class CuriosityEngine:
             print(f"   [Resource Aware] Skipping Behavioral Rule Discovery (CPU:{cpu_p:.1f}%  MEM:{mem_p:.1f}%).")
             return
 
-        print("🧠 [Behavioral Rule Discovery] Dreaming about new rules...")
+        print(" [Behavioral Rule Discovery] Dreaming about new rules...")
         candidates = self.behavioral_learner.propose_new_rules(self)
         if candidates:
             for rule in candidates:
@@ -3302,7 +2267,7 @@ class CuriosityEngine:
             print(f"   [Resource Aware] Skipping autonomous code generation (CPU:{cpu_p:.1f}% MEM:{mem_p:.1f}%).")
             return
 
-        print("🤖 [Autonomous Code Generation] Selecting candidates...")
+        print("[Autonomous Code Generation] Selecting candidates...")
         candidates = []
 
         # 1. High‑confidence behavioral rules that are confirmed but not yet coded
@@ -3583,7 +2548,7 @@ class CuriosityEngine:
             return
 
         print("\n" + "="*80)
-        print("🧠 [AGI Idle Session] Running deep consolidation tasks...")
+        print(" [AGI Idle Session] Running deep consolidation tasks...")
         print("="*80)
         tasks = [
             self.world_model_dreaming,
