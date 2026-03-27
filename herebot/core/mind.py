@@ -1,3 +1,4 @@
+from __future__ import annotations
 from core.heart import *
 # ------------------------------------------------------------
 # Action Generator – produces system responsesself.propagate_word_state_associations,
