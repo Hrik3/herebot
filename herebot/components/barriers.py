@@ -283,7 +283,7 @@ class ConscienceManager:
 
 class LogicInheritanceManager:
     """
-    Allows the AGI to write its own logical rules to disk (./logic)
+    Allows the Herebot to write its own logical rules to disk (./logic)
     and later ask the user for confirmation. Once confirmed, the logic
     can be integrated into the reasoning engine or become a conscience belief.
     """

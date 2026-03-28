@@ -1074,7 +1074,7 @@
             return
 
         print("\n" + "="*80)
-        print(" [AGI Idle Session] Running deep consolidation tasks...")
+        print(" [Herebot Idle Session] Running deep consolidation tasks...")
         print("="*80)
         tasks = [
             self.world_model_dreaming,

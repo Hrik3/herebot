@@ -261,3 +261,4 @@
             self._max_cycles_per_session = 100000
             self._max_hypotheses = 5000
             self._max_logic_rules = 2000
+

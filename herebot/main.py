@@ -1,5 +1,5 @@
 """
-AGI Curiosity Engine v0.4 - Information-Theoretic Curiosity & Intrinsic Motivation
+Herebot Curiosity Engine v0.4 - Information-Theoretic Curiosity & Intrinsic Motivation
 Integrated with real CI/Phonotactic/Diagnostic engines from `backend.ci`.
 
 This system implements cutting-edge, human-level curiosity:
@@ -87,7 +87,7 @@ class IdleReasoner(threading.Thread):
 # ------------------------------------------------------------
 def main():
     print("=" * 80)
-    print(" AGI Curiosity Engine v0.9 - Information-Theoretic & Intrinsically Motivated")
+    print(" Herebot Curiosity Engine v0.9 - Information-Theoretic & Intrinsically Motivated")
     print("Integrated with backend.ci ")
     print("State persists in ./curiosity_state/ - the system grows over time.")
     print("with: Gaussian Process uncertainty, Bayesian surprise, Intrinsic Reward.")
@@ -101,7 +101,7 @@ def main():
     try:
         while True:
             try:
-                user_input = input("\n AGI> ").strip()
+                user_input = input("\n Herebot> ").strip()
                 if not user_input:
                     continue
                 if user_input.lower() in ("exit", "quit"):
