@@ -8,7 +8,7 @@ try:
 except Exception as e:
     print(f"[WARN] Could not create STATE_DIR: {e}")
 # ------------------------------------------------------------
-# Logic directory for inheritance – AGI writes own logic here
+# Logic directory for inheritance – Herebot writes own logic here
 # ------------------------------------------------------------
 LOGIC_DIR = os.path.join(os.path.dirname(__file__), "logic")
 try:
@@ -16,7 +16,7 @@ try:
 except Exception as e:
     print(f"[WARN] Could not create LOGIC_DIR: {e}")
 # ------------------------------------------------------------
-# Generated code directory – AGI writes its own executable logic here
+# Generated code directory – Herebot writes its own executable logic here
 # ------------------------------------------------------------
 CODE_GEN_DIR = os.path.join(os.path.dirname(__file__), "generated_code")
 try:

@@ -62,7 +62,7 @@
                     system_reply = "Chat mode activated. I'll try to talk with you naturally. What shall we discuss?"
                 else:
                     system_reply = "Chat mode deactivated. Returning to normal learning mode."
-                print(f"AGI> {system_reply}")
+                print(f"Herebot> {system_reply}")
                 return {
                     "ci_report": {},
                     "phon_score": 0,
@@ -534,7 +534,7 @@
                 self.recorded_steps = []
                 teach_question = f"I don't know how to solve {expr}. Could you teach me step by step?"
                 print(f"\n [Teaching Request] {teach_question}")
-                print(f"AGI> {teach_question}")
+                print(f"Herebot> {teach_question}")
                 return {
                     "ci_report": ci_report,
                     "phon_score": phon_score,
@@ -553,7 +553,7 @@
                     description = rule.get('description', f"I wrote a logical rule: {rule}")
                     query = f"I have a doubt about some logic I wrote: {description} Is this correct?"
                     print(f"\n [Logic Doubt] {query}")
-                    print(f"AGI> {query}")
+                    print(f"Herebot> {query}")
                     self.expecting_logic_feedback = True
                     self.pending_logic_doubt = doubt
                     return {
@@ -583,7 +583,7 @@
                         self.last_asked_word = target
                         system_reply = f"What does '{target}' mean?"
                         print(f"\n [Knowledge Gap] {system_reply}")
-                        print(f"AGI> {system_reply}")
+                        print(f"Herebot> {system_reply}")
                         return {
                             "ci_report": ci_report,
                             "phon_score": phon_score,
@@ -603,7 +603,7 @@
                         self.last_asked_word = token
                         self.expecting_pattern_label = True
                         print(f"\n [Pattern Discovery] {pattern_query}")
-                        print(f"AGI> {pattern_query}")
+                        print(f"Herebot> {pattern_query}")
                         return {
                             "ci_report": ci_report,
                             "phon_score": phon_score,
@@ -746,7 +746,7 @@
                     self.expecting_rule_confirmation = True
                     self.pending_rule_id = rule.rule_id
                     print(f"\n [Rule Hypothesis] {query}")
-                    print(f"AGI> {query}")
+                    print(f"Herebot> {query}")
                     return {
                         "ci_report": ci_report,
                         "phon_score": phon_score,
@@ -826,7 +826,7 @@
                 match = re.search(r"'([^']+)'", system_reply)
                 if match:
                     self.last_asked_word = match.group(1)
-            print(f"AGI> {system_reply}")
+            print(f"Herebot> {system_reply}")
 
             # Possibly ask for feedback on the response we just generated
             if not self.chat_mode_active and not self.expecting_response_feedback and not self.expecting_feedback and not self.expecting_rule_confirmation and not self.expecting_logic_feedback:
@@ -834,7 +834,7 @@
                 self.reasoner.register_response_template(template_id, system_reply)
                 if self._should_ask_feedback(tokens, factor_dict, template_id):
                     feedback_question = self._generate_feedback_question()
-                    print(f"AGI> {feedback_question}")
+                    print(f"Herebot> {feedback_question}")
                     entry = FeedbackEntry(
                         timestamp=time.time(),
                         user_input=text,
@@ -867,7 +867,7 @@
                         label1, label2 = conflicts[0]
                         question = f"I'm unsure whether '{token}' means '{label1}' or '{label2}'. Which one is correct?"
                         print(f"\n [Word Conflict] {question}")
-                        print(f"AGI> {question}")
+                        print(f"Herebot> {question}")
                         self.expecting_word_conflict = True
                         self._pending_conflict = (token, label1, label2)
                         return {
