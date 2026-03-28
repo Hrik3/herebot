@@ -1,11 +1,11 @@
 from importglobal import os, json,copy,np,Optional,List
-from components.directory_handler import STATE_DIR
+from .directory_handler import STATE_DIR
 # ------------------------------------------------------------
 # Configuration Manager – loads parameters from active_config.json
 # ------------------------------------------------------------
 class ConfigManager:
     """
-    Manages external JSON configuration for the AGI.
+    Manages external JSON configuration for the Herebot.
     Loads from curiosity_state/active_config.json, provides defaults,
     supports deep updates, saving, and generating new configs via emotional modulation.
     """
