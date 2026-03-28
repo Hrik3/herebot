@@ -33,6 +33,7 @@ class CuriosityEngine:
         self.reward_tracker = IntrinsicRewardTracker(config_manager=self.config_manager)
 
         # Reasoning engine
+        from components.resoning import ReasoningEngine
         self.reasoner = ReasoningEngine(config_manager=self.config_manager)
         self._last_state_learning_time = 0
         # ---- Language & consciousness modules ----
@@ -45,6 +46,7 @@ class CuriosityEngine:
         self.consciousness = ParameterRevision(config_manager=self.config_manager)
         self.episodic_memory = EpisodicMemory(config_manager=self.config_manager)
         # ---- Parallel reasoning ----
+        from components.resoning import ParallelReasoner
         self.parallel_reasoner = ParallelReasoner(self.reasoner, self.meta_learner)
         # ------------------------------------------
         self._last_feedback_ask_time = 0
@@ -162,6 +164,7 @@ class CuriosityEngine:
         self.chat_history = []                  # recent turns for context
         # ================================
         # ========== BEHAVIORAL RULE LEARNER ==========
+        from components.rules import BehavioralRuleLearner
         self.behavioral_learner = BehavioralRuleLearner(config_manager=self.config_manager)
         # ---- Conscience & Logic Inheritance ----
         self.conscience_manager = ConscienceManager(config_manager=self.config_manager)
@@ -208,6 +211,8 @@ class CuriosityEngine:
         if load_state:
             self._load_state()
         self.structured_world_model = StructuredWorldModel(self.reasoner.knowledge_graph, self.state_manager)
+        from .tracker import CuriosityTracker
+        self.tracker = CuriosityTracker(graphs_dir="graphs", plot_every=5)
     # ------------------------------------------------------------------
     # Persistence (now with config_manager passed to .load() methods)
     # ------------------------------------------------------------------
@@ -893,7 +898,7 @@ class CuriosityEngine:
             print("   [State Learning] Factor vector too uniform – skipping state creation.")
             return
 
-        print("\n🧠 [State Learning] I encountered a new internal state.")
+        print("\n [State Learning] I encountered a new internal state.")
         print("    Factor vector: " + " ".join(f"{v:.2f}" for v in factor_vector))
         print("    How do humans call this state? (e.g., 'confident exploration', 'cautious inquiry')")
         label = input("    🏷️  Label: ").strip()
@@ -935,7 +940,7 @@ class CuriosityEngine:
         # Optionally log identity drift
         drift = self.identity_manager.detect_drift(factor_vector)
         if drift > 0.5:
-            print(f"🧠 [Identity Drift] Current state diverges from learned identity (drift={drift:.3f}).")
+            print(f" [Identity Drift] Current state diverges from learned identity (drift={drift:.3f}).")
     # ------------------------------------------------------------------
     # State embedding helpers (persistent latent concept)
     # ------------------------------------------------------------------
@@ -1164,7 +1169,7 @@ class CuriosityEngine:
                 i_emb = self.semantic_learner.word_embeddings['i']
                 self.semantic_learner.initialize_word(alias)
                 self.semantic_learner.word_embeddings[alias] = i_emb.copy()
-                print(f"🧠 [Rule Integration] Learned self-alias: '{alias}'")
+                print(f" [Rule Integration] Learned self-alias: '{alias}'")
             if 'i' in self.semantic_learner.word_embeddings:
                 i_emb = self.semantic_learner.word_embeddings['i']
                 self.reasoner.store_definition(alias, f"a name for myself", i_emb)
@@ -1245,7 +1250,7 @@ class CuriosityEngine:
             compute_function=curiosity_compute_function,
             metadata={'source': 'control_space', 'original_factor': factor_name}
         )
-        print(f"🧠 [Drive Creation] New curiosity factor 'ctrl_{factor_name}' created from control dimension '{factor_name}'.")  
+        print(f" [Drive Creation] New curiosity factor 'ctrl_{factor_name}' created from control dimension '{factor_name}'.")  
 
     def build_world_model_transitions(self):
         """Scan episodic memory to build transition counts for the structured world model."""
@@ -1326,7 +1331,7 @@ class CuriosityEngine:
                     system_reply = "Chat mode activated. I'll try to talk with you naturally. What shall we discuss?"
                 else:
                     system_reply = "Chat mode deactivated. Returning to normal learning mode."
-                print(f"🤖 Herebot> {system_reply}")
+                print(f" Herebot> {system_reply}")
                 return {
                     "ci_report": {},
                     "phon_score": 0,
@@ -1608,7 +1613,7 @@ class CuriosityEngine:
                         proc = self.reasoner.procedural_learner.learn_procedure(
                             self.pending_problem_expr, self.recorded_steps, None
                         )
-                        print(f"🧠 [Procedure Learned] I've learned a new procedure for {self.pending_problem_expr}")
+                        print(f" [Procedure Learned] I've learned a new procedure for {self.pending_problem_expr}")
                     self.expecting_procedure_steps = False
                     self.pending_problem_expr = None
                     self.recorded_steps = []
@@ -1797,8 +1802,8 @@ class CuriosityEngine:
                 self.pending_problem_expr = expr
                 self.recorded_steps = []
                 teach_question = f"I don't know how to solve {expr}. Could you teach me step by step?"
-                print(f"\n🧠 [Teaching Request] {teach_question}")
-                print(f"🤖 Herebot> {teach_question}")
+                print(f"\n [Teaching Request] {teach_question}")
+                print(f" Herebot> {teach_question}")
                 return {
                     "ci_report": ci_report,
                     "phon_score": phon_score,
@@ -1816,8 +1821,8 @@ class CuriosityEngine:
                     rule = doubt['rule']
                     description = rule.get('description', f"I wrote a logical rule: {rule}")
                     query = f"I have a doubt about some logic I wrote: {description} Is this correct?"
-                    print(f"\n🧠 [Logic Doubt] {query}")
-                    print(f"🤖 Herebot> {query}")
+                    print(f"\n [Logic Doubt] {query}")
+                    print(f" Herebot> {query}")
                     self.expecting_logic_feedback = True
                     self.pending_logic_doubt = doubt
                     return {
@@ -1846,8 +1851,8 @@ class CuriosityEngine:
                     if struct_score <= 0.65:
                         self.last_asked_word = target
                         system_reply = f"What does '{target}' mean?"
-                        print(f"\n🧠 [Knowledge Gap] {system_reply}")
-                        print(f"🤖 Herebot> {system_reply}")
+                        print(f"\n [Knowledge Gap] {system_reply}")
+                        print(f" Herebot> {system_reply}")
                         return {
                             "ci_report": ci_report,
                             "phon_score": phon_score,
@@ -1866,8 +1871,8 @@ class CuriosityEngine:
                     if pattern_query:
                         self.last_asked_word = token
                         self.expecting_pattern_label = True
-                        print(f"\n🧠 [Pattern Discovery] {pattern_query}")
-                        print(f"🤖 Herebot> {pattern_query}")
+                        print(f"\n [Pattern Discovery] {pattern_query}")
+                        print(f" Herebot> {pattern_query}")
                         return {
                             "ci_report": ci_report,
                             "phon_score": phon_score,
@@ -1884,7 +1889,7 @@ class CuriosityEngine:
             if not self.chat_mode_active:
                 unresolved = self.state_manager.get_unresolved_conflicts()
                 if unresolved:
-                    print("\n🧠 [Conflict Resolution] I have some unresolved state conflicts from previous idle introspection.")
+                    print("\n [Conflict Resolution] I have some unresolved state conflicts from previous idle introspection.")
                     for conflict in unresolved[:2]:
                         l1, l2 = conflict["labels"]
                         sim = conflict["similarity"]
@@ -2009,8 +2014,8 @@ class CuriosityEngine:
                     self.behavioral_learner.save()
                     self.expecting_rule_confirmation = True
                     self.pending_rule_id = rule.rule_id
-                    print(f"\n🧠 [Rule Hypothesis] {query}")
-                    print(f"🤖 Herebot> {query}")
+                    print(f"\n [Rule Hypothesis] {query}")
+                    print(f" Herebot> {query}")
                     return {
                         "ci_report": ci_report,
                         "phon_score": phon_score,
@@ -2090,7 +2095,7 @@ class CuriosityEngine:
                 match = re.search(r"'([^']+)'", system_reply)
                 if match:
                     self.last_asked_word = match.group(1)
-            print(f"🤖 Herebot> {system_reply}")
+            print(f" Herebot> {system_reply}")
 
             # Possibly ask for feedback on the response we just generated
             if not self.chat_mode_active and not self.expecting_response_feedback and not self.expecting_feedback and not self.expecting_rule_confirmation and not self.expecting_logic_feedback:
@@ -2098,7 +2103,7 @@ class CuriosityEngine:
                 self.reasoner.register_response_template(template_id, system_reply)
                 if self._should_ask_feedback(tokens, factor_dict, template_id):
                     feedback_question = self._generate_feedback_question()
-                    print(f"🤖 Herebot> {feedback_question}")
+                    print(f" Herebot> {feedback_question}")
                     entry = FeedbackEntry(
                         timestamp=time.time(),
                         user_input=text,
@@ -2130,8 +2135,8 @@ class CuriosityEngine:
                     if conflicts:
                         label1, label2 = conflicts[0]
                         question = f"I'm unsure whether '{token}' means '{label1}' or '{label2}'. Which one is correct?"
-                        print(f"\n🧠 [Word Conflict] {question}")
-                        print(f"🤖 Herebot> {question}")
+                        print(f"\n [Word Conflict] {question}")
+                        print(f" Herebot> {question}")
                         self.expecting_word_conflict = True
                         self._pending_conflict = (token, label1, label2)
                         return {
@@ -2152,7 +2157,7 @@ class CuriosityEngine:
                 multiplier = self._compute_chat_reward_multiplier(factor_dict)
                 original_reward = self.reward_tracker.episode_reward
                 self.reward_tracker.episode_reward *= multiplier
-                print(f"🤖 [Chat Mode] Reward multiplier: {multiplier:.2f} (original: {original_reward:.3f} → boosted: {self.reward_tracker.episode_reward:.3f})")
+                print(f" [Chat Mode] Reward multiplier: {multiplier:.2f} (original: {original_reward:.3f} → boosted: {self.reward_tracker.episode_reward:.3f})")
 
             # Store episode
             safe_factor_dict = factor_dict if isinstance(factor_dict, dict) else {}
@@ -2173,6 +2178,8 @@ class CuriosityEngine:
 
             if self.interaction_counter % self.reconfigure_interval == 0:
                 self._maybe_reconfigure()
+
+            self.tracker.record(self)
 
             return {
                 'ci_report': ci_report,
@@ -2230,7 +2237,7 @@ class CuriosityEngine:
     ) -> List[str]:
         """Generate rich artifacts including dynamic factor state."""
         artifacts = []
-        artifacts.append("🧠 [Meta-Curiosity Analysis v0.5 – Adaptive Control Space]")
+        artifacts.append(" [Meta-Curiosity Analysis v0.5 – Adaptive Control Space]")
         artifacts.append(f"   Input tokens: {tokens}")
 
         artifacts.append(f"   • CI confidence: {ci_report.get('confidence', 0.5):.3f} | Stability: {ci_report.get('stability', 0.5):.3f}")
@@ -2318,7 +2325,7 @@ class CuriosityEngine:
         1. Detect conflicts among saved states, create shadow resolutions.
         2. Offline learning from episodic memory.
         """
-        print("\n🧠 [Deep State Introspection] Examining saved states for conflicts...")
+        print("\n [Deep State Introspection] Examining saved states for conflicts...")
         threshold = self.config_manager.get('state_manager.conflict_threshold', 0.85)
         self.state_manager.refresh_conflicts(threshold=threshold)
         unresolved = self.state_manager.get_unresolved_conflicts()
@@ -3226,7 +3233,7 @@ class CuriosityEngine:
             print(f"   [Resource Aware] Skipping Behavioral Rule Discovery (CPU:{cpu_p:.1f}%  MEM:{mem_p:.1f}%).")
             return
 
-        print("🧠 [Behavioral Rule Discovery] Dreaming about new rules...")
+        print(" [Behavioral Rule Discovery] Dreaming about new rules...")
         candidates = self.behavioral_learner.propose_new_rules(self)
         if candidates:
             for rule in candidates:
@@ -3295,7 +3302,7 @@ class CuriosityEngine:
             print(f"   [Resource Aware] Skipping autonomous code generation (CPU:{cpu_p:.1f}% MEM:{mem_p:.1f}%).")
             return
 
-        print("🤖 [Autonomous Code Generation] Selecting candidates...")
+        print(" [Autonomous Code Generation] Selecting candidates...")
         candidates = []
 
         # 1. High‑confidence behavioral rules that are confirmed but not yet coded
@@ -3576,7 +3583,7 @@ class CuriosityEngine:
             return
 
         print("\n" + "="*80)
-        print("🧠 [Herebot Idle Session] Running deep consolidation tasks...")
+        print(" [Herebot Idle Session] Running deep consolidation tasks...")
         print("="*80)
         tasks = [
             self.world_model_dreaming,

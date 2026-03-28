@@ -63,6 +63,7 @@ class IdleReasoner(threading.Thread):
                 if idle_time > self.short_thresh:
                     thought = self.engine.idle_reflection()
                     print(f"\n⏳ [Idle at {time.strftime('%H:%M:%S')}]\n{thought}\n")
+                    self.engine.tracker.record(self.engine, trigger="idle_short")
                     time.sleep(self.short_thresh)
 
                 # Long idle → deep state introspection AND all idle tasks
@@ -73,6 +74,7 @@ class IdleReasoner(threading.Thread):
                         self.engine._save_state()
                     except Exception:
                         pass
+                    self.engine.tracker.record(self.engine, trigger="idle_long")
                     self.long_idle_done = True
             except Exception:
                 print("\n[IdleReasoner ERROR — Full Traceback]")
@@ -128,6 +130,7 @@ def main():
         print("\nInterrupted. Exiting.")
     finally:
         idle_reasoner.running = False
-
+        engine.tracker.save_data()
+        engine.tracker.plot_all(engine)
 if __name__ == "__main__":
     main()
