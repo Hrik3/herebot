@@ -1,0 +1,26 @@
+{
+  "label": "shadow_exploration_chain forming_1774756919",
+  "vector": [
+    0.42878231159947844,
+    0.1836352806282764,
+    0.6300000640983914,
+    0.6456002509639105,
+    0.010879335378201377,
+    0.3515,
+    0.1,
+    0.25,
+    0.7,
+    0.965775
+  ],
+  "dimension": 10,
+  "timestamp": 1774756919.4915948,
+  "metadata": {
+    "merged_from": [
+      "exploration",
+      "chain forming"
+    ],
+    "similarity": 0.9387027760753816,
+    "timestamp": 1774756919.4915698
+  },
+  "is_shadow": true
+}

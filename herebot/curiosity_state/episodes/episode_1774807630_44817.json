@@ -1,0 +1,23 @@
+{
+  "timestamp": 1774807630.1326396,
+  "user_input": "boy is person",
+  "system_response": "Perhaps 'boy' is similar to 'live' \u2013 they seem to share a definition. Is that right?",
+  "factor_vector": {
+    "curiosity": 1.316662316244181,
+    "threat": 0.22685778989516298,
+    "trust": 0.732696838747096,
+    "confidence": 0.6121740534564931,
+    "uncertainty": 0.010962135018593746,
+    "energy": 0.375,
+    "attention": 0.15,
+    "comprehension": 0.6434244524001699,
+    "fluency": 0.7,
+    "cognitive_load": 0.94375,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 3.4052534757603676,
+  "metadata": {
+    "ci_confidence": 0.6121740534564931
+  }
+}

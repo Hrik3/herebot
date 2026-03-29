@@ -1,0 +1,23 @@
+{
+  "timestamp": 1774806968.8498614,
+  "user_input": "you are herebot",
+  "system_response": "Is 'you' a type of 'herebot'?",
+  "factor_vector": {
+    "curiosity": 1.6747261975355854,
+    "threat": 0.1484501811070246,
+    "trust": 0.5760964937158743,
+    "confidence": 0.710640509557339,
+    "uncertainty": 0.010228502537218643,
+    "energy": 0.35,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9475,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 2.485426197603024,
+  "metadata": {
+    "ci_confidence": 0.710640509557339
+  }
+}

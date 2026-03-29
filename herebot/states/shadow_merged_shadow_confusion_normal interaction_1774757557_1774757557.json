@@ -1,0 +1,26 @@
+{
+  "label": "shadow_confusion_normal interaction_1774757557",
+  "vector": [
+    0.7675953063088399,
+    0.20142624044423968,
+    0.7033146082212529,
+    0.6496080462850695,
+    0.01135054761222161,
+    0.675,
+    0.05,
+    0.5,
+    0.7,
+    0.96625
+  ],
+  "dimension": 10,
+  "timestamp": 1774757557.5107193,
+  "metadata": {
+    "merged_from": [
+      "confusion",
+      "normal interaction"
+    ],
+    "similarity": 0.8749416536082202,
+    "timestamp": 1774757557.5106723
+  },
+  "is_shadow": true
+}

@@ -1,0 +1,23 @@
+{
+  "timestamp": 1774754646.033848,
+  "user_input": "negative",
+  "system_response": "Perhaps 'negative' is related to 'means', since they appear together often.",
+  "factor_vector": {
+    "curiosity": 0.44400004575508206,
+    "threat": 0.14800259810588787,
+    "trust": 0.7153512335310094,
+    "confidence": 0.6775518816100828,
+    "uncertainty": 0.01345485824025317,
+    "energy": 0.355,
+    "attention": 0.05,
+    "comprehension": 0.5,
+    "fluency": 0.7,
+    "cognitive_load": 0.98225,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.15931452289761888,
+  "metadata": {
+    "ci_confidence": 0.6775518816100828
+  }
+}

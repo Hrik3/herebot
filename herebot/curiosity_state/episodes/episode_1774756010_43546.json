@@ -1,0 +1,23 @@
+{
+  "timestamp": 1774756010.9434376,
+  "user_input": "play means fun",
+  "system_response": "Perhaps 'play' is similar to 'fun' \u2013 they seem to share a definition. Is that right?",
+  "factor_vector": {
+    "curiosity": 0.6028137999823506,
+    "threat": 0.23567333746669417,
+    "trust": 0.5354430094731792,
+    "confidence": 0.6026351845276652,
+    "uncertainty": 0.010953226359621208,
+    "energy": 0.33299999999999996,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9500500000000001,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.6199636163954547,
+  "metadata": {
+    "ci_confidence": 0.6026351845276652
+  }
+}

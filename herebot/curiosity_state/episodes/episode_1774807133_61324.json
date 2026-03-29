@@ -1,0 +1,23 @@
+{
+  "timestamp": 1774807133.570402,
+  "user_input": "hrishi is boy",
+  "system_response": "Perhaps 'hrishi' is related to 'is', since they appear together often.",
+  "factor_vector": {
+    "curiosity": 0.9249545627049107,
+    "threat": 0.23775944164279567,
+    "trust": 0.7336954758521196,
+    "confidence": 0.6126847292263442,
+    "uncertainty": 0.009886710701070141,
+    "energy": 0.364,
+    "attention": 0.15,
+    "comprehension": 0.6434244524001699,
+    "fluency": 0.7,
+    "cognitive_load": 0.9454,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.637538836108914,
+  "metadata": {
+    "ci_confidence": 0.6126847292263442
+  }
+}

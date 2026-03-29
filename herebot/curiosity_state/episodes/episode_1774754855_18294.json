@@ -1,0 +1,23 @@
+{
+  "timestamp": 1774754855.9419975,
+  "user_input": "bike is vehicle",
+  "system_response": "As I'm cautious inquiry, i think means means means mean mean. I don't follow.",
+  "factor_vector": {
+    "curiosity": 0.38088726543551316,
+    "threat": 0.18577153041110886,
+    "trust": 0.5570618570069432,
+    "confidence": 0.6523936081027278,
+    "uncertainty": 0.012044111395680995,
+    "energy": 0.32499999999999996,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.95125,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.5703216378604938,
+  "metadata": {
+    "ci_confidence": 0.6523936081027278
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "label": "shadow_learning_chain forming_1774756919",
+  "vector": [
+    0.7233652458923757,
+    0.17282104609124885,
+    0.6360971017576931,
+    0.662606502367805,
+    0.01206923060860195,
+    0.314,
+    0.1,
+    0.25,
+    0.7,
+    0.9714
+  ],
+  "dimension": 10,
+  "timestamp": 1774756919.490114,
+  "metadata": {
+    "merged_from": [
+      "learning",
+      "chain forming"
+    ],
+    "similarity": 0.8570029544584046,
+    "timestamp": 1774756919.490038
+  },
+  "is_shadow": true
+}

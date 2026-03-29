@@ -1,0 +1,226 @@
+{
+  "learning": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.9995515187694893,
+    "predictive_gain": 1.0,
+    "phase": "weak",
+    "last_used": 1774808245.040882,
+    "confidence": 1.0
+  },
+  "exploration": {
+    "energy_cost": 1.0,
+    "recent_usage": 5.996340430354305,
+    "predictive_gain": 1.0,
+    "phase": "archived",
+    "last_used": 1774808245.049997,
+    "confidence": 1.0
+  },
+  "confusion": {
+    "energy_cost": 1.0,
+    "recent_usage": 1.4993172649850226,
+    "predictive_gain": 1.0,
+    "phase": "deleted",
+    "last_used": 1774808245.0471718,
+    "confidence": 1.0
+  },
+  "shadow_learning_exploration_1774755537": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.0,
+    "predictive_gain": 1.0,
+    "phase": "deleted",
+    "last_used": 1774755537.455126,
+    "confidence": 1.0
+  },
+  "shadow_learning_cautious inquiry_1774755537": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.0,
+    "predictive_gain": 1.0,
+    "phase": "deleted",
+    "last_used": 1774755537.4559004,
+    "confidence": 1.0
+  },
+  "shadow_learning_confusion_1774755537": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.0,
+    "predictive_gain": 1.0,
+    "phase": "deleted",
+    "last_used": 1774755537.4565084,
+    "confidence": 1.0
+  },
+  "shadow_exploration_confusion_1774755676": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.0,
+    "predictive_gain": 1.0,
+    "phase": "archived",
+    "last_used": 1774755676.228601,
+    "confidence": 1.0
+  },
+  "normal interaction": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.2000037863428167,
+    "predictive_gain": 1.0,
+    "phase": "archived",
+    "last_used": 1774808244.9912455,
+    "confidence": 1.0
+  },
+  "chain forming": {
+    "energy_cost": 1.0,
+    "recent_usage": 3.9983367472934166,
+    "predictive_gain": 1.0,
+    "phase": "archived",
+    "last_used": 1774808245.0310433,
+    "confidence": 1.0
+  },
+  "shadow_learning_chain forming_1774756919": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.0,
+    "predictive_gain": 1.0,
+    "phase": "archived",
+    "last_used": 1774756919.4901154,
+    "confidence": 1.0
+  },
+  "shadow_exploration_normal interaction_1774756919": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.0,
+    "predictive_gain": 1.0,
+    "phase": "archived",
+    "last_used": 1774756919.49094,
+    "confidence": 1.0
+  },
+  "shadow_exploration_chain forming_1774756919": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.0,
+    "predictive_gain": 1.0,
+    "phase": "archived",
+    "last_used": 1774756919.4915953,
+    "confidence": 1.0
+  },
+  "shadow_confusion_normal interaction_1774757557": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.0,
+    "predictive_gain": 1.0,
+    "phase": "dormant",
+    "last_used": 1774757557.5107226,
+    "confidence": 1.0
+  },
+  "shadow_confusion_chain forming_1774757557": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.0,
+    "predictive_gain": 1.0,
+    "phase": "dormant",
+    "last_used": 1774757557.5115807,
+    "confidence": 1.0
+  },
+  "shadow_normal interaction_chain forming_1774757557": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.0,
+    "predictive_gain": 1.0,
+    "phase": "dormant",
+    "last_used": 1774757557.5122728,
+    "confidence": 1.0
+  },
+  "discovering": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.39998385404036296,
+    "predictive_gain": 1.0,
+    "phase": "weak",
+    "last_used": 1774808245.0197997,
+    "confidence": 1.0
+  },
+  "identitiy": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.20000223048138246,
+    "predictive_gain": 1.0,
+    "phase": "weak",
+    "last_used": 1774808245.023949,
+    "confidence": 1.0
+  },
+  "stable": {
+    "energy_cost": 1.0,
+    "recent_usage": 5.79648578204492,
+    "predictive_gain": 1.0,
+    "phase": "weak",
+    "last_used": 1774808245.0507538,
+    "confidence": 1.0
+  },
+  "identity": {
+    "energy_cost": 1.0,
+    "recent_usage": 3.1988576801792323,
+    "predictive_gain": 1.0,
+    "phase": "weak",
+    "last_used": 1774808245.0418923,
+    "confidence": 1.0
+  },
+  "maths": {
+    "energy_cost": 1.0,
+    "recent_usage": 2.3990897858329685,
+    "predictive_gain": 1.0,
+    "phase": "weak",
+    "last_used": 1774808245.0389595,
+    "confidence": 1.0
+  },
+  "pattern": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.99961427900714,
+    "predictive_gain": 1.0,
+    "phase": "weak",
+    "last_used": 1774808245.0429022,
+    "confidence": 1.0
+  },
+  "shadow_exploration_stable_1774808232": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.0,
+    "predictive_gain": 1.0,
+    "phase": "weak",
+    "last_used": 1774808232.1230543,
+    "confidence": 1.0
+  },
+  "shadow_exploration_identity_1774808232": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.0,
+    "predictive_gain": 1.0,
+    "phase": "weak",
+    "last_used": 1774808232.1241927,
+    "confidence": 1.0
+  },
+  "shadow_exploration_pattern_1774808232": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.0,
+    "predictive_gain": 1.0,
+    "phase": "weak",
+    "last_used": 1774808232.1253765,
+    "confidence": 1.0
+  },
+  "macro_0_1774808240": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.0,
+    "predictive_gain": 1.0,
+    "phase": "weak",
+    "last_used": 1774808240.2972,
+    "confidence": 1.0
+  },
+  "macro_2_1774808240": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.0,
+    "predictive_gain": 1.0,
+    "phase": "weak",
+    "last_used": 1774808240.2979705,
+    "confidence": 1.0
+  },
+  "macro_3_1774808240": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.0,
+    "predictive_gain": 1.0,
+    "phase": "weak",
+    "last_used": 1774808240.2988086,
+    "confidence": 1.0
+  },
+  "macro_4_1774808240": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.0,
+    "predictive_gain": 1.0,
+    "phase": "weak",
+    "last_used": 1774808240.2993643,
+    "confidence": 1.0
+  }
+}

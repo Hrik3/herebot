@@ -11,12 +11,92 @@
     },
     "means": {
       "means": 0.7999999999999999
+    },
+    "what": {
+      "means": 0.7973419593838688
+    },
+    "plane": {
+      "means": 0.7766275138238132
+    },
+    "transport": {
+      "means": 0.776627513823813
+    },
+    "exploration": {
+      "means": 0.7767527186056069
+    },
+    "learning": {
+      "means": 0.7477714637710315
+    },
+    "how": {
+      "means": 0.7767510500462693
+    },
+    "confusion": {
+      "means": 0.7688751044310043
+    },
+    "cautious inquiry": {
+      "means": 0.7706092683048338
+    },
+    "sound": {
+      "means": 0.7977238183675971
+    },
+    "is": {
+      "means": 0.7783066408534437
+    },
+    "hear": {
+      "means": 0.7828389869645036
+    },
+    "crow": {
+      "means": 0.7664271700160392
+    },
+    "cat": {
+      "means": 0.7664271700160392
+    },
+    "animal": {
+      "means": 0.7842003856402964
+    },
+    "chain forming": {
+      "means": 0.7000436481724686
+    },
+    "identity": {
+      "means": 0.6729853034045385
+    },
+    "maths": {
+      "means": 0.7042399534715024
+    },
+    "pattern": {
+      "means": 0.7634261959466135
+    },
+    "girl": {
+      "means": 0.7842719414697574
+    },
+    "normal interaction": {
+      "means": 0.655324180050058
     }
   },
   "label_to_words": {
     "means": [
+      "cat",
+      "cautious inquiry",
+      "chain forming",
+      "is",
+      "exploration",
+      "animal",
+      "sound",
+      "girl",
+      "identity",
+      "hear",
+      "learning",
+      "normal interaction",
+      "what",
+      "maths",
+      "means",
+      "confusion",
+      "pattern",
+      "how",
       "mean",
-      "means"
+      "transport",
+      "crow",
+      "plane"
     ],
     "color": [
       "blue",

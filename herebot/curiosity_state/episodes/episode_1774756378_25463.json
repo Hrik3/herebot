@@ -1,0 +1,23 @@
+{
+  "timestamp": 1774756378.1065173,
+  "user_input": "2 + 2 =",
+  "system_response": "This reminds me of when you said '2516861497853165774'. Tell me more.",
+  "factor_vector": {
+    "curiosity": 0.0,
+    "threat": 0.5831756184169993,
+    "trust": 0.5988720846801762,
+    "confidence": 0.3795609539575019,
+    "uncertainty": 0.008120928349279154,
+    "energy": 0.975,
+    "attention": 0.0,
+    "comprehension": 0.5,
+    "fluency": 0.7,
+    "cognitive_load": 1.0,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.0,
+  "metadata": {
+    "ci_confidence": 0.3795609539575019
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "timestamp": 1774756278.09297,
+  "user_input": "my animal is cat",
+  "system_response": "Curious as I am, I understand 'animal' as animal is living. Tell me more.",
+  "factor_vector": {
+    "curiosity": 1.1414349853848615,
+    "threat": 0.2325339234286851,
+    "trust": 0.5431820638689573,
+    "confidence": 0.6171725851660762,
+    "uncertainty": 0.009278535441508733,
+    "energy": 0.364,
+    "attention": 0.2,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9272,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 1.5691119612535325,
+  "metadata": {
+    "ci_confidence": 0.6171725851660762
+  }
+}

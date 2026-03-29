@@ -1,0 +1,11 @@
+{
+  "timestamp": 1774755540.1013212,
+  "user_input": "nature is natural",
+  "system_response": "[synthetic]",
+  "factor_vector": {},
+  "factor_dim": 0,
+  "intrinsic_reward": 0.0,
+  "metadata": {
+    "synthetic": true
+  }
+}

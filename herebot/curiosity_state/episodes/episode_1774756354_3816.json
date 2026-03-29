@@ -1,0 +1,23 @@
+{
+  "timestamp": 1774756354.6722043,
+  "user_input": "plane also flies",
+  "system_response": "I know 'plane' is associated with: means. Tell me more about it.",
+  "factor_vector": {
+    "curiosity": 1.5048188673481486,
+    "threat": 0.1946111218880623,
+    "trust": 0.5624817500017635,
+    "confidence": 0.6755944465297125,
+    "uncertainty": 0.008169071764707821,
+    "energy": 0.372,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9442,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 11.138966991183718,
+  "metadata": {
+    "ci_confidence": 0.6755944465297125
+  }
+}

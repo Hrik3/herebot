@@ -1,0 +1,33 @@
+{
+  "label": "learning",
+  "vector": [
+    1.2959536350445267,
+    0.1976141751640894,
+    0.7007254129333873,
+    0.6521322343155146,
+    0.011550434004441387,
+    0.367,
+    0.3,
+    0.48682623376835177,
+    0.7,
+    0.8899,
+    0.0
+  ],
+  "dimension": 11,
+  "timestamp": 1774807493.710206,
+  "metadata": {
+    "input_text": "animals means \"plural form on animal\"",
+    "timestamp": 1774807490.2526886,
+    "ci_confidence": 0.6521322343155146,
+    "phon_score": 0.8051097703656825,
+    "tokens": [
+      "animals",
+      "means",
+      "plural",
+      "form",
+      "on",
+      "animal"
+    ]
+  },
+  "is_shadow": false
+}

@@ -1,0 +1,23 @@
+{
+  "timestamp": 1774754531.2227085,
+  "user_input": "animal is living",
+  "system_response": "Perhaps 'animal' is related to 'is', since they appear together often.",
+  "factor_vector": {
+    "curiosity": 1.1233689300943017,
+    "threat": 0.20095441227750652,
+    "trust": 0.5514269454169133,
+    "confidence": 0.6393738276232855,
+    "uncertainty": 0.013337179709703533,
+    "energy": 0.258,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9613,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.5836802453395994,
+  "metadata": {
+    "ci_confidence": 0.6393738276232855
+  }
+}

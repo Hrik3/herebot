@@ -1,0 +1,23 @@
+{
+  "timestamp": 1774756160.8672843,
+  "user_input": "what is doll?",
+  "system_response": "I'm a bit lost, but I know 'what' is associated with: means. Tell me more about it.",
+  "factor_vector": {
+    "curiosity": 0.659897582451142,
+    "threat": 0.2429666467325332,
+    "trust": 0.5602061223513924,
+    "confidence": 0.6050833831686669,
+    "uncertainty": 0.009968671012583382,
+    "energy": 0.29799999999999993,
+    "attention": 0.15,
+    "comprehension": 0.08325848838624135,
+    "fluency": 0.7,
+    "cognitive_load": 0.9553,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.9330593659541346,
+  "metadata": {
+    "ci_confidence": 0.6050833831686669
+  }
+}

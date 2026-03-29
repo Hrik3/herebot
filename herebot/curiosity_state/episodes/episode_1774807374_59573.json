@@ -1,0 +1,23 @@
+{
+  "timestamp": 1774807374.3860126,
+  "user_input": "how are you ?",
+  "system_response": "Curious as I am, I know 'how' is associated with: means. Tell me more about it.",
+  "factor_vector": {
+    "curiosity": 0.8755029143708275,
+    "threat": 0.21323264718206209,
+    "trust": 0.5460529775929484,
+    "confidence": 0.6308961743364455,
+    "uncertainty": 0.01223305626104373,
+    "energy": 0.375,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.94375,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.864472000242952,
+  "metadata": {
+    "ci_confidence": 0.6308961743364455
+  }
+}

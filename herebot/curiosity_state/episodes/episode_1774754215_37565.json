@@ -1,0 +1,23 @@
+{
+  "timestamp": 1774754215.508053,
+  "user_input": "how",
+  "system_response": "Perhaps 'how' is related to 'are', since they appear together often.",
+  "factor_vector": {
+    "curiosity": 0.5565533954197507,
+    "threat": 0.22110174340567143,
+    "trust": 0.697029352597802,
+    "confidence": 0.6247456414858215,
+    "uncertainty": 0.014212079407110625,
+    "energy": 0.2859999999999999,
+    "attention": 0.05,
+    "comprehension": 0.5,
+    "fluency": 0.7,
+    "cognitive_load": 0.9857,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.21254833636672305,
+  "metadata": {
+    "ci_confidence": 0.6247456414858215
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "timestamp": 1774807736.0643172,
+  "user_input": "rozums means rozum",
+  "system_response": "Perhaps 'rozums' is similar to 'live' \u2013 they seem to share a definition. Is that right?",
+  "factor_vector": {
+    "curiosity": 0.41273275807613835,
+    "threat": 0.19903731616283937,
+    "trust": 0.546262686650313,
+    "confidence": 0.6245289608427699,
+    "uncertainty": 0.011473214940792929,
+    "energy": 0.32799999999999996,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9508,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.567057356617156,
+  "metadata": {
+    "ci_confidence": 0.6245289608427699
+  }
+}
