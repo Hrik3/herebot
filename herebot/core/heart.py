@@ -1045,77 +1045,93 @@ class CuriosityEngine:
         self.reasoner.store_sentence(sentence, tokens, embedding=sentence_emb,
                                      metadata={'timestamp': time.time(), 'source': 'user'})
 
-        # --- Detect categorical or definitional statement ---
-        # Find main verb: look for 'is' or 'means' in tokens
-        verb_pos = None
-        verb = None
-        for i, tok in enumerate(tokens):
-            if tok in ['is', 'are', 'was', 'were', 'means', 'like']:
-                verb_pos = i
-                verb = tok
-                break
-        if verb_pos is not None:
-            subject = ' '.join(tokens[:verb_pos]).strip()
-            object = ' '.join(tokens[verb_pos+1:]).strip()
-            if subject and object:
-                if verb in ['is', 'are', 'was', 'were']:
-                    rel_type = 'is_a'
-                elif verb == 'means':
-                    rel_type = 'means'
-                elif verb == 'like':
-                    rel_type = 'similar'
-                else:
-                    rel_type = 'unknown'
-                # Store relation in reasoner
-                self.reasoner.store_phrase_relation(subject, object, rel_type, confidence=1.0)
-                # Also generate a direct hypothesis about this relation if it's new
-                key = f"relation:{rel_type}:{subject}:{object}"
-                if not any(h.get('key') == key for h in self.reasoner.hypotheses):
-                    hyp = {
-                        'key': key,
-                        'type': 'relation',
-                        'subject': subject,
-                        'predicate': rel_type,
-                        'object': object,
-                        'text': f"Did I understand correctly: '{subject}' {verb} '{object}'?",
-                        'asked': False,
-                    }
-                    self.reasoner.hypotheses.append(hyp)
+        # --- Pattern-based relation detection (no hardcoded verb lists) ---
+        # 1. Feed tokens to pattern observer: updates structural word stats,
+        #    returns (head, connector, tail) triplets for this sentence.
+        triplets = self.reasoner.pattern_observer.observe(tokens)
 
-                # ---- Word-state association ----
-                # If subject is a word/phrase and object is a state label (single word), associate
-                # Also handle "X like Y" as suggesting similarity
-                if rel_type in ('means', 'is_a'):
-                    # Treat object as a label for subject
-                    self.reasoner.word_state.add_association(subject, object, confidence=1.0, source="explicit")
-                    print(f"📝 [Word-State] Associated '{subject}' with label '{object}'")
-                    
-                    # ---- IMMEDIATE PROPAGATION: if object has labels, propagate them to subject ----
-                    object_labels = self.reasoner.word_state.get_labels(object, threshold=0.3)
-                    for lab in object_labels:
-                        if lab != object:  # avoid self‑propagation
-                            self.reasoner.word_state.add_association(subject, lab, confidence=0.9, source="inheritance")
-                            print(f"   ↪ Propagated label '{lab}' from '{object}' to '{subject}'")
-                            
-                elif rel_type == 'similar':
-                    # If subject and object are both words, they should share labels
-                    subj_labels = self.reasoner.word_state.get_labels(subject)
-                    obj_labels = self.reasoner.word_state.get_labels(object)
-                    # Propagate labels from object to subject with lower confidence
-                    for lab in obj_labels:
-                        self.reasoner.word_state.add_association(subject, lab, confidence=0.7, source="similarity")
-                    for lab in subj_labels:
-                        self.reasoner.word_state.add_association(object, lab, confidence=0.7, source="similarity")
-                    print(f"📝 [Word-State] Propagated labels between '{subject}' and '{object}'")
-                # ---- Also add to knowledge graph ----
-                # Get node for subject (word/phrase) and object (label)
-                subj_nid = self.reasoner.knowledge_graph.get_node_id(subject, "word" if len(subject.split())==1 else "phrase")
-                if subj_nid is None:
-                    subj_nid = self.reasoner.knowledge_graph.add_node(subject, "word" if len(subject.split())==1 else "phrase")
-                obj_nid = self.reasoner.knowledge_graph.get_node_id(object, "state")
-                if obj_nid is None:
-                    obj_nid = self.reasoner.knowledge_graph.add_node(object, "state")
-                self.reasoner.knowledge_graph.add_edge(subj_nid, obj_nid, "associated", confidence=1.0)
+        # 2. Try to parse as a math sentence using learned number/operator words.
+        math_result = self.reasoner.pattern_observer.try_parse_math(
+            tokens, self.reasoner.operators)
+        if math_result:
+            self._handle_math_sentence(math_result, tokens)
+
+        # 3. Surface any new connector-role questions to the hypothesis queue.
+        for q in self.reasoner.pattern_observer.get_pending_questions():
+            conn_key = f"connector_role:{q['connector']}"
+            if not any(h.get('key') == conn_key for h in self.reasoner.hypotheses):
+                self.reasoner.hypotheses.append({
+                    'key': conn_key,
+                    'type': 'connector_role',
+                    'connector': q['connector'],
+                    'text': q['text'],
+                    'asked': False,
+                    'energy_cost': 0.3,
+                    'predictive_gain': 0.7,
+                    'phase': 'active',
+                    'last_used': None,
+                    'recent_usage': 0.0,
+                })
+
+        # 4. Process each extracted triplet.
+        for (subject, connector, object) in triplets:
+            if not subject or not object:
+                continue
+            # Map connector to a relation type if already learned, else 'unknown'
+            rel_type = self.reasoner.pattern_observer.connector_to_reltype(connector)
+            if rel_type is None:
+                rel_type = 'unknown'
+
+            # Store relation in reasoner
+            self.reasoner.store_phrase_relation(subject, object, rel_type, confidence=1.0)
+
+            # Generate a confirmation hypothesis if new
+            key = f"relation:{rel_type}:{subject}:{object}"
+            if not any(h.get('key') == key for h in self.reasoner.hypotheses):
+                self.reasoner.hypotheses.append({
+                    'key': key,
+                    'type': 'relation',
+                    'subject': subject,
+                    'predicate': rel_type,
+                    'object': object,
+                    'text': f"Did I understand correctly: '{subject}' {connector} '{object}'?",
+                    'asked': False,
+                })
+
+            # Word-state association
+            if rel_type in ('means', 'is_a'):
+                self.reasoner.word_state.add_association(
+                    subject, object, confidence=1.0, source="explicit")
+                print(f"📝 [Word-State] Associated '{subject}' with label '{object}'"
+                      f" (via learned connector '{connector}')")
+                object_labels = self.reasoner.word_state.get_labels(object, threshold=0.3)
+                for lab in object_labels:
+                    if lab != object:
+                        self.reasoner.word_state.add_association(
+                            subject, lab, confidence=0.9, source="inheritance")
+                        print(f"   ↪ Propagated label '{lab}' from '{object}' to '{subject}'")
+            elif rel_type == 'similar':
+                subj_labels = self.reasoner.word_state.get_labels(subject)
+                obj_labels  = self.reasoner.word_state.get_labels(object)
+                for lab in obj_labels:
+                    self.reasoner.word_state.add_association(
+                        subject, lab, confidence=0.7, source="similarity")
+                for lab in subj_labels:
+                    self.reasoner.word_state.add_association(
+                        object, lab, confidence=0.7, source="similarity")
+                print(f"📝 [Word-State] Propagated labels between '{subject}' and '{object}'")
+
+            # Add to knowledge graph
+            subj_nid = self.reasoner.knowledge_graph.get_node_id(
+                subject, "word" if len(subject.split()) == 1 else "phrase")
+            if subj_nid is None:
+                subj_nid = self.reasoner.knowledge_graph.add_node(
+                    subject, "word" if len(subject.split()) == 1 else "phrase")
+            obj_nid = self.reasoner.knowledge_graph.get_node_id(object, "state")
+            if obj_nid is None:
+                obj_nid = self.reasoner.knowledge_graph.add_node(object, "state")
+            self.reasoner.knowledge_graph.add_edge(
+                subj_nid, obj_nid, "associated", confidence=1.0)
 
         # Generate other hypotheses (existing logic)
         hypothesis = self.reasoner.generate_sentence_hypothesis(sentence, tokens, sentence_emb)
@@ -1572,7 +1588,7 @@ class CuriosityEngine:
                         word = self.last_asked_word
                         if word not in self.semantic_learner.word_embeddings:
                             self.semantic_learner.initialize_word(word)
-                        self.semantic_learner.observe_definition(word, text)
+                        self.semantic_learner.observe_definition(word, text, structural_detector=self.reasoner.pattern_observer.detector)
                         def_emb = self.semantic_learner.text_to_embedding(text)
                         if def_emb is not None:
                             self.reasoner.store_definition(word, text, def_emb)
@@ -1580,7 +1596,7 @@ class CuriosityEngine:
                         if word in self.word_history:
                             for rec in self.word_history[word][-3:]:
                                 rec['curiosity_factors'].gp_uncertainty *= 0.3
-                                rec['curiosity_factors'].bayesian_surprise *= 0.3
+                                rec['curiosity_factors'].bayesan_surprise *= 0.3
                             if hasattr(self.concept_model, 'word_concept_counts') and word in self.concept_model.word_concept_counts:
                                 counts = self.concept_model.word_concept_counts[word]
                                 if counts:
@@ -2316,6 +2332,44 @@ class CuriosityEngine:
                                  f"(entropy={self.concept_model.entropy_word(most_uncertain_word):.3f})")
 
         return artifacts
+    
+    def _handle_math_sentence(self, math_result: dict, tokens: list):
+        """
+        Called when the pattern observer detects a math sentence.
+        If all three values (left, op, right, expected_result) are present,
+        verify the equation and optionally teach the operator back to the
+        pattern observer if the operator word was unknown.
+        """
+        left = math_result.get('left')
+        right = math_result.get('right')
+        op = math_result.get('operator')
+        expected = math_result.get('expected_result')
+        sentence = math_result.get('sentence', '')
+
+        if None in (left, right, op):
+            return
+
+        # Attempt to evaluate with known operators
+        known_ops = self.reasoner.operators
+        if op in known_ops:
+            try:
+                computed = known_ops[op].evaluate(left, right)
+                if expected is not None:
+                    match = abs(computed - expected) < 1e-9
+                    print(f"🔢 [Math] {sentence} → {left} {op} {right} = {computed}"
+                          f" {'✓' if match else '✗ (expected ' + str(expected) + ')'}")
+                else:
+                    print(f"🔢 [Math] {sentence} → {left} {op} {right} = {computed}")
+            except Exception:
+                pass
+        elif expected is not None:
+            # Unknown operator word: infer from values
+            inferred = self.reasoner.pattern_observer.infer_operator(left, right, expected)
+            if inferred:
+                # Teach this word as an operator going forward
+                self.reasoner.pattern_observer.teach_math_operator(op, inferred)
+                print(f"🔢 [Math] Learned: '{op}' means '{inferred}' "
+                      f"(from {left} {op} {right} = {expected})")
     # ------------------------------------------------------------------
     # Idle reflection and introspection (unchanged logic)
     # ------------------------------------------------------------------

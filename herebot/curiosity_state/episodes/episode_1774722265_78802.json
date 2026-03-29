@@ -1,0 +1,23 @@
+{
+  "timestamp": 1774722265.5900352,
+  "user_input": "human",
+  "system_response": "I'm really curious about 'hear'. That's interesting. Can you tell me more?",
+  "factor_vector": {
+    "curiosity": 1.4221941665393967,
+    "threat": 0.18816766918754552,
+    "trust": 0.7025309498721872,
+    "confidence": 0.6500364116143378,
+    "uncertainty": 0.01668374539099074,
+    "energy": 0.375,
+    "attention": 0.05,
+    "comprehension": 0.5,
+    "fluency": 0.7,
+    "cognitive_load": 0.98125,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 5.714400030866799,
+  "metadata": {
+    "ci_confidence": 0.6500364116143378
+  }
+}

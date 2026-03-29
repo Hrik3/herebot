@@ -5,6 +5,7 @@ from components.learner import KnowledgeGraph, ConfigManager, STATE_DIR, Structu
 from traits.traits_global import TypeHierarchy, Operator, Symbol, SymbolRegistry, RuleSchema,SchemaLearner
 from components.rules import RuleEngine, ConstraintPropagator
 from components.feedback_process import ContextualSentimentCorpus, FeedbackEntry
+from components.pattern_observer import PatternObserver
 # ------------------------------------------------------------
 # SymbolicReasoner – performs rule‑based inference on the knowledge graph
 # ------------------------------------------------------------
@@ -183,6 +184,8 @@ class ReasoningEngine:
         self.constraints = []  # list of (left, right) equations
         # ---- Procedural learning ----
         self.procedural_learner = ProceduralLearner(self)
+        # ---- Pattern observer: learns structural words + triplet extraction ----
+        self.pattern_observer = PatternObserver()
     # ------------------------------------------------------------------
     # Unification and constraint solving
     # ------------------------------------------------------------------
@@ -412,6 +415,9 @@ class ReasoningEngine:
         # --- store sentence (without embedding now; embedding added later) ---
         self.store_sentence(sentence, tokens, embedding=None,
                             metadata={'source': 'user', 'timestamp': time.time()})
+
+        # --- Pattern observer: learn structural words from positional statistics ---
+        self.pattern_observer.observe(tokens)
 
         # --- NEW: Structural pattern learning ---
         pattern = self.structural_patterns.extract_pattern(sentence, tokens)

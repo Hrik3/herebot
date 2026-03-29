@@ -1,0 +1,23 @@
+{
+  "timestamp": 1774722077.253263,
+  "user_input": "hello",
+  "system_response": "I feel confident, and I understand 'hello' as hello means hi. Tell me more.",
+  "factor_vector": {
+    "curiosity": 0.4640899061789763,
+    "threat": 0.16049839936661653,
+    "trust": 0.7334041699613957,
+    "confidence": 0.7504595861666603,
+    "uncertainty": 0.01744209745422668,
+    "energy": 0.37,
+    "attention": 0.05,
+    "comprehension": 0.5,
+    "fluency": 0.7,
+    "cognitive_load": 0.9815,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.18630736787283989,
+  "metadata": {
+    "ci_confidence": 0.7504595861666603
+  }
+}
