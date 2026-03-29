@@ -74,14 +74,21 @@ class SemanticLearner:
         self.word_embeddings[word] += lr * grad
         self.word_counts[word] += 1
 
-    def observe_definition(self, word: str, definition_text: str):
+    def observe_definition(self, word: str, definition_text: str,
+                           structural_detector=None):
         """
         When user provides a definition (e.g., "markus means a name"),
         treat it as supervised learning: the embedding should be close
         to the embedding of the definition words.
+
+        If a structural_detector is supplied (from PatternObserver), function
+        words like 'means', 'is', 'a' are stripped from the definition before
+        building the target embedding, so only content words shape the vector.
         """
-        # tokenise definition, get average embedding of known words
+        # tokenise definition, optionally filter structural/function words
         tokens = definition_text.split()
+        if structural_detector is not None:
+            tokens = [t for t in tokens if not structural_detector.is_structural(t)]
         known_embs = [self.word_embeddings[t] for t in tokens if t in self.word_embeddings]
         if not known_embs:
             return

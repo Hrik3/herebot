@@ -1,0 +1,23 @@
+{
+  "timestamp": 1774721292.0957892,
+  "user_input": "car = vehicle",
+  "system_response": "Perhaps 'car' is related to 'vehicle', since they appear together often.",
+  "factor_vector": {
+    "curiosity": 2.380574099637971,
+    "threat": 0.24686205239708142,
+    "trust": 0.5325245184190124,
+    "confidence": 0.5945154416100625,
+    "uncertainty": 0.008894675693926872,
+    "energy": 0.367,
+    "attention": 0.1,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9633,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.41018979703177993,
+  "metadata": {
+    "ci_confidence": 0.5945154416100625
+  }
+}

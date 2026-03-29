@@ -1,0 +1,23 @@
+{
+  "timestamp": 1774722277.996328,
+  "user_input": "hear is listening",
+  "system_response": "I understand 'hear' as hear means sound. Tell me more.",
+  "factor_vector": {
+    "curiosity": 1.5389545553554265,
+    "threat": 0.19357711352148171,
+    "trust": 0.5585822145824413,
+    "confidence": 0.6665106027077481,
+    "uncertainty": 0.01598858933302446,
+    "energy": 0.37,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9445,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 6.193075888193362,
+  "metadata": {
+    "ci_confidence": 0.6665106027077481
+  }
+}

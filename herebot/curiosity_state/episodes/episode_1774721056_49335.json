@@ -1,0 +1,23 @@
+{
+  "timestamp": 1774721056.5561388,
+  "user_input": "positive means +",
+  "system_response": "I'm listening. Tell me more.",
+  "factor_vector": {
+    "curiosity": 0.38664698965797784,
+    "threat": 0.21578976831917274,
+    "trust": 0.5469528962487857,
+    "confidence": 0.6290302330214028,
+    "uncertainty": 0.0018219607870342362,
+    "energy": 0.37,
+    "attention": 0.1,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.963,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.3475003655397342,
+  "metadata": {
+    "ci_confidence": 0.6290302330214028
+  }
+}

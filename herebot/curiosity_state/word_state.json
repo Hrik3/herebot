@@ -1,0 +1,27 @@
+{
+  "word_to_labels": {
+    "mean": {
+      "means": 1.0
+    },
+    "green": {
+      "color": 1.0
+    },
+    "blue": {
+      "color": 1.0
+    },
+    "means": {
+      "means": 0.7999999999999999
+    }
+  },
+  "label_to_words": {
+    "means": [
+      "mean",
+      "means"
+    ],
+    "color": [
+      "blue",
+      "green"
+    ]
+  },
+  "conflict_history": []
+}
