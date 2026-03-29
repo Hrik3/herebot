@@ -1,1 +1,425 @@
-[]
+[
+  {
+    "labels": [
+      "exploration",
+      "learning"
+    ],
+    "similarity": 0.9624644681119846,
+    "words1": [],
+    "words2": [],
+    "resolved": true,
+    "resolution_label": "shadow_learning_exploration_1774755537",
+    "timestamp": 1774808232.121769
+  },
+  {
+    "labels": [
+      "exploration",
+      "confusion"
+    ],
+    "similarity": 0.9536777088839056,
+    "words1": [],
+    "words2": [],
+    "resolved": true,
+    "resolution_label": "shadow_exploration_confusion_1774755676",
+    "timestamp": 1774808232.121818
+  },
+  {
+    "labels": [
+      "exploration",
+      "stable"
+    ],
+    "similarity": 0.9231685499845563,
+    "words1": [],
+    "words2": [],
+    "resolved": true,
+    "resolution_label": "shadow_exploration_stable_1774808232",
+    "timestamp": 1774808232.1218274,
+    "resolution_type": "shadow"
+  },
+  {
+    "labels": [
+      "exploration",
+      "identity"
+    ],
+    "similarity": 0.9935456976276232,
+    "words1": [],
+    "words2": [],
+    "resolved": true,
+    "resolution_label": "shadow_exploration_identity_1774808232",
+    "timestamp": 1774808232.121836,
+    "resolution_type": "shadow"
+  },
+  {
+    "labels": [
+      "exploration",
+      "pattern"
+    ],
+    "similarity": 0.9053405308130956,
+    "words1": [],
+    "words2": [],
+    "resolved": true,
+    "resolution_label": "shadow_exploration_pattern_1774808232",
+    "timestamp": 1774808232.1218524,
+    "resolution_type": "shadow"
+  },
+  {
+    "labels": [
+      "learning",
+      "chain forming"
+    ],
+    "similarity": 0.8773897511376094,
+    "words1": [],
+    "words2": [],
+    "resolved": true,
+    "resolution_label": "shadow_learning_chain forming_1774756919",
+    "timestamp": 1774808232.1218626
+  },
+  {
+    "labels": [
+      "learning",
+      "discovering"
+    ],
+    "similarity": 0.8756826539817549,
+    "words1": [],
+    "words2": [],
+    "resolved": false,
+    "resolution_label": null,
+    "timestamp": 1774808232.1218777
+  },
+  {
+    "labels": [
+      "learning",
+      "confusion"
+    ],
+    "similarity": 0.9893201374373976,
+    "words1": [],
+    "words2": [],
+    "resolved": true,
+    "resolution_label": "shadow_learning_confusion_1774755537",
+    "timestamp": 1774808232.1218927
+  },
+  {
+    "labels": [
+      "learning",
+      "stable"
+    ],
+    "similarity": 0.9235120536841506,
+    "words1": [],
+    "words2": [],
+    "resolved": false,
+    "resolution_label": null,
+    "timestamp": 1774808232.1219008
+  },
+  {
+    "labels": [
+      "learning",
+      "identity"
+    ],
+    "similarity": 0.9671352699851602,
+    "words1": [],
+    "words2": [],
+    "resolved": false,
+    "resolution_label": null,
+    "timestamp": 1774808232.1219087
+  },
+  {
+    "labels": [
+      "learning",
+      "pattern"
+    ],
+    "similarity": 0.975275468671115,
+    "words1": [],
+    "words2": [],
+    "resolved": false,
+    "resolution_label": null,
+    "timestamp": 1774808232.1219237
+  },
+  {
+    "labels": [
+      "chain forming",
+      "normal interaction"
+    ],
+    "similarity": 0.9513713336958394,
+    "words1": [],
+    "words2": [],
+    "resolved": true,
+    "resolution_label": "shadow_normal interaction_chain forming_1774757557",
+    "timestamp": 1774808232.1219358
+  },
+  {
+    "labels": [
+      "chain forming",
+      "discovering"
+    ],
+    "similarity": 0.9654370888727054,
+    "words1": [],
+    "words2": [],
+    "resolved": false,
+    "resolution_label": null,
+    "timestamp": 1774808232.1219454
+  },
+  {
+    "labels": [
+      "chain forming",
+      "identitiy"
+    ],
+    "similarity": 0.9144946020710321,
+    "words1": [],
+    "words2": [],
+    "resolved": false,
+    "resolution_label": null,
+    "timestamp": 1774808232.121953
+  },
+  {
+    "labels": [
+      "chain forming",
+      "confusion"
+    ],
+    "similarity": 0.9108472905239275,
+    "words1": [],
+    "words2": [],
+    "resolved": true,
+    "resolution_label": "shadow_confusion_chain forming_1774757557",
+    "timestamp": 1774808232.1219614
+  },
+  {
+    "labels": [
+      "chain forming",
+      "stable"
+    ],
+    "similarity": 0.9316746325685477,
+    "words1": [],
+    "words2": [],
+    "resolved": false,
+    "resolution_label": null,
+    "timestamp": 1774808232.1219695
+  },
+  {
+    "labels": [
+      "chain forming",
+      "maths"
+    ],
+    "similarity": 0.8802999418391065,
+    "words1": [],
+    "words2": [],
+    "resolved": false,
+    "resolution_label": null,
+    "timestamp": 1774808232.1219845
+  },
+  {
+    "labels": [
+      "chain forming",
+      "pattern"
+    ],
+    "similarity": 0.9542827449329598,
+    "words1": [],
+    "words2": [],
+    "resolved": false,
+    "resolution_label": null,
+    "timestamp": 1774808232.1219923
+  },
+  {
+    "labels": [
+      "normal interaction",
+      "discovering"
+    ],
+    "similarity": 0.9148624932696829,
+    "words1": [],
+    "words2": [],
+    "resolved": false,
+    "resolution_label": null,
+    "timestamp": 1774808232.1220012
+  },
+  {
+    "labels": [
+      "normal interaction",
+      "identitiy"
+    ],
+    "similarity": 0.9693246675034328,
+    "words1": [],
+    "words2": [],
+    "resolved": false,
+    "resolution_label": null,
+    "timestamp": 1774808232.1220112
+  },
+  {
+    "labels": [
+      "normal interaction",
+      "confusion"
+    ],
+    "similarity": 0.8749416536082202,
+    "words1": [],
+    "words2": [],
+    "resolved": true,
+    "resolution_label": "shadow_confusion_normal interaction_1774757557",
+    "timestamp": 1774808232.1220188
+  },
+  {
+    "labels": [
+      "normal interaction",
+      "stable"
+    ],
+    "similarity": 0.8991774994309899,
+    "words1": [],
+    "words2": [],
+    "resolved": false,
+    "resolution_label": null,
+    "timestamp": 1774808232.1220267
+  },
+  {
+    "labels": [
+      "normal interaction",
+      "maths"
+    ],
+    "similarity": 0.938247890186597,
+    "words1": [],
+    "words2": [],
+    "resolved": false,
+    "resolution_label": null,
+    "timestamp": 1774808232.1220417
+  },
+  {
+    "labels": [
+      "normal interaction",
+      "pattern"
+    ],
+    "similarity": 0.9150894437733251,
+    "words1": [],
+    "words2": [],
+    "resolved": false,
+    "resolution_label": null,
+    "timestamp": 1774808232.1220496
+  },
+  {
+    "labels": [
+      "discovering",
+      "identitiy"
+    ],
+    "similarity": 0.8754933367521112,
+    "words1": [],
+    "words2": [],
+    "resolved": false,
+    "resolution_label": null,
+    "timestamp": 1774808232.1220589
+  },
+  {
+    "labels": [
+      "discovering",
+      "confusion"
+    ],
+    "similarity": 0.9001291485852743,
+    "words1": [],
+    "words2": [],
+    "resolved": false,
+    "resolution_label": null,
+    "timestamp": 1774808232.1220667
+  },
+  {
+    "labels": [
+      "discovering",
+      "maths"
+    ],
+    "similarity": 0.8506133299192549,
+    "words1": [],
+    "words2": [],
+    "resolved": false,
+    "resolution_label": null,
+    "timestamp": 1774808232.1220877
+  },
+  {
+    "labels": [
+      "discovering",
+      "pattern"
+    ],
+    "similarity": 0.9456888790045753,
+    "words1": [],
+    "words2": [],
+    "resolved": false,
+    "resolution_label": null,
+    "timestamp": 1774808232.1220956
+  },
+  {
+    "labels": [
+      "identitiy",
+      "maths"
+    ],
+    "similarity": 0.9887051252930145,
+    "words1": [],
+    "words2": [],
+    "resolved": false,
+    "resolution_label": null,
+    "timestamp": 1774808232.1221244
+  },
+  {
+    "labels": [
+      "confusion",
+      "stable"
+    ],
+    "similarity": 0.9375817768293091,
+    "words1": [],
+    "words2": [],
+    "resolved": false,
+    "resolution_label": null,
+    "timestamp": 1774808232.12214
+  },
+  {
+    "labels": [
+      "confusion",
+      "identity"
+    ],
+    "similarity": 0.9627491502728807,
+    "words1": [],
+    "words2": [],
+    "resolved": false,
+    "resolution_label": null,
+    "timestamp": 1774808232.1221476
+  },
+  {
+    "labels": [
+      "confusion",
+      "pattern"
+    ],
+    "similarity": 0.9772168757296155,
+    "words1": [],
+    "words2": [],
+    "resolved": false,
+    "resolution_label": null,
+    "timestamp": 1774808232.1221623
+  },
+  {
+    "labels": [
+      "stable",
+      "identity"
+    ],
+    "similarity": 0.9574398211032493,
+    "words1": [],
+    "words2": [],
+    "resolved": false,
+    "resolution_label": null,
+    "timestamp": 1774808232.1221707
+  },
+  {
+    "labels": [
+      "stable",
+      "pattern"
+    ],
+    "similarity": 0.9507212304038776,
+    "words1": [],
+    "words2": [],
+    "resolved": false,
+    "resolution_label": null,
+    "timestamp": 1774808232.1221855
+  },
+  {
+    "labels": [
+      "identity",
+      "pattern"
+    ],
+    "similarity": 0.9310397739219868,
+    "words1": [],
+    "words2": [],
+    "resolved": false,
+    "resolution_label": null,
+    "timestamp": 1774808232.122202
+  }
+]

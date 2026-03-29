@@ -1596,7 +1596,7 @@ class CuriosityEngine:
                         if word in self.word_history:
                             for rec in self.word_history[word][-3:]:
                                 rec['curiosity_factors'].gp_uncertainty *= 0.3
-                                rec['curiosity_factors'].bayesan_surprise *= 0.3
+                                rec['curiosity_factors'].bayesian_surprise *= 0.3
                             if hasattr(self.concept_model, 'word_concept_counts') and word in self.concept_model.word_concept_counts:
                                 counts = self.concept_model.word_concept_counts[word]
                                 if counts:

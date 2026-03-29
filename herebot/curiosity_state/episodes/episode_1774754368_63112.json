@@ -1,0 +1,23 @@
+{
+  "timestamp": 1774754368.037316,
+  "user_input": "travel means car",
+  "system_response": "Perhaps 'travel' is related to 'means', since they appear together often.",
+  "factor_vector": {
+    "curiosity": 1.4547789625676728,
+    "threat": 0.203541720282643,
+    "trust": 0.5535802533354901,
+    "confidence": 0.653116089015527,
+    "uncertainty": 0.011902661813352944,
+    "energy": 0.3420000000000001,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9487,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.650785653989409,
+  "metadata": {
+    "ci_confidence": 0.653116089015527
+  }
+}

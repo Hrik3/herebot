@@ -1,0 +1,23 @@
+{
+  "timestamp": 1774757527.6529222,
+  "user_input": "ok",
+  "system_response": "I'm really curious about 'cautious inquiry'. That's interesting. Can you tell me more?",
+  "factor_vector": {
+    "curiosity": 1.2917232796904556,
+    "threat": 0.24794101869319207,
+    "trust": 0.6560920517597122,
+    "confidence": 0.5526474532670198,
+    "uncertainty": 0.008630203142240776,
+    "energy": 0.372,
+    "attention": 0.05,
+    "comprehension": 0.5,
+    "fluency": 0.7,
+    "cognitive_load": 0.9814,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 5.50200407500922,
+  "metadata": {
+    "ci_confidence": 0.5526474532670198
+  }
+}

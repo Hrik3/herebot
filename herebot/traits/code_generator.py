@@ -90,7 +90,6 @@ def run(context: dict) -> str:
 
 logger = logging.getLogger(__name__)
 
-@resource_monitor
 def run(word: str, semantic_learner) -> float:
     """
     Returns similarity confidence (0-1) between word and known concept.
@@ -111,7 +110,6 @@ import numpy as np
 
 logger = logging.getLogger(__name__)
 
-@resource_monitor
 def run(factor_vector: list) -> bool:
     """
     Returns True if the current factor vector matches this state.
@@ -137,6 +135,10 @@ def run(factor_vector: list) -> bool:
 
 {base_imports}
 import numpy as np
+import pickle
+import sys, os
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from components.language_model import LanguageModel
 
 class ImprovedLSTMLanguageModel(LanguageModel):
     """
@@ -448,15 +450,24 @@ def run(context: dict) -> str:
         # Convert action dict to Python statements
         action_code = cls._parse_action(action)
 
+        def _indent(block: str, spaces: int = 4) -> str:
+            pad = " " * spaces
+            lines = block.splitlines()
+            # First line gets no extra indent (template already provides it),
+            # subsequent lines each need the padding added.
+            if len(lines) <= 1:
+                return block
+            return lines[0] + "\n" + "\n".join(pad + l for l in lines[1:])
+
         return cls.BEHAVIORAL_TEMPLATE.format(
             logic_id=logic_id,
             rule_type=rule.get("rule_type", "behavioral"),
             timestamp=timestamp,
             BASE_IMPORTS=base_imports,
             condition=condition,
-            condition_code=condition_code,
+            condition_code=_indent(condition_code),
             action=action,
-            action_code=action_code
+            action_code=_indent(action_code)
         )
 
     @classmethod
@@ -579,7 +590,7 @@ def run(context: dict) -> str:
         lines = []
         if "self_reference" in action:
             alias = action["self_reference"]
-            lines.append(f'    response = f"I am {{alias}}."')
+            lines.append(f'    response = "I am {alias}."')
         elif "say" in action:
             text = action["say"]
             lines.append(f'    response = "{text}"')
@@ -593,7 +604,7 @@ def run(context: dict) -> str:
             lines.append('    response = "[acknowledged]"')
 
         # Add optional logging
-        lines.append('    logger.debug(f"Action executed: {response}")')
+        lines.append('    logger.debug(f"Action executed: {{response}}")')
         return "\n".join(lines)
 
     @staticmethod

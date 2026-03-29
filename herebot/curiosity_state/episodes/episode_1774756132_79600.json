@@ -1,0 +1,23 @@
+{
+  "timestamp": 1774756132.3225846,
+  "user_input": "herebot",
+  "system_response": "I'm really curious about 'cautious inquiry'. That's interesting. Can you tell me more?",
+  "factor_vector": {
+    "curiosity": 1.2614580163457625,
+    "threat": 0.16583545198787975,
+    "trust": 0.7168034840293475,
+    "confidence": 0.6897980878385991,
+    "uncertainty": 0.00977091756650893,
+    "energy": 0.367,
+    "attention": 0.05,
+    "comprehension": 0.5,
+    "fluency": 0.7,
+    "cognitive_load": 0.98165,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 5.48322891115351,
+  "metadata": {
+    "ci_confidence": 0.6897980878385991
+  }
+}

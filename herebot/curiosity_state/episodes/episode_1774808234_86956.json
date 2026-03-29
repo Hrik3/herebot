@@ -1,0 +1,11 @@
+{
+  "timestamp": 1774808234.9902172,
+  "user_input": "form on animal",
+  "system_response": "[synthetic]",
+  "factor_vector": {},
+  "factor_dim": 0,
+  "intrinsic_reward": 0.0,
+  "metadata": {
+    "synthetic": true
+  }
+}

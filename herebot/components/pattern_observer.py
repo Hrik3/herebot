@@ -20,7 +20,7 @@ Also provides:
 """
 from importglobal import (
     np, Counter, defaultdict,
-    Dict, List, Optional, Set, Tuple, math
+    Dict, List, Optional, Set, Tuple, math, time
 )
 
 
@@ -32,6 +32,10 @@ class WordRoleTracker:
     Per-word positional statistics across observed sentences.
     Tracks bridge frequency, neighbour diversity, and sentence coverage.
     """
+    # Gap (seconds) between two observations that signals a new inactive period.
+    # Any pause longer than this is treated as "PC off / model not running".
+    SESSION_GAP: float = 300.0   # 5 minutes
+
     def __init__(self):
         self.bridge_count: Counter = Counter()
         self.left_neighbors:  Dict[str, Counter] = defaultdict(Counter)
@@ -39,10 +43,17 @@ class WordRoleTracker:
         self.sentence_count: Counter = Counter()
         self.total_sentences: int = 0
         self.total_count: Counter = Counter()
+        # One timestamp per call to observe(), in order.
+        # Stored so old data can be retroactively re-bucketed when SESSION_GAP changes.
+        self._obs_timestamps: List[float] = []
+        # Cache of active-session sentence count (recomputed lazily).
+        self._active_sentences_cache: Optional[int] = None
 
     def observe(self, tokens: List[str]):
         """Record statistics for one tokenised sentence."""
         self.total_sentences += 1
+        self._obs_timestamps.append(time.time())
+        self._active_sentences_cache = None   # invalidate
         seen: Set[str] = set()
         for i, tok in enumerate(tokens):
             self.total_count[tok] += 1
@@ -54,6 +65,42 @@ class WordRoleTracker:
                 self.bridge_count[tok] += 1
                 self.left_neighbors[tok][tokens[i - 1]] += 1
                 self.right_neighbors[tok][tokens[i + 1]] += 1
+
+    def _active_sentence_count(self) -> int:
+        """
+        Count only sentences that occurred during active running windows.
+        A 'running window' is a contiguous run of observations where the gap
+        between any two consecutive timestamps is < SESSION_GAP seconds.
+
+        The very first observation always opens a new active window.
+        Cached after each call; invalidated by observe().
+        """
+        if self._active_sentences_cache is not None:
+            return self._active_sentences_cache
+
+        ts = self._obs_timestamps
+        if not ts:
+            self._active_sentences_cache = 0
+            return 0
+
+        active = 1   # first observation always counts
+        for i in range(1, len(ts)):
+            if ts[i] - ts[i - 1] < self.SESSION_GAP:
+                active += 1
+            # else: gap >= SESSION_GAP → model was not running; skip
+        self._active_sentences_cache = active
+        return active
+
+    def recompute_active_count(self, new_gap: float = None) -> int:
+        """
+        Retroactively recompute active sentence count with a (optionally new)
+        SESSION_GAP, without discarding any raw timestamp data.
+        Call this after loading saved state to fix old polluted counts.
+        """
+        if new_gap is not None:
+            self.SESSION_GAP = new_gap
+        self._active_sentences_cache = None
+        return self._active_sentence_count()
 
     def neighbor_entropy(self, word: str) -> float:
         """Shannon entropy of the word's left+right neighbour distribution."""
@@ -75,7 +122,8 @@ class WordRoleTracker:
         n = self.total_count.get(word, 0)
         if n < 3:
             return 0.0
-        coverage     = self.sentence_count.get(word, 0) / max(self.total_sentences, 1)
+        active_total = self._active_sentence_count()
+        coverage     = self.sentence_count.get(word, 0) / max(active_total, 1)
         bridge_ratio = self.bridge_count.get(word, 0) / max(n, 1)
         entropy      = self.neighbor_entropy(word)
         return 0.4 * coverage + 0.3 * bridge_ratio + 0.3 * entropy
@@ -404,3 +452,26 @@ class PatternObserver:
 
     def teach_math_equality(self, word: str):
         self.math_parser.teach_equality(word)
+
+    # ------------------------------------------------------------------
+    # Session-aware retroactive correction
+    # ------------------------------------------------------------------
+    def recompute_active_counts(self, new_gap_seconds: float = None) -> int:
+        """
+        Retroactively fix structural scores by recomputing active-session
+        sentence counts from stored timestamps, without losing any raw data.
+        Pass new_gap_seconds to also change the shutdown-gap threshold.
+        Returns the new active sentence count.
+        """
+        return self.detector.tracker.recompute_active_count(new_gap_seconds)
+
+    @property
+    def session_gap(self) -> float:
+        """Gap in seconds that separates 'running' from 'PC off'."""
+        return self.detector.tracker.SESSION_GAP
+
+    @session_gap.setter
+    def session_gap(self, seconds: float):
+        self.detector.tracker.SESSION_GAP = seconds
+        self.detector.tracker._active_sentences_cache = None
+        self.detector._dirty = True

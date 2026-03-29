@@ -1,0 +1,23 @@
+{
+  "timestamp": 1774754949.5719266,
+  "user_input": "metro is transport",
+  "system_response": "Perhaps 'metro' is related to 'is', since they appear together often.",
+  "factor_vector": {
+    "curiosity": 1.5718963239167199,
+    "threat": 0.21351603985695608,
+    "trust": 0.557602044692916,
+    "confidence": 0.6605414011908552,
+    "uncertainty": 0.011195112878451352,
+    "energy": 0.35,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9475,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 3.384758474304335,
+  "metadata": {
+    "ci_confidence": 0.6605414011908552
+  }
+}

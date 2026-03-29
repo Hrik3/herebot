@@ -1,0 +1,23 @@
+{
+  "timestamp": 1774756121.5838578,
+  "user_input": "doll is my toy",
+  "system_response": "I understand 'is' as is means mean. Tell me more.",
+  "factor_vector": {
+    "curiosity": 1.6659647912180682,
+    "threat": 0.24171206280124502,
+    "trust": 0.5389671755151302,
+    "confidence": 0.6135323429968875,
+    "uncertainty": 0.009951860484410949,
+    "energy": 0.372,
+    "attention": 0.2,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9256,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 7.034645476674836,
+  "metadata": {
+    "ci_confidence": 0.6135323429968875
+  }
+}

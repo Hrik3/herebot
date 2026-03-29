@@ -76,6 +76,42 @@ def _safe_float(val, default: float = 0.0) -> float:
         return default
 
 
+# Gap in seconds between two consecutive data points that means "PC was off".
+# Any pair of points further apart than this gets a None break inserted so
+# matplotlib lifts the pen instead of drawing a flat line across the gap.
+_SESSION_GAP_SECONDS: float = 300.0   # 5 minutes
+
+
+def _break_series(timestamps, values, gap: float = _SESSION_GAP_SECONDS):
+    """
+    Insert a (midpoint_timestamp, None) pair between any two consecutive points
+    whose timestamps differ by more than `gap` seconds.
+    Works with both datetime objects and raw unix floats.
+    Returns (new_timestamps, new_values) ready for ax.plot().
+    Also retroactively fixes already-loaded historical data — no data is lost,
+    only the visual connection between off-gap points is severed.
+    """
+    import datetime
+    if not timestamps:
+        return timestamps, values
+    ts_out  = [timestamps[0]]
+    val_out = [values[0]]
+    for i in range(1, len(timestamps)):
+        prev, curr = timestamps[i - 1], timestamps[i]
+        if isinstance(prev, datetime.datetime):
+            delta = (curr - prev).total_seconds()
+            mid   = prev + (curr - prev) / 2
+        else:
+            delta = float(curr - prev)
+            mid   = prev + delta / 2
+        if delta > gap:
+            ts_out.append(mid)
+            val_out.append(None)        # pen-lift point
+        ts_out.append(curr)
+        val_out.append(values[i])
+    return ts_out, val_out
+
+
 # ──────────────────────────────────────────────────────────────────────────────
 # CuriosityTracker
 # ──────────────────────────────────────────────────────────────────────────────
@@ -286,25 +322,32 @@ class CuriosityTracker:
         # Build time axis as datetime objects for x-axis labels
         import datetime
         ts = [datetime.datetime.fromtimestamp(d["timestamp"]) for d in data]
+        idx = list(range(len(data)))
+
+        def _bs(vals):
+            """Sequential x-axis; None break inserted at session gaps."""
+            xs, ys = [], []
+            for i, (x, y) in enumerate(zip(idx, vals)):
+                if i > 0:
+                    gap = (ts[i] - ts[i - 1]).total_seconds()
+                    if gap > _SESSION_GAP_SECONDS:
+                        xs.append((idx[i - 1] + idx[i]) / 2.0)
+                        ys.append(None)
+                xs.append(x)
+                ys.append(y)
+            return xs, ys
 
         # ── helper: shade sessions ──
         def _shade_sessions(ax, data, ts):
-            """Light vertical band per session so you can see restart boundaries."""
-            session_ids = [d.get("session_id", "") for d in data]
-            starts: Dict[str, float] = {}
-            ends: Dict[str, float] = {}
-            for t, sid in zip(ts, session_ids):
-                if sid not in starts:
-                    starts[sid] = t
-                ends[sid] = t
-            colors = ["#e8f0fe", "#fff3e0", "#e8f5e9", "#fce4ec", "#f3e5f5"]
-            for i, sid in enumerate(sorted(starts)):
-                ax.axvspan(
-                    starts[sid], ends[sid],
-                    alpha=0.25, color=colors[i % len(colors)],
-                    label=f"session {sid[:6]}" if i < 4 else "_nolegend_",
-                    zorder=0,
-                )
+            """Dashed vertical line wherever a session gap occurred."""
+            for i in range(1, len(data)):
+                gap = (ts[i] - ts[i - 1]).total_seconds()
+                if gap > _SESSION_GAP_SECONDS:
+                    ax.axvline(
+                        x=(idx[i - 1] + idx[i]) / 2.0,
+                        color="#aaaaaa", linewidth=0.8,
+                        linestyle="--", alpha=0.7, zorder=1,
+                    )
 
         plt.rcParams.update({
             "font.family": "DejaVu Sans",
@@ -323,62 +366,57 @@ class CuriosityTracker:
 
         # 1a. Words & Concepts
         ax = fig.add_subplot(gs[0, 0])
-        ax.plot(ts, [d.get("words_known", 0) for d in data],
+        ax.plot(*_bs([d.get("words_known", 0) for d in data]),
                 color=_PALETTE[0], linewidth=1.8, label="Words known")
-        ax.plot(ts, [d.get("concepts_formed", 0) for d in data],
+        ax.plot(*_bs([d.get("concepts_formed", 0) for d in data]),
                 color=_PALETTE[1], linewidth=1.8, linestyle="--", label="Concepts formed")
         _shade_sessions(ax, data, ts)
         ax.set_title("Vocabulary & Concept Growth")
         ax.set_ylabel("Count")
         ax.legend(fontsize=8)
-        ax.xaxis.set_major_formatter(mdates.DateFormatter("%m/%d %H:%M"))
-        plt.setp(ax.xaxis.get_majorticklabels(), rotation=30, ha="right", fontsize=7)
+        ax.set_xlabel("Interaction index", fontsize=7)
 
         # 1b. Intrinsic reward
         ax = fig.add_subplot(gs[0, 1])
-        ax.plot(ts, [d.get("total_reward", 0) for d in data],
+        ax.plot(*_bs([d.get("total_reward", 0) for d in data]),
                 color=_PALETTE[2], linewidth=1.8)
         _shade_sessions(ax, data, ts)
         ax.set_title("Cumulative Intrinsic Reward")
         ax.set_ylabel("Reward")
-        ax.xaxis.set_major_formatter(mdates.DateFormatter("%m/%d %H:%M"))
-        plt.setp(ax.xaxis.get_majorticklabels(), rotation=30, ha="right", fontsize=7)
+        ax.set_xlabel("Interaction index", fontsize=7)
 
         # 1c. Entropy & GP variance
         ax = fig.add_subplot(gs[1, 0])
-        ax.plot(ts, [d.get("avg_entropy", 0) for d in data],
+        ax.plot(*_bs([d.get("avg_entropy", 0) for d in data]),
                 color=_PALETTE[3], linewidth=1.8, label="Avg entropy")
-        ax.plot(ts, [d.get("avg_gp_variance", 0) for d in data],
+        ax.plot(*_bs([d.get("avg_gp_variance", 0) for d in data]),
                 color=_PALETTE[4], linewidth=1.8, linestyle=":", label="Avg GP variance")
         _shade_sessions(ax, data, ts)
         ax.set_title("Uncertainty Signals")
         ax.set_ylabel("Value")
         ax.legend(fontsize=8)
-        ax.xaxis.set_major_formatter(mdates.DateFormatter("%m/%d %H:%M"))
-        plt.setp(ax.xaxis.get_majorticklabels(), rotation=30, ha="right", fontsize=7)
+        ax.set_xlabel("Interaction index", fontsize=7)
 
         # 1d. Top curiosity score
         ax = fig.add_subplot(gs[1, 1])
-        ax.plot(ts, [d.get("top_curiosity_score", 0) for d in data],
+        ax.plot(*_bs([d.get("top_curiosity_score", 0) for d in data]),
                 color=_PALETTE[5], linewidth=1.8)
         _shade_sessions(ax, data, ts)
         ax.set_title("Top Word Curiosity Score")
         ax.set_ylabel("Score")
-        ax.xaxis.set_major_formatter(mdates.DateFormatter("%m/%d %H:%M"))
-        plt.setp(ax.xaxis.get_majorticklabels(), rotation=30, ha="right", fontsize=7)
+        ax.set_xlabel("Interaction index", fontsize=7)
 
         # 1e. States & unique tokens
         ax = fig.add_subplot(gs[2, 0])
-        ax.plot(ts, [d.get("states_learned", 0) for d in data],
+        ax.plot(*_bs([d.get("states_learned", 0) for d in data]),
                 color=_PALETTE[6], linewidth=1.8, label="States learned")
-        ax.plot(ts, [d.get("unique_tokens", 0) for d in data],
+        ax.plot(*_bs([d.get("unique_tokens", 0) for d in data]),
                 color=_PALETTE[7], linewidth=1.8, linestyle="--", label="Unique tokens")
         _shade_sessions(ax, data, ts)
         ax.set_title("State & Token Diversity")
         ax.set_ylabel("Count")
         ax.legend(fontsize=8)
-        ax.xaxis.set_major_formatter(mdates.DateFormatter("%m/%d %H:%M"))
-        plt.setp(ax.xaxis.get_majorticklabels(), rotation=30, ha="right", fontsize=7)
+        ax.set_xlabel("Interaction index", fontsize=7)
 
         # 1f. Session interaction distribution (bar chart)
         ax = fig.add_subplot(gs[2, 1])
@@ -429,7 +467,7 @@ class CuriosityTracker:
             fig, ax = plt.subplots(figsize=(14, 5))
             for i, fname in enumerate(all_factor_names):
                 vals = [d.get("factor_weights", {}).get(fname, 0.0) for d in data]
-                ax.plot(ts, vals, label=fname, color=_PALETTE[i % len(_PALETTE)],
+                ax.plot(*_bs(vals), label=fname, color=_PALETTE[i % len(_PALETTE)],
                         linewidth=1.5, alpha=0.85)
             ax.axhline(0, color="black", linewidth=0.7, linestyle="--", alpha=0.4)
             _shade_sessions(ax, data, ts)

@@ -1,0 +1,23 @@
+{
+  "timestamp": 1774756202.5429432,
+  "user_input": "what means \"questioning someone\"",
+  "system_response": "Curious as I am, I know 'what' is associated with: means. Tell me more about it.",
+  "factor_vector": {
+    "curiosity": 0.9787594696930061,
+    "threat": 0.20369160289762447,
+    "trust": 0.6233712219157688,
+    "confidence": 0.6297574422459636,
+    "uncertainty": 0.009782967295339706,
+    "energy": 0.372,
+    "attention": 0.2,
+    "comprehension": 0.24986992187920423,
+    "fluency": 0.7,
+    "cognitive_load": 0.9256,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 1.2006334907202854,
+  "metadata": {
+    "ci_confidence": 0.6297574422459636
+  }
+}

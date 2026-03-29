@@ -1,0 +1,23 @@
+{
+  "timestamp": 1774807343.8629878,
+  "user_input": "herebot is good",
+  "system_response": "Perhaps 'herebot' is related to 'you', since they appear together often.",
+  "factor_vector": {
+    "curiosity": 0.8053797870844622,
+    "threat": 0.18051434981113795,
+    "trust": 0.5680439223644825,
+    "confidence": 0.6880930314082546,
+    "uncertainty": 0.012487133269343977,
+    "energy": 0.375,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.94375,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.5677527566107419,
+  "metadata": {
+    "ci_confidence": 0.6880930314082546
+  }
+}

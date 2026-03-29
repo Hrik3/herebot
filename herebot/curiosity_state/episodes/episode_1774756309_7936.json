@@ -1,0 +1,23 @@
+{
+  "timestamp": 1774756309.2236063,
+  "user_input": "crow animal",
+  "system_response": "Curious as I am, I understand 'animal' as animal is living. Tell me more.",
+  "factor_vector": {
+    "curiosity": 1.5672034032951179,
+    "threat": 0.22300613726621288,
+    "trust": 0.546091337345992,
+    "confidence": 0.6344994443100456,
+    "uncertainty": 0.008972126603458827,
+    "energy": 0.367,
+    "attention": 0.1,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9633,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 5.8194356980538275,
+  "metadata": {
+    "ci_confidence": 0.6344994443100456
+  }
+}

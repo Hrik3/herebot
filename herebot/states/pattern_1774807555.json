@@ -1,0 +1,33 @@
+{
+  "label": "pattern",
+  "vector": [
+    0.7802431472696167,
+    0.2230172784488787,
+    0.6877507945862046,
+    0.6150789035007752,
+    0.011076742664740898,
+    0.367,
+    0.3,
+    0.5,
+    0.7,
+    0.8899,
+    0.0
+  ],
+  "dimension": 11,
+  "timestamp": 1774807555.4400814,
+  "metadata": {
+    "input_text": "boys means \"plural form of boy\"",
+    "timestamp": 1774807551.0019484,
+    "ci_confidence": 0.6150789035007752,
+    "phon_score": 0.7698372005027041,
+    "tokens": [
+      "boys",
+      "means",
+      "plural",
+      "form",
+      "of",
+      "boy"
+    ]
+  },
+  "is_shadow": false
+}

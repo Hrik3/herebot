@@ -1,0 +1,23 @@
+{
+  "timestamp": 1774806816.413175,
+  "user_input": "\"lily is good girl\"",
+  "system_response": "Perhaps 'girl' is related to 'is', since they appear together often.",
+  "factor_vector": {
+    "curiosity": 0.4067760149823423,
+    "threat": 0.2224850357751395,
+    "trust": 0.6895501221271244,
+    "confidence": 0.6159749105621513,
+    "uncertainty": 0.008412604686256875,
+    "energy": 0.361,
+    "attention": 0.2,
+    "comprehension": 0.5,
+    "fluency": 0.7,
+    "cognitive_load": 0.9278,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.8293870366528786,
+  "metadata": {
+    "ci_confidence": 0.6159749105621513
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "timestamp": 1774806478.891082,
+  "user_input": "girl = human",
+  "system_response": "Perhaps 'girl' is related to 'human', since they appear together often.",
+  "factor_vector": {
+    "curiosity": 0.40894890592235533,
+    "threat": 0.2396524883236688,
+    "trust": 0.5400581592349658,
+    "confidence": 0.6147706407185618,
+    "uncertainty": 0.008406279647163372,
+    "energy": 0.367,
+    "attention": 0.1,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9633,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.37227652727542593,
+  "metadata": {
+    "ci_confidence": 0.6147706407185618
+  }
+}

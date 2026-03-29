@@ -1,0 +1,23 @@
+{
+  "timestamp": 1774754312.7253366,
+  "user_input": "what means questioning",
+  "system_response": "Perhaps 'what' is related to 'means', since they appear together often.",
+  "factor_vector": {
+    "curiosity": 1.5555943493917745,
+    "threat": 0.21245500736733902,
+    "trust": 0.7495347049264222,
+    "confidence": 0.6341395224042548,
+    "uncertainty": 0.013231935999709893,
+    "energy": 0.18500000000000005,
+    "attention": 0.15,
+    "comprehension": 0.6666666666666666,
+    "fluency": 0.7,
+    "cognitive_load": 0.97225,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 3.3212102998059434,
+  "metadata": {
+    "ci_confidence": 0.6341395224042548
+  }
+}

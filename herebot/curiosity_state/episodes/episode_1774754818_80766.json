@@ -1,0 +1,23 @@
+{
+  "timestamp": 1774754818.17949,
+  "user_input": "has means using",
+  "system_response": "Perhaps 'has' is related to 'means', since they appear together often.",
+  "factor_vector": {
+    "curiosity": 1.5123923763245655,
+    "threat": 0.20649003343310168,
+    "trust": 0.5450760752443826,
+    "confidence": 0.6232453061393802,
+    "uncertainty": 0.012611833017984908,
+    "energy": 0.33299999999999996,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9500500000000001,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 3.3431292224901528,
+  "metadata": {
+    "ci_confidence": 0.6232453061393802
+  }
+}

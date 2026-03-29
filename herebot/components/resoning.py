@@ -650,6 +650,7 @@ class ReasoningEngine:
                 'type_hierarchy': self.type_hierarchy,
                 'schemas': self.schemas,
                 'procedures': self.procedural_learner.procedures,
+                'po_retrofix_done': True,
             }, f)
         os.replace(tmp, path)
         # Save symbol registry
@@ -702,6 +703,10 @@ class ReasoningEngine:
             self.structural_patterns = StructuralPatternLearner()
         # Load symbol registry
         self.symbol_registry.load(os.path.join(STATE_DIR, 'symbol_registry.json'))
+        # Fix structural scores polluted by PC-off gaps — runs once per old save file.
+        # After the first fix, 'po_retrofix_done' is written by save() so it never re-runs.
+        if not data.get('po_retrofix_done', False):
+            self.pattern_observer.recompute_active_counts()
 
     def detect_pattern_and_query(self, word: str) -> Optional[str]:
         pat = self.context_patterns[word]

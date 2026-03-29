@@ -1,0 +1,23 @@
+{
+  "timestamp": 1774755970.8323855,
+  "user_input": "doll is happy",
+  "system_response": "Perhaps 'doll' is related to 'toy', since they appear together often.",
+  "factor_vector": {
+    "curiosity": 0.925133561357073,
+    "threat": 0.22380210576941412,
+    "trust": 0.5425964194857933,
+    "confidence": 0.6217447355764646,
+    "uncertainty": 0.010954400803329711,
+    "energy": 0.38,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9430000000000001,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.6538398855335266,
+  "metadata": {
+    "ci_confidence": 0.6217447355764646
+  }
+}

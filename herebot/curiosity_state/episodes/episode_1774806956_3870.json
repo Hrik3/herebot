@@ -1,0 +1,23 @@
+{
+  "timestamp": 1774806956.042235,
+  "user_input": "herebot",
+  "system_response": "I have no contextual clues about 'herebot' yet.",
+  "factor_vector": {
+    "curiosity": 0.7541775038482286,
+    "threat": 0.1662250238812435,
+    "trust": 0.7160425312699618,
+    "confidence": 0.6888241581051897,
+    "uncertainty": 0.008484628103536961,
+    "energy": 0.361,
+    "attention": 0.05,
+    "comprehension": 0.5,
+    "fluency": 0.7,
+    "cognitive_load": 0.98195,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.1579906967342932,
+  "metadata": {
+    "ci_confidence": 0.6888241581051897
+  }
+}

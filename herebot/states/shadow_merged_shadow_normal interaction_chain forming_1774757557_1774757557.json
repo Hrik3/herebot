@@ -1,0 +1,26 @@
+{
+  "label": "shadow_normal interaction_chain forming_1774757557",
+  "vector": [
+    0.35008000527013466,
+    0.14538886501641754,
+    0.719707404496633,
+    0.6840862143337587,
+    0.011280849118548975,
+    0.6725,
+    0.05,
+    0.5,
+    0.7,
+    0.966375
+  ],
+  "dimension": 10,
+  "timestamp": 1774757557.5122724,
+  "metadata": {
+    "merged_from": [
+      "normal interaction",
+      "chain forming"
+    ],
+    "similarity": 0.9513713336958394,
+    "timestamp": 1774757557.5122397
+  },
+  "is_shadow": true
+}

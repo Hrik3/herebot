@@ -1,0 +1,23 @@
+{
+  "timestamp": 1774806855.4457772,
+  "user_input": "lily \"has car\"",
+  "system_response": "Perhaps 'car' is related to 'wheels', since they appear together often.",
+  "factor_vector": {
+    "curiosity": 0.8076292729495714,
+    "threat": 0.2516272985847267,
+    "trust": 0.5176436751070902,
+    "confidence": 0.5546817535381833,
+    "uncertainty": 0.008484628103536961,
+    "energy": 0.387,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.94195,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.6403092001028524,
+  "metadata": {
+    "ci_confidence": 0.5546817535381833
+  }
+}

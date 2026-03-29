@@ -1,0 +1,23 @@
+{
+  "timestamp": 1774756295.8661785,
+  "user_input": "cat is living too",
+  "system_response": "I understand 'is' as is means mean. Tell me more.",
+  "factor_vector": {
+    "curiosity": 1.3186869933915812,
+    "threat": 0.2057188539392958,
+    "trust": 0.5496786096700156,
+    "confidence": 0.6325778651517605,
+    "uncertainty": 0.00912166204685314,
+    "energy": 0.375,
+    "attention": 0.2,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.925,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 6.211630528090443,
+  "metadata": {
+    "ci_confidence": 0.6325778651517605
+  }
+}

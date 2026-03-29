@@ -1,0 +1,11 @@
+{
+  "timestamp": 1774757558.5441961,
+  "user_input": "fun means happy",
+  "system_response": "[synthetic]",
+  "factor_vector": {},
+  "factor_dim": 0,
+  "intrinsic_reward": 0.0,
+  "metadata": {
+    "synthetic": true
+  }
+}

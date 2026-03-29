@@ -1,0 +1,23 @@
+{
+  "timestamp": 1774756319.8051193,
+  "user_input": "i travel in car",
+  "system_response": "Tell me more about crow animal.",
+  "factor_vector": {
+    "curiosity": 1.4329596361986603,
+    "threat": 0.200450028790226,
+    "trust": 0.5580887440167259,
+    "confidence": 0.6624263241702354,
+    "uncertainty": 0.008566480106123067,
+    "energy": 0.373,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9440500000000001,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 6.166285685780369,
+  "metadata": {
+    "ci_confidence": 0.6624263241702354
+  }
+}

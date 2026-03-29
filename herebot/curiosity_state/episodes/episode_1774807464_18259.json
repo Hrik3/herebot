@@ -1,0 +1,23 @@
+{
+  "timestamp": 1774807464.5036063,
+  "user_input": "car is good vehicle",
+  "system_response": "Perhaps 'car' is related to 'vehicle', since they appear together often.",
+  "factor_vector": {
+    "curiosity": 0.7498992603176594,
+    "threat": 0.20601911701850106,
+    "trust": 0.5504657973984912,
+    "confidence": 0.6377676369058219,
+    "uncertainty": 0.012167150590968876,
+    "energy": 0.383,
+    "attention": 0.2,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9234,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.7754963778141981,
+  "metadata": {
+    "ci_confidence": 0.6377676369058219
+  }
+}
