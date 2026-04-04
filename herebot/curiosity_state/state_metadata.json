@@ -1,26 +1,18 @@
 {
-  "learning": {
-    "energy_cost": 1.0,
-    "recent_usage": 0.9995515187694893,
-    "predictive_gain": 1.0,
-    "phase": "weak",
-    "last_used": 1774808245.040882,
-    "confidence": 1.0
-  },
   "exploration": {
     "energy_cost": 1.0,
-    "recent_usage": 5.996340430354305,
+    "recent_usage": 5.99551768258449,
     "predictive_gain": 1.0,
-    "phase": "archived",
-    "last_used": 1774808245.049997,
+    "phase": "deleted",
+    "last_used": 1775067449.368146,
     "confidence": 1.0
   },
   "confusion": {
     "energy_cost": 1.0,
-    "recent_usage": 1.4993172649850226,
+    "recent_usage": 4.297750471447157,
     "predictive_gain": 1.0,
     "phase": "deleted",
-    "last_used": 1774808245.0471718,
+    "last_used": 1775067449.3759477,
     "confidence": 1.0
   },
   "shadow_learning_exploration_1774755537": {
@@ -51,31 +43,23 @@
     "energy_cost": 1.0,
     "recent_usage": 0.0,
     "predictive_gain": 1.0,
-    "phase": "archived",
+    "phase": "deleted",
     "last_used": 1774755676.228601,
     "confidence": 1.0
   },
   "normal interaction": {
     "energy_cost": 1.0,
-    "recent_usage": 0.2000037863428167,
+    "recent_usage": 3.598101247645583,
     "predictive_gain": 1.0,
-    "phase": "archived",
-    "last_used": 1774808244.9912455,
-    "confidence": 1.0
-  },
-  "chain forming": {
-    "energy_cost": 1.0,
-    "recent_usage": 3.9983367472934166,
-    "predictive_gain": 1.0,
-    "phase": "archived",
-    "last_used": 1774808245.0310433,
+    "phase": "deleted",
+    "last_used": 1775067449.348324,
     "confidence": 1.0
   },
   "shadow_learning_chain forming_1774756919": {
     "energy_cost": 1.0,
     "recent_usage": 0.0,
     "predictive_gain": 1.0,
-    "phase": "archived",
+    "phase": "deleted",
     "last_used": 1774756919.4901154,
     "confidence": 1.0
   },
@@ -83,7 +67,7 @@
     "energy_cost": 1.0,
     "recent_usage": 0.0,
     "predictive_gain": 1.0,
-    "phase": "archived",
+    "phase": "deleted",
     "last_used": 1774756919.49094,
     "confidence": 1.0
   },
@@ -91,7 +75,7 @@
     "energy_cost": 1.0,
     "recent_usage": 0.0,
     "predictive_gain": 1.0,
-    "phase": "archived",
+    "phase": "deleted",
     "last_used": 1774756919.4915953,
     "confidence": 1.0
   },
@@ -99,7 +83,7 @@
     "energy_cost": 1.0,
     "recent_usage": 0.0,
     "predictive_gain": 1.0,
-    "phase": "dormant",
+    "phase": "archived",
     "last_used": 1774757557.5107226,
     "confidence": 1.0
   },
@@ -107,7 +91,7 @@
     "energy_cost": 1.0,
     "recent_usage": 0.0,
     "predictive_gain": 1.0,
-    "phase": "dormant",
+    "phase": "archived",
     "last_used": 1774757557.5115807,
     "confidence": 1.0
   },
@@ -115,63 +99,39 @@
     "energy_cost": 1.0,
     "recent_usage": 0.0,
     "predictive_gain": 1.0,
-    "phase": "dormant",
+    "phase": "archived",
     "last_used": 1774757557.5122728,
-    "confidence": 1.0
-  },
-  "discovering": {
-    "energy_cost": 1.0,
-    "recent_usage": 0.39998385404036296,
-    "predictive_gain": 1.0,
-    "phase": "weak",
-    "last_used": 1774808245.0197997,
     "confidence": 1.0
   },
   "identitiy": {
     "energy_cost": 1.0,
-    "recent_usage": 0.20000223048138246,
+    "recent_usage": 0.2000002090016312,
     "predictive_gain": 1.0,
-    "phase": "weak",
-    "last_used": 1774808245.023949,
-    "confidence": 1.0
-  },
-  "stable": {
-    "energy_cost": 1.0,
-    "recent_usage": 5.79648578204492,
-    "predictive_gain": 1.0,
-    "phase": "weak",
-    "last_used": 1774808245.0507538,
+    "phase": "dormant",
+    "last_used": 1775067449.338629,
     "confidence": 1.0
   },
   "identity": {
     "energy_cost": 1.0,
-    "recent_usage": 3.1988576801792323,
+    "recent_usage": 6.795774008790861,
     "predictive_gain": 1.0,
-    "phase": "weak",
-    "last_used": 1774808245.0418923,
+    "phase": "dormant",
+    "last_used": 1775067449.3767571,
     "confidence": 1.0
   },
   "maths": {
     "energy_cost": 1.0,
-    "recent_usage": 2.3990897858329685,
+    "recent_usage": 2.5985054362885096,
     "predictive_gain": 1.0,
-    "phase": "weak",
-    "last_used": 1774808245.0389595,
-    "confidence": 1.0
-  },
-  "pattern": {
-    "energy_cost": 1.0,
-    "recent_usage": 0.99961427900714,
-    "predictive_gain": 1.0,
-    "phase": "weak",
-    "last_used": 1774808245.0429022,
+    "phase": "dormant",
+    "last_used": 1775067449.3717957,
     "confidence": 1.0
   },
   "shadow_exploration_stable_1774808232": {
     "energy_cost": 1.0,
     "recent_usage": 0.0,
     "predictive_gain": 1.0,
-    "phase": "weak",
+    "phase": "dormant",
     "last_used": 1774808232.1230543,
     "confidence": 1.0
   },
@@ -179,7 +139,7 @@
     "energy_cost": 1.0,
     "recent_usage": 0.0,
     "predictive_gain": 1.0,
-    "phase": "weak",
+    "phase": "dormant",
     "last_used": 1774808232.1241927,
     "confidence": 1.0
   },
@@ -187,7 +147,7 @@
     "energy_cost": 1.0,
     "recent_usage": 0.0,
     "predictive_gain": 1.0,
-    "phase": "weak",
+    "phase": "dormant",
     "last_used": 1774808232.1253765,
     "confidence": 1.0
   },
@@ -195,7 +155,7 @@
     "energy_cost": 1.0,
     "recent_usage": 0.0,
     "predictive_gain": 1.0,
-    "phase": "weak",
+    "phase": "dormant",
     "last_used": 1774808240.2972,
     "confidence": 1.0
   },
@@ -203,7 +163,7 @@
     "energy_cost": 1.0,
     "recent_usage": 0.0,
     "predictive_gain": 1.0,
-    "phase": "weak",
+    "phase": "dormant",
     "last_used": 1774808240.2979705,
     "confidence": 1.0
   },
@@ -211,7 +171,7 @@
     "energy_cost": 1.0,
     "recent_usage": 0.0,
     "predictive_gain": 1.0,
-    "phase": "weak",
+    "phase": "dormant",
     "last_used": 1774808240.2988086,
     "confidence": 1.0
   },
@@ -219,8 +179,88 @@
     "energy_cost": 1.0,
     "recent_usage": 0.0,
     "predictive_gain": 1.0,
-    "phase": "weak",
+    "phase": "dormant",
     "last_used": 1774808240.2993643,
+    "confidence": 1.0
+  },
+  "uncertain": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.9998267558943008,
+    "predictive_gain": 1.0,
+    "phase": "weak",
+    "last_used": 1775067449.3735278,
+    "confidence": 1.0
+  },
+  "learning": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.20000040658574714,
+    "predictive_gain": 1.0,
+    "phase": "weak",
+    "last_used": 1775067449.3726737,
+    "confidence": 1.0
+  },
+  "resolution": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.2000005146016317,
+    "predictive_gain": 1.0,
+    "phase": "weak",
+    "last_used": 1775067449.3743322,
+    "confidence": 1.0
+  },
+  "unnamed_state": {
+    "energy_cost": 1.0,
+    "recent_usage": 2.597616004060642,
+    "predictive_gain": 1.0,
+    "phase": "weak",
+    "last_used": 1775067449.3751476,
+    "confidence": 1.0
+  },
+  "shadow_exploration_resolution_1775067434": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.0,
+    "predictive_gain": 1.0,
+    "phase": "weak",
+    "last_used": 1775067434.977773,
+    "confidence": 1.0
+  },
+  "shadow_exploration_unnamed_state_1775067434": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.0,
+    "predictive_gain": 1.0,
+    "phase": "weak",
+    "last_used": 1775067434.9789758,
+    "confidence": 1.0
+  },
+  "shadow_uncertain_maths_1775067434": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.0,
+    "predictive_gain": 1.0,
+    "phase": "weak",
+    "last_used": 1775067434.9800122,
+    "confidence": 1.0
+  },
+  "macro_2_1775067444": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.0,
+    "predictive_gain": 1.0,
+    "phase": "weak",
+    "last_used": 1775067444.5214508,
+    "confidence": 1.0
+  },
+  "macro_3_1775067444": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.0,
+    "predictive_gain": 1.0,
+    "phase": "weak",
+    "last_used": 1775067444.5222745,
+    "confidence": 1.0
+  },
+  "macro_4_1775067444": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.0,
+    "predictive_gain": 1.0,
+    "phase": "weak",
+    "last_used": 1775067444.523122,
     "confidence": 1.0
   }
 }

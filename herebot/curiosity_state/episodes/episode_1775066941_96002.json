@@ -1,0 +1,23 @@
+{
+  "timestamp": 1775066941.2875965,
+  "user_input": "fish lives in water",
+  "system_response": "I know that fish is fish is living. Also, it is unknown living, unknown on earth.",
+  "factor_vector": {
+    "curiosity": 0.70289443585856,
+    "threat": 0.19805144903210667,
+    "trust": 0.5555766189890157,
+    "confidence": 0.6541616697113342,
+    "uncertainty": 0.011757291276759941,
+    "energy": 0.345,
+    "attention": 0.2,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.931,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 1.2116293967037493,
+  "metadata": {
+    "ci_confidence": 0.6541616697113342
+  }
+}

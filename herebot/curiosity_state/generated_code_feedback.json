@@ -46,5 +46,14 @@
         "factor_dict": {}
       }
     }
+  ],
+  "logic_1774808242_421": [
+    {
+      "rating": "negative",
+      "timestamp": 1774809535.5119557,
+      "context": {
+        "factor_dict": {}
+      }
+    }
   ]
 }

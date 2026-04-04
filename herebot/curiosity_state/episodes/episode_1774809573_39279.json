@@ -1,0 +1,23 @@
+{
+  "timestamp": 1774809573.9834433,
+  "user_input": "ok",
+  "system_response": "What does the sentence 'ok' mean? (My comprehension is 0.49.)",
+  "factor_vector": {
+    "curiosity": 0.5861930740733243,
+    "threat": 0.25045432913614807,
+    "trust": 0.6519622469120748,
+    "confidence": 0.5463641771596297,
+    "uncertainty": 0.011185455218948228,
+    "energy": 0.983,
+    "attention": 0.05,
+    "comprehension": 0.5,
+    "fluency": 0.7,
+    "cognitive_load": 0.95085,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.2625979819383744,
+  "metadata": {
+    "ci_confidence": 0.5463641771596297
+  }
+}

@@ -1,0 +1,1221 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MD Studio</title>
+
+<link rel="stylesheet" href="MD%20Studio_files/katex.min.css">
+<script defer="defer" src="MD%20Studio_files/katex.min.js"></script>
+<script defer="defer" src="MD%20Studio_files/auto-render.min.js"></script>
+<script src="MD%20Studio_files/marked.min.js"></script>
+<link rel="stylesheet" href="MD%20Studio_files/github.min.css">
+<script src="MD%20Studio_files/highlight.min.js"></script>
+<script src="MD%20Studio_files/python.min.js"></script>
+<script src="MD%20Studio_files/html2pdf.bundle.min.js"></script>
+<link href="MD%20Studio_files/css2.css" rel="stylesheet">
+
+<style>
+:root {
+  --bg:          #0f0f11;
+  --surface:     #16161a;
+  --surface2:    #1e1e24;
+  --surface3:    #232330;
+  --border:      #2a2a35;
+  --border2:     #38384a;
+  --accent:      #7c6af7;
+  --accent-soft: #a89df5;
+  --accent-glow: rgba(124,106,247,0.12);
+  --text:        #e8e6f0;
+  --text-muted:  #8b89a0;
+  --text-dim:    #5a5870;
+  --math-color:  #c9c2ff;
+  --green:       #5ec98e;
+  --amber:       #f0c060;
+  --red:         #f07070;
+  --topbar-h:    52px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  background: var(--bg); color: var(--text);
+  font-family: 'DM Sans', sans-serif; font-size: 15px; line-height: 1.7;
+  display: flex; flex-direction: column; overflow: hidden;
+}
+
+/* ── TOPBAR ── */
+.topbar {
+  height: var(--topbar-h); flex-shrink: 0;
+  background: rgba(15,15,17,0.94); backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; padding: 0 1.25rem; gap: 1rem; z-index: 200;
+}
+.logo { font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--accent-soft); letter-spacing:.1em; white-space:nowrap; flex-shrink:0; }
+.logo span { color:var(--text-dim); }
+.mode-switcher { display:flex; background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:3px; gap:2px; flex-shrink:0; }
+.mode-btn {
+  font-family:'DM Sans',sans-serif; font-size:12px; font-weight:500;
+  padding:4px 14px; border-radius:5px; border:none; background:transparent;
+  color:var(--text-muted); cursor:pointer; transition:all .15s;
+  display:flex; align-items:center; gap:5px;
+}
+.mode-btn:hover { color:var(--text); background:var(--surface3); }
+.mode-btn.active { background:var(--accent); color:#fff; }
+.fname-badge {
+  font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-muted);
+  background:var(--surface2); border:1px solid var(--border); padding:3px 10px;
+  border-radius:4px; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.topbar-right { display:flex; gap:6px; margin-left:auto; align-items:center; flex-shrink:0; }
+.tb-btn {
+  font-family:'DM Sans',sans-serif; font-size:12px; font-weight:500;
+  padding:5px 12px; border-radius:6px; border:1px solid var(--border);
+  background:var(--surface2); color:var(--text-muted); cursor:pointer;
+  transition:all .15s; display:flex; align-items:center; gap:5px; white-space:nowrap;
+}
+.tb-btn:hover { background:var(--surface3); color:var(--text); border-color:var(--border2); }
+.tb-btn.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+.tb-btn.primary:hover { background:#6a59e0; border-color:#6a59e0; }
+.tb-btn:disabled { opacity:.35; cursor:not-allowed; pointer-events:none; }
+.divider { width:1px; height:20px; background:var(--border); margin:0 2px; }
+#file-input { display:none; }
+
+/* Export menu */
+.export-wrap { position:relative; }
+.export-menu {
+  position:absolute; top:calc(100% + 6px); right:0;
+  background:var(--surface2); border:1px solid var(--border2);
+  border-radius:8px; padding:4px; min-width:170px; z-index:999;
+  display:none; box-shadow:0 8px 32px rgba(0,0,0,.5);
+}
+.export-menu.open { display:block; animation:menuIn .12s ease; }
+@keyframes menuIn { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:none} }
+.export-item {
+  display:flex; align-items:center; gap:10px; padding:8px 12px;
+  border-radius:5px; cursor:pointer; font-size:13px; color:var(--text-muted); transition:all .12s;
+}
+.export-item:hover { background:var(--surface3); color:var(--text); }
+.ei-icon { width:18px; text-align:center; color:var(--text-dim); display:flex; align-items:center; justify-content:center; }
+.ei-label { flex:1; }
+.ei-sub { font-size:10px; color:var(--text-dim); font-family:'JetBrains Mono',monospace; }
+
+/* ── APP BODY ── */
+.app-body { flex:1; overflow:hidden; position:relative; }
+
+/* ── VIEWER ── */
+#viewer-mode { display:flex; height:100%; overflow:hidden; }
+.toc-panel {
+  width:215px; flex-shrink:0; background:var(--surface);
+  border-right:1px solid var(--border); overflow-y:auto;
+  padding:1.5rem .75rem; scrollbar-width:thin; scrollbar-color:var(--border) transparent;
+}
+.toc-title { font-family:'JetBrains Mono',monospace; font-size:9px; letter-spacing:.14em; text-transform:uppercase; color:var(--text-dim); margin-bottom:.75rem; padding-left:6px; }
+.toc-list { list-style:none; }
+.toc-link { display:block; font-size:12px; color:var(--text-muted); text-decoration:none; padding:3px 8px; border-radius:4px; border-left:2px solid transparent; transition:all .12s; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; line-height:1.6; }
+.toc-link:hover { color:var(--text); background:var(--surface2); }
+.toc-link.active { color:var(--accent-soft); border-left-color:var(--accent); background:var(--accent-glow); }
+.toc-link.h3 { padding-left:18px; font-size:11px; }
+.toc-link.h4 { padding-left:30px; font-size:10px; }
+.viewer-scroll { flex:1; overflow-y:auto; padding:3rem 3.5rem; scrollbar-width:thin; scrollbar-color:var(--border) transparent; }
+.drop-zone {
+  border:2px dashed var(--border); border-radius:16px; background:var(--surface);
+  padding:4rem 2rem; text-align:center; cursor:pointer; transition:all .2s;
+  position:relative; overflow:hidden; max-width:600px; margin:4rem auto;
+}
+.drop-zone::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse at 50% 0%,var(--accent-glow) 0%,transparent 70%); opacity:0; transition:opacity .3s; }
+.drop-zone:hover::before,.drop-zone.drag-over::before { opacity:1; }
+.drop-zone:hover,.drop-zone.drag-over { border-color:var(--accent); background:var(--surface2); }
+.drop-icon { font-size:1.8rem; display:block; margin-bottom:1rem; color:var(--text-dim); }
+.drop-title { font-family:'Crimson Pro',serif; font-size:1.4rem; color:var(--text); margin-bottom:.4rem; }
+.drop-sub { font-size:13px; color:var(--text-muted); margin-bottom:1.25rem; }
+.drop-tags { display:flex; gap:6px; justify-content:center; flex-wrap:wrap; }
+.tag { font-family:'JetBrains Mono',monospace; font-size:10px; padding:2px 8px; border-radius:100px; border:1px solid var(--border); color:var(--text-muted); }
+.tag.math { color:var(--math-color); border-color:rgba(201,194,255,.3); background:rgba(201,194,255,.05); }
+.tag.code { color:var(--green); border-color:rgba(94,201,142,.3); background:rgba(94,201,142,.05); }
+.tag.md   { color:var(--amber); border-color:rgba(240,192,96,.3); background:rgba(240,192,96,.05); }
+#viewer-content { display:none; max-width:780px; margin:0 auto; animation:fadeIn .3s ease; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
+
+/* ─────────────────────────────────────────────────
+   RESEARCH MODE — pure white, printable, B&W
+───────────────────────────────────────────────── */
+#research-mode {
+  display:none; height:100%; overflow-y:auto;
+  padding:4rem 3.5rem;
+  scrollbar-width:thin; scrollbar-color:#bbb transparent;
+  background:#ffffff;     /* ← white, not dark */
+}
+#research-content { max-width:720px; margin:0 auto; animation:fadeIn .3s ease; }
+#research-drop {
+  border:2px dashed #bbb; border-radius:16px; background:#f9f9f9;
+  padding:4rem 2rem; text-align:center; cursor:pointer; transition:all .2s;
+  max-width:600px; margin:4rem auto;
+}
+#research-drop:hover { border-color:#666; background:#f2f2f2; }
+#research-drop .drop-title-r { font-family:'Crimson Pro',serif;font-size:1.3rem;color:#222;margin-bottom:.3rem; }
+#research-drop .drop-sub-r   { font-size:13px;color:#666; }
+#research-drop svg { color:#999; }
+
+/* ── RESEARCH RENDER: nuclear B&W reset ──
+   Every rule uses !important so no dark-theme
+   .md-render rule can bleed through.           */
+
+/* Step 1: wipe ALL inherited color/bg from every descendant */
+.research-render,
+.research-render * {
+  font-family: Calibri, 'Segoe UI', Arial, sans-serif !important;
+  color: #000 !important;
+  background: none !important;
+  background-color: transparent !important;
+  border-color: #000 !important;
+  text-shadow: none !important;
+  -webkit-text-fill-color: #000 !important;
+}
+
+/* Step 2: re-apply structural styles individually */
+.research-render h1 {
+  font-size:1.85rem !important; font-weight:700 !important; color:#000 !important;
+  margin:0 0 2rem !important; line-height:1.25 !important;
+  border-bottom:1.5px solid #000 !important; padding-bottom:.8rem !important;
+  text-transform:none !important; letter-spacing:normal !important;
+}
+.research-render h2 {
+  font-size:1.35rem !important; font-weight:700 !important; color:#000 !important;
+  margin:2.5rem 0 .75rem !important; border-bottom:1px solid #aaa !important;
+  padding-bottom:.3rem !important;
+  text-transform:none !important; letter-spacing:normal !important;
+}
+.research-render h3 {
+  font-size:1.05rem !important; font-weight:700 !important; color:#000 !important;
+  margin:1.75rem 0 .5rem !important;
+  text-transform:none !important; letter-spacing:normal !important;
+}
+.research-render h4 {
+  font-size:.85rem !important; font-weight:700 !important; color:#000 !important;
+  margin:1.5rem 0 .4rem !important;
+  text-transform:uppercase !important; letter-spacing:.07em !important;
+}
+.research-render p {
+  font-size:1rem !important; line-height:1.85 !important;
+  color:#000 !important; margin:0 0 1rem !important;
+}
+.research-render strong { font-weight:700 !important; color:#000 !important; }
+.research-render em     { font-style:italic !important; color:#000 !important; }
+.research-render ul, .research-render ol {
+  margin:.5rem 0 1rem 1.5rem !important; font-size:1rem !important; line-height:1.85 !important;
+}
+.research-render li { margin-bottom:.2rem !important; color:#000 !important; }
+.research-render li::marker { color:#000 !important; }
+.research-render a { color:#000 !important; text-decoration:underline !important; text-underline-offset:2px !important; }
+
+/* Inline code */
+.research-render code {
+  font-family: 'Courier New', Courier, monospace !important;
+  font-size:.87em !important; color:#000 !important;
+  background:none !important; border:none !important; padding:0 !important;
+}
+
+/* Code blocks: totally plain */
+.research-render .code-wrapper {
+  margin:1rem 0 !important; background:none !important;
+  border:none !important; border-radius:0 !important;
+  box-shadow:none !important;
+}
+.research-render .code-header { display:none !important; }
+.research-render .copy-btn    { display:none !important; }
+.research-render pre {
+  margin:0 !important; padding:.25rem 0 !important; border:none !important;
+  font-family:'Courier New', Courier, monospace !important;
+  font-size:.87rem !important; line-height:1.75 !important;
+  background:none !important; overflow-x:auto !important;
+}
+.research-render pre *,
+.research-render pre code,
+.research-render pre code span,
+.research-render pre .hljs,
+.research-render pre .hljs-keyword,
+.research-render pre .hljs-string,
+.research-render pre .hljs-number,
+.research-render pre .hljs-comment,
+.research-render pre .hljs-built_in,
+.research-render pre .hljs-title,
+.research-render pre [class*="hljs-"] {
+  font-family:'Courier New', Courier, monospace !important;
+  background:none !important; color:#000 !important;
+  text-shadow:none !important; border:none !important; padding:0 !important;
+  -webkit-text-fill-color: #000 !important;
+}
+
+/* Math: plain black, no box, no border */
+.research-render .math-block {
+  margin:1.4rem 0 !important; padding:.25rem 0 !important;
+  background:none !important; border:none !important;
+  border-left:none !important; border-radius:0 !important;
+  overflow-x:auto !important; box-shadow:none !important;
+}
+.research-render .math-inline { display:inline !important; vertical-align:baseline !important; }
+.research-render .math-raw    { color:#000 !important; background:none !important; border:none !important; }
+/* KaTeX full override */
+.research-render .katex,
+.research-render .katex *,
+.research-render .katex-display,
+.research-render .katex-display *,
+.research-render .katex-html,
+.research-render .katex-html *,
+.research-render .katex svg,
+.research-render .katex path {
+  color:#000 !important;
+  fill:#000 !important;
+  stroke:#000 !important;
+  -webkit-text-fill-color:#000 !important;
+}
+.research-render .katex-error { color:#000 !important; font-style:italic !important; }
+
+.research-render blockquote {
+  border:none !important; border-left:2px solid #666 !important;
+  margin:1rem 0 !important; padding:.25rem 1rem !important;
+  background:none !important; color:#000 !important;
+  font-style:italic !important; font-size:1rem !important;
+}
+.research-render table {
+  width:100% !important; border-collapse:collapse !important;
+  margin:1.25rem 0 !important; font-size:.93rem !important;
+}
+.research-render th {
+  text-align:left !important; padding:6px 12px !important;
+  border-bottom:2px solid #000 !important;
+  font-size:.78rem !important; font-weight:700 !important;
+  text-transform:uppercase !important; letter-spacing:.06em !important;
+  color:#000 !important; background:none !important;
+}
+.research-render td {
+  padding:6px 12px !important; border-bottom:1px solid #bbb !important;
+  color:#000 !important; background:none !important;
+}
+.research-render tr:hover td { background:none !important; }
+.research-render hr { border:none !important; border-top:1px solid #aaa !important; margin:2rem 0 !important; }
+
+.research-render .conf-tag {
+  display:inline-block !important;
+  font-family:'Courier New',monospace !important;
+  font-size:9px !important; padding:1px 7px !important; border-radius:3px !important;
+  margin:0 2px !important; letter-spacing:.04em !important; vertical-align:middle !important;
+  background:none !important; border:1px solid #888 !important; color:#000 !important;
+}
+/* strip conf-tag color classes in research */
+.research-render .conf-confident,
+.research-render .conf-inferred,
+.research-render .conf-uncertain {
+  background:none !important; color:#000 !important;
+  border:1px solid #888 !important;
+}
+
+/* ── EDITOR ── */
+#editor-mode { display:none; height:100%; flex-direction:column; }
+.editor-toolbar {
+  height:40px; flex-shrink:0; background:var(--surface);
+  border-bottom:1px solid var(--border); display:flex;
+  align-items:center; padding:0 1rem; gap:6px; overflow-x:auto;
+}
+.ed-label { font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--text-dim); margin-right:4px; flex-shrink:0; }
+.ed-btn { font-size:11px; font-family:'JetBrains Mono',monospace; padding:3px 10px; border-radius:4px; border:1px solid var(--border); background:transparent; color:var(--text-muted); cursor:pointer; transition:all .12s; flex-shrink:0; }
+.ed-btn:hover { background:var(--surface2); color:var(--text); }
+.ed-btn.active { background:var(--accent-glow); color:var(--accent-soft); border-color:rgba(124,106,247,.3); }
+.ed-btn.repair-tab-btn { color:var(--amber); border-color:rgba(240,192,96,.25); }
+.ed-btn.repair-tab-btn.active { background:rgba(240,192,96,.1); border-color:rgba(240,192,96,.4); color:var(--amber); }
+.ed-sep { width:1px; height:16px; background:var(--border); margin:0 4px; flex-shrink:0; }
+.editor-status { margin-left:auto; font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--text-dim); display:flex; gap:1rem; flex-shrink:0; }
+.status-dot { display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--green); margin-right:4px; vertical-align:middle; animation:pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+.editor-panels { flex:1; display:flex; overflow:hidden; min-height:0; }
+.editor-panels.raw-only .preview-pane { display:none; }
+.editor-panels.raw-only .editor-pane { border-right:none; flex:1; }
+.editor-panels.preview-only .editor-pane { display:none; }
+.editor-pane { flex:1; display:flex; flex-direction:column; border-right:1px solid var(--border); overflow:hidden; min-width:0; }
+.pane-header { height:30px; flex-shrink:0; background:var(--surface2); border-bottom:1px solid var(--border); display:flex; align-items:center; padding:0 1rem; gap:8px; }
+.pane-label { font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--text-dim); text-transform:uppercase; letter-spacing:.1em; }
+.pane-dot { width:7px; height:7px; border-radius:50%; background:var(--amber); }
+.pane-dot.green { background:var(--green); }
+#raw-editor { flex:1; resize:none; background:#0c0c0e; color:#d0cfe0; font-family:'JetBrains Mono',monospace; font-size:13px; line-height:1.75; padding:1.5rem; border:none; outline:none; tab-size:2; overflow-y:auto; scrollbar-width:thin; scrollbar-color:var(--border) transparent; }
+#raw-editor::placeholder { color:var(--text-dim); line-height:2; }
+.preview-pane { flex:1; display:flex; flex-direction:column; overflow:hidden; min-width:0; }
+#editor-preview { flex:1; overflow-y:auto; padding:1.75rem 2.5rem; scrollbar-width:thin; scrollbar-color:var(--border) transparent; }
+
+/* ── REPAIR PANEL ── */
+.repair-pane {
+  flex:1; display:none; flex-direction:column; overflow:hidden; min-width:0;
+  border-left:1px solid var(--border);
+}
+.repair-pane.visible { display:flex; }
+#repair-log {
+  flex:1; overflow-y:auto; padding:1.25rem 1.5rem;
+  scrollbar-width:thin; scrollbar-color:var(--border) transparent;
+}
+.repair-empty {
+  font-family:'JetBrains Mono',monospace; font-size:11px;
+  color:var(--text-dim); text-align:center; margin-top:3rem;
+}
+.repair-item {
+  margin-bottom:1.25rem; border:1px solid var(--border);
+  border-radius:8px; overflow:hidden; font-size:12px;
+}
+.repair-item-head {
+  padding:6px 12px; background:var(--surface2);
+  border-bottom:1px solid var(--border); display:flex;
+  align-items:center; gap:8px;
+}
+.repair-badge {
+  font-family:'JetBrains Mono',monospace; font-size:9px; padding:2px 7px;
+  border-radius:3px; letter-spacing:.04em; flex-shrink:0;
+}
+.rb-fix   { background:rgba(94,201,142,.12);  color:var(--green); border:1px solid rgba(94,201,142,.3); }
+.rb-warn  { background:rgba(240,192,96,.12);  color:var(--amber); border:1px solid rgba(240,192,96,.3); }
+.repair-desc { color:var(--text-muted); font-family:'JetBrains Mono',monospace; font-size:10px; }
+.repair-diff { padding:8px 12px; background:#0c0c0e; }
+.repair-before { color:#f07070; font-family:'JetBrains Mono',monospace; font-size:11px; white-space:pre-wrap; word-break:break-all; margin-bottom:4px; }
+.repair-after  { color:var(--green); font-family:'JetBrains Mono',monospace; font-size:11px; white-space:pre-wrap; word-break:break-all; }
+.repair-arrow  { color:var(--text-dim); font-family:'JetBrains Mono',monospace; font-size:10px; margin:2px 0; }
+.repair-stats { font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--text-dim); padding:5px 12px; border-top:1px solid var(--border); background:var(--surface2); }
+
+/* ── SHARED MD RENDER (viewer + editor preview) ── */
+.md-render h1 { font-family:'Crimson Pro',serif; font-size:2.2rem; font-weight:600; color:var(--text); margin:0 0 1.75rem; padding-bottom:.9rem; border-bottom:1px solid var(--border); line-height:1.2; }
+.md-render h2 { font-family:'Crimson Pro',serif; font-size:1.6rem; font-weight:600; color:var(--text); margin:2.25rem 0 .9rem; padding-bottom:.4rem; border-bottom:1px solid var(--border); }
+.md-render h3 { font-family:'DM Sans',sans-serif; font-size:1.05rem; font-weight:500; color:var(--accent-soft); margin:1.75rem 0 .65rem; }
+.md-render h4 { font-family:'DM Sans',sans-serif; font-size:11px; font-weight:500; color:var(--text-muted); margin:1.5rem 0 .5rem; text-transform:uppercase; letter-spacing:.07em; }
+.md-render p { margin:0 0 1rem; color:var(--text); }
+.md-render a { color:var(--accent-soft); text-decoration:none; border-bottom:1px solid rgba(168,157,245,.3); }
+.md-render a:hover { border-bottom-color:var(--accent-soft); }
+.md-render strong { color:var(--text); font-weight:600; }
+.md-render em { font-style:italic; color:var(--text-muted); }
+.md-render ul,.md-render ol { margin:.6rem 0 1rem 1.5rem; }
+.md-render li { margin-bottom:.3rem; }
+.md-render li::marker { color:var(--accent); }
+.md-render code { font-family:'JetBrains Mono',monospace; font-size:.82em; background:rgba(18,18,22,.8); border:1px solid var(--border); border-radius:4px; padding:1px 5px; color:var(--green); }
+.md-render blockquote { border-left:3px solid var(--accent); background:var(--surface); margin:1rem 0; padding:.75rem 1.25rem; border-radius:0 6px 6px 0; color:var(--text-muted); font-style:italic; }
+.md-render table { width:100%; border-collapse:collapse; margin:1.25rem 0; font-size:.875rem; }
+.md-render th { text-align:left; padding:9px 13px; background:var(--surface2); border-bottom:2px solid var(--accent); font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted); font-weight:500; }
+.md-render td { padding:9px 13px; border-bottom:1px solid var(--border); }
+.md-render tr:hover td { background:var(--surface); }
+.md-render hr { border:none; border-top:1px solid var(--border); margin:1.75rem 0; }
+/* code blocks */
+.code-wrapper { position:relative; margin:1rem 0; border-radius:8px; overflow:hidden; border:1px solid var(--border); background:#0c0c10; }
+.code-header { display:flex; align-items:center; gap:8px; padding:7px 12px; background:var(--surface2); border-bottom:1px solid var(--border); }
+.code-lang { font-family:'JetBrains Mono',monospace; font-size:10px; color:var(--text-dim); text-transform:uppercase; letter-spacing:.06em; flex:1; }
+.code-lang.python { color:var(--green); }
+.code-lang.bash   { color:var(--amber); }
+.copy-btn { font-family:'JetBrains Mono',monospace; font-size:9px; padding:2px 8px; border-radius:3px; border:1px solid var(--border); background:transparent; color:var(--text-dim); cursor:pointer; transition:all .12s; }
+.copy-btn:hover { background:var(--border); color:var(--text); }
+.copy-btn.copied { color:var(--green); border-color:rgba(94,201,142,.4); }
+.md-render pre { margin:0; padding:1.1rem 1.25rem; overflow-x:auto; font-family:'JetBrains Mono',monospace; font-size:.78rem; line-height:1.7; background:transparent !important; scrollbar-width:thin; }
+.md-render pre code { background:none; border:none; padding:0; font-size:inherit; color:inherit; }
+/* math */
+.math-block { margin:1.25rem 0; padding:1rem 1.25rem; background:var(--surface); border:1px solid rgba(124,106,247,.2); border-left:3px solid var(--accent); border-radius:0 6px 6px 0; overflow-x:auto; scrollbar-width:thin; }
+.math-inline { display:inline; vertical-align:baseline; }
+.math-raw { font-family:'JetBrains Mono',monospace; font-size:.85em; color:var(--math-color); background:rgba(201,194,255,.06); border-radius:3px; padding:1px 4px; }
+.katex-display { margin:0 !important; }
+.katex { color:var(--math-color) !important; }
+.katex-error { color:#f07070 !important; font-size:.8em; }
+/* confidence */
+.conf-tag { display:inline-block; font-family:'JetBrains Mono',monospace; font-size:9px; padding:1px 7px; border-radius:100px; margin:0 2px; letter-spacing:.04em; vertical-align:middle; }
+.conf-confident { background:rgba(94,201,142,.1);  color:var(--green); border:1px solid rgba(94,201,142,.3); }
+.conf-inferred  { background:rgba(240,192,96,.1);  color:var(--amber); border:1px solid rgba(240,192,96,.3); }
+.conf-uncertain { background:rgba(240,112,112,.1); color:var(--red);   border:1px solid rgba(240,112,112,.3); }
+
+/* click-to-scroll highlight in preview */
+.scroll-flash {
+  animation: scrollFlash 1.2s ease;
+}
+@keyframes scrollFlash {
+  0%   { background: rgba(124,106,247,.25); }
+  100% { background: transparent; }
+}
+
+/* print */
+@media print {
+  body { background:#fff !important; color:#111 !important; overflow:visible !important; display:block !important; }
+  .topbar,.toc-panel,.editor-toolbar,.editor-pane,#editor-mode { display:none !important; }
+  #viewer-mode { display:block !important; height:auto !important; overflow:visible !important; }
+  .viewer-scroll { overflow:visible !important; padding:0 !important; height:auto !important; }
+  #viewer-content { display:block !important; max-width:100% !important; }
+  .md-render h1,.md-render h2,.md-render h3,.md-render h4 { color:#111 !important; border-color:#ccc !important; }
+  .md-render p,.md-render li,.md-render td { color:#222 !important; }
+  .md-render th { background:#f0f0f0 !important; color:#333 !important; }
+  .md-render code { background:#f4f4f4 !important; color:#333 !important; border-color:#ddd !important; }
+  .math-block { background:#f8f8f8 !important; border-color:#aaa !important; }
+  .code-wrapper { border-color:#ccc !important; background:#f4f4f4 !important; }
+  .code-header { background:#ebebeb !important; border-color:#ccc !important; }
+  .copy-btn { display:none !important; }
+  .katex { color:#111 !important; }
+  .drop-zone { display:none !important; }
+  .conf-tag { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+}
+::-webkit-scrollbar { width:5px; height:5px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+@media (max-width:860px) {
+  .toc-panel { display:none !important; }
+  .viewer-scroll { padding:2rem 1.5rem; }
+  #research-mode { padding:2rem 1.5rem; }
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="logo">md<span>/</span>studio</div>
+
+  <div class="mode-switcher">
+    <button class="mode-btn active" id="btn-viewer" onclick="switchMode('viewer')">
+      <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor"><path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"></path><path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z"></path></svg>
+      Viewer
+    </button>
+    <button class="mode-btn" id="btn-research" onclick="switchMode('research')">
+      <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor"><path d="M1.5 3A.5.5 0 0 1 2 2.5h12a.5.5 0 0 1 0 1H2A.5.5 0 0 1 1.5 3zm0 3A.5.5 0 0 1 2 5.5h8a.5.5 0 0 1 0 1H2A.5.5 0 0 1 1.5 6zm0 3A.5.5 0 0 1 2 8.5h12a.5.5 0 0 1 0 1H2A.5.5 0 0 1 1.5 9zm0 3A.5.5 0 0 1 2 11.5h6a.5.5 0 0 1 0 1H2a.5.5 0 0 1-.5-.5z"></path></svg>
+      Research
+    </button>
+    <button class="mode-btn" id="btn-editor" onclick="switchMode('editor')">
+      <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor"><path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.106.106-1.528 3.821 3.821-1.528.106-.106A.5.5 0 0 1 5 12.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.468-.325z"></path></svg>
+      Editor
+    </button>
+  </div>
+
+  <span class="fname-badge" id="fname-badge" style="display:none"></span>
+
+  <div class="topbar-right">
+    <button class="tb-btn primary" onclick="document.getElementById('file-input').click()">
+      <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"></path><path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708l3-3z"></path></svg>
+      Open .md
+    </button>
+    <input type="file" id="file-input" accept=".md,.txt" onchange="loadFile(this.files[0])">
+    <div class="divider"></div>
+    <div class="export-wrap" id="export-wrap">
+      <button class="tb-btn" id="export-btn" onclick="toggleExportMenu()" disabled="disabled">Export ▾</button>
+      <div class="export-menu" id="export-menu">
+        <div class="export-item" onclick="exportPDF()">
+          <span class="ei-icon"><svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"></path></svg></span>
+          <span class="ei-label">Save as PDF</span>
+          <span class="ei-sub">.pdf</span>
+        </div>
+        <div class="export-item" onclick="exportMD()">
+          <span class="ei-icon"><svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"></path><path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"></path></svg></span>
+          <span class="ei-label">Save Markdown</span>
+          <span class="ei-sub">.md</span>
+        </div>
+        <div class="export-item" onclick="printDoc()">
+          <span class="ei-icon"><svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M2.5 8a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1z"></path><path d="M5 1a2 2 0 0 0-2 2v2H2a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h1v1a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-1h1a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1V3a2 2 0 0 0-2-2H5zM4 3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2H4V3zm1 5a2 2 0 0 0-2 2v1H2a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3a1 1 0 0 1-1 1h-1v-1a2 2 0 0 0-2-2H5zm7 2v3a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1z"></path></svg></span>
+          <span class="ei-label">Print</span>
+          <span class="ei-sub">Ctrl+P</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="app-body">
+
+  <!-- VIEWER -->
+  <div id="viewer-mode" style="display:flex">
+    <nav class="toc-panel" id="toc-panel" style="display:none">
+      <div class="toc-title">Contents</div>
+      <ul class="toc-list" id="toc-list"></ul>
+    </nav>
+    <div class="viewer-scroll" id="viewer-scroll" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+      <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+        <span class="drop-icon">
+          <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="12" y1="18" x2="12" y2="12"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+        </span>
+        <div class="drop-title">Drop your Markdown file here</div>
+        <div class="drop-sub">or click to browse · LaTeX · Python · MD</div>
+        <div class="drop-tags">
+          <span class="tag math">LaTeX math</span>
+          <span class="tag code">Python</span>
+          <span class="tag md">Markdown</span>
+          <span class="tag">Tables</span>
+          <span class="tag">TOC</span>
+          <span class="tag">PDF export</span>
+        </div>
+      </div>
+      <div id="viewer-content" class="md-render"></div>
+    </div>
+  </div>
+
+  <!-- RESEARCH -->
+  <div id="research-mode" ondragover="handleResearchDragOver(event)" ondragleave="handleResearchDragLeave(event)" ondrop="handleResearchDrop(event)">
+    <div id="research-drop" onclick="document.getElementById('file-input').click()">
+      <span style="display:block;margin-bottom:.75rem;">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+      </span>
+      <div class="drop-title-r">Open a Markdown file</div>
+      <div class="drop-sub-r">Click to browse or drag a .md file here</div>
+    </div>
+    <div id="research-content" class="research-render" style="display:none"></div>
+  </div>
+
+  <!-- EDITOR -->
+  <div id="editor-mode">
+    <div class="editor-toolbar">
+      <span class="ed-label">Layout</span>
+      <button class="ed-btn active" id="ed-split" onclick="setEditorLayout('split')">Split</button>
+      <button class="ed-btn" id="ed-raw" onclick="setEditorLayout('raw')">Raw only</button>
+      <button class="ed-btn" id="ed-preview" onclick="setEditorLayout('preview')">Preview only</button>
+      <div class="ed-sep"></div>
+      <button class="ed-btn" onclick="clearEditor()">Clear</button>
+      <button class="ed-btn" id="ed-sync-btn" style="display:none" onclick="loadEditorFromViewer()">← Pull from viewer</button>
+      <div class="ed-sep"></div>
+      <button class="ed-btn repair-tab-btn" id="ed-repair-tab" onclick="toggleRepairPanel()">
+        ⚡ LaTeX Repair <span id="repair-count-badge" style="display:none;margin-left:4px;background:rgba(240,192,96,.2);padding:1px 5px;border-radius:3px;font-size:9px;">0</span>
+      </button>
+      <div class="editor-status">
+        <span><span class="status-dot"></span>live</span>
+        <span id="ed-words">0 words</span>
+        <span id="ed-lines">0 lines</span>
+      </div>
+    </div>
+    <div class="editor-panels" id="editor-panels">
+      <div class="editor-pane">
+        <div class="pane-header"><span class="pane-dot"></span><span class="pane-label">Markdown source</span></div>
+        <textarea id="raw-editor" placeholder="# Start writing...
+
+Paste or type Markdown here. Live preview updates as you type.
+
+## Math
+Inline: \(E = mc^2\)
+
+Display:
+\[ \Lambda_N = \lambda I + X^\top X \]
+
+## Code
+```python
+def hello():
+    print('Hello!')
+```" oninput="onEditorInput()" onkeydown="handleTab(event)"></textarea>
+      </div>
+      <div class="preview-pane">
+        <div class="pane-header"><span class="pane-dot green"></span><span class="pane-label">Live preview</span></div>
+        <div id="editor-preview" class="md-render"></div>
+      </div>
+      <div class="repair-pane" id="repair-pane">
+        <div class="pane-header">
+          <span class="pane-dot" style="background:var(--amber)"></span>
+          <span class="pane-label">LaTeX Auto-Repair Log</span>
+        </div>
+        <div id="repair-log">
+          <div class="repair-empty" id="repair-empty-msg">No repairs yet.<br>Paste markdown with LaTeX to see auto-fix details.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+let currentMode     = 'viewer';
+let rawMarkdown     = '';
+let currentFilename = 'document.md';
+let editorLayout    = 'split';
+let renderTimer     = null;
+let repairPanelOpen = false;
+let lastRepairLog   = [];
+
+/* ══════════════════════════════════════════════════
+   LATEX AUTO-REPAIR ENGINE
+   Fixes common LLM-output breakage in LaTeX/KaTeX
+══════════════════════════════════════════════════ */
+function repairLatex(src) {
+  const log = [];
+
+  function fix(label, pattern, replacement, flags) {
+    const re = new RegExp(pattern, flags || 'g');
+    const before = src;
+    src = src.replace(re, replacement);
+    if (src !== before) {
+      // Find all changed spots for display (up to 5)
+      const matches = [...before.matchAll(new RegExp(pattern, (flags||'g')))].slice(0, 5);
+      matches.forEach(m => {
+        const after_str = m[0].replace(new RegExp(pattern, 'g'), replacement);
+        log.push({ label, before: m[0], after: after_str });
+      });
+    }
+    return src;
+  }
+
+  // ── 1. Single backslash before known commands that lost their backslash ──
+  // LLMs sometimes output "alpha" instead of "\alpha", "frac{" instead of "\frac{"
+  const cmdNoSlash = ['frac','sqrt','sum','int','prod','lim','infty','partial',
+    'alpha','beta','gamma','delta','epsilon','zeta','eta','theta','iota','kappa',
+    'lambda','mu','nu','xi','pi','rho','sigma','tau','upsilon','phi','chi','psi','omega',
+    'Gamma','Delta','Theta','Lambda','Xi','Pi','Sigma','Upsilon','Phi','Psi','Omega',
+    'cdot','cdots','ldots','vdots','ddots','times','div','pm','mp','leq','geq','neq',
+    'approx','equiv','sim','propto','in','notin','subset','supset','cup','cap',
+    'forall','exists','neg','land','lor','Rightarrow','Leftarrow','Leftrightarrow',
+    'rightarrow','leftarrow','leftrightarrow','to','gets','mapsto','hat','bar','vec',
+    'tilde','dot','ddot','mathbb','mathbf','mathcal','mathrm','mathit','text',
+    'left','right','begin','end','binom','pmatrix','matrix','cases','aligned',
+    'operatorname','underbrace','overbrace','overline','underline','widehat','widetilde',
+    'top','bot','dagger','circ','bullet','star','oplus','otimes'];
+
+  // Inside math zones only — first protect math zones
+  function repairInsideMath(tex, isDisplay) {
+    let t = tex;
+    const mathLog = [];
+
+    function mfix(label, re, repl) {
+      const prev = t;
+      t = t.replace(re, repl);
+      if (t !== prev) mathLog.push({ label, before: prev.slice(0, 120), after: t.slice(0, 120) });
+    }
+
+    // a) Double backslash that became single (\\frac → \frac is fine, but \\ before newline in display is valid)
+    //    Fix: \\\\( followed by letter → \\ (real double) but \\frac → \frac already correct
+    //    Actually fix: lone single \ before command when it should already be \ — this is already fine.
+
+    // b) Escaped underscore/caret outside braces that confuse KaTeX: \_ → _  and \^ → ^
+    mfix('Escaped _ → plain _', /\\_/g, '_');
+    mfix('Escaped ^ → plain ^', /\\\^/g, '^');
+
+    // c) Unicode minus/dash → ASCII hyphen-minus
+    mfix('Unicode minus → -', /[−–]/g, '-');
+
+    // d) Unicode multiplication × → \times  (only inside math)
+    mfix('× → \\times', /×/g, '\\times');
+
+    // e) Missing backslash before well-known commands: e.g.  "int_0" when it should be "\int_0"
+    //    Pattern: word boundary + command name + { or _ or ^ or space (not already preceded by \)
+    cmdNoSlash.forEach(cmd => {
+      const re = new RegExp(`(?<!\\\\)\\b(${cmd})(?=[_{^\\s\\(\\[{]|$)`, 'g');
+      const prev2 = t;
+      t = t.replace(re, `\\${cmd}`);
+      if (t !== prev2) mathLog.push({ label: `Missing \\ before \\${cmd}`, before: prev2.slice(0,80), after: t.slice(0,80) });
+    });
+
+    // f) \left( without matching \right) and vice versa — wrap with the counterpart
+    //    (simple heuristic: count lefts and rights)
+    const lefts  = (t.match(/\\left[\(\[\|{.]/g) || []).length;
+    const rights = (t.match(/\\right[\)\]\|}.]/g) || []).length;
+    if (lefts > rights) {
+      t += ' \\right.'.repeat(lefts - rights);
+      mathLog.push({ label: 'Added missing \\right.', before: tex.slice(-40), after: t.slice(-40) });
+    } else if (rights > lefts) {
+      t = '\\left. '.repeat(rights - lefts) + t;
+      mathLog.push({ label: 'Added missing \\left.', before: tex.slice(0,40), after: t.slice(0,40) });
+    }
+
+    // g) Stray HTML entities inside math: &gt; &lt; &amp;
+    mfix('HTML &gt; → >', /&gt;/g, '>');
+    mfix('HTML &lt; → <', /&lt;/g, '<');
+    mfix('HTML &amp; → &', /&amp;/g, '&');
+
+    // h) Double dollar sign leakage: $$...$ (only one closing $)
+    // Already handled by surrounding context, skip.
+
+    // i) \\ at end of non-aligned display (spurious line break in single-line display)
+    if (!isDisplay && t.includes('\\\\')) {
+      const prev3 = t;
+      t = t.replace(/\\\\$/, '');
+      if (t !== prev3) mathLog.push({ label: 'Removed trailing \\\\', before: prev3.slice(-30), after: t.slice(-30) });
+    }
+
+    return { tex: t, log: mathLog };
+  }
+
+  // ── 0. PRE-PASS: detect orphaned LaTeX (no delimiters) ──
+  // LLMs sometimes emit raw LaTeX like:
+  //   \text{factor_value}(s) = f(s), \quad 0 \leq f(s) \leq 1
+  // or multi-line:
+  //   \text{evaluate_factor}(f_t) = \begin{cases} ... \end{cases}
+  // These appear as plain paragraph text starting with backslash.
+  // We detect lines that look like raw LaTeX and wrap them in \[...\]
+
+  const latexIndicators = /\\(?:text|frac|begin|end|sum|int|prod|lim|left|right|quad|qquad|leq|geq|neq|approx|times|cdot|sqrt|alpha|beta|gamma|lambda|sigma|theta|mu|pi|forall|exists|mathbb|mathbf|mathrm|operatorname|binom|cases|aligned)/;
+  const notMarkdown = /^(?!#+\s|[-*+]\s|\d+\.\s|>|\|)/;
+
+  // Multi-line: a paragraph where FIRST non-empty line starts with \ and contains LaTeX
+  // Split on blank lines (paragraph boundaries)
+  src = src.split(/\n{2,}/).map(para => {
+    const lines = para.split('\n');
+    const firstContent = lines.find(l => l.trim());
+    if (!firstContent) return para;
+    const t = firstContent.trim();
+    // If first line starts with \ and looks like LaTeX, and isn't markdown syntax
+    if (t.startsWith('\\') && latexIndicators.test(t) && notMarkdown.test(t)) {
+      // Check it's not already wrapped
+      if (!t.startsWith('\\[') && !t.startsWith('\\(') && !t.startsWith('$$')) {
+        const inner = lines.join('\n').trim();
+        log.push({
+          label: 'Orphaned LaTeX paragraph → wrapped in \\[...\\]',
+          before: inner.slice(0, 100),
+          after: `\\[${inner}\\]`
+        });
+        return `\\[${inner}\\]`;
+      }
+    }
+    return para;
+  }).join('\n\n');
+
+  // ── Process math zones ──
+  // We extract all math blocks, repair them, then put them back
+  const mathStash = [];
+  let idx = 0;
+
+  // Display math \[...\]
+  src = src.replace(/\\\[([\s\S]*?)\\\]/g, (_, t) => {
+    const { tex: fixed, log: ml } = repairInsideMath(t, true);
+    ml.forEach(e => log.push(e));
+    mathStash.push({ fixed: `\\[${fixed}\\]` });
+    return `\x01MATH${idx++}\x01`;
+  });
+  // Display math $$...$$
+  src = src.replace(/\$\$([\s\S]*?)\$\$/g, (_, t) => {
+    const { tex: fixed, log: ml } = repairInsideMath(t, true);
+    ml.forEach(e => log.push(e));
+    mathStash.push({ fixed: `$$${fixed}$$` });
+    return `\x01MATH${idx++}\x01`;
+  });
+  // Inline math \(...\)
+  src = src.replace(/\\\(([^\n]*?)\\\)/g, (_, t) => {
+    const { tex: fixed, log: ml } = repairInsideMath(t, false);
+    ml.forEach(e => log.push(e));
+    mathStash.push({ fixed: `\\(${fixed}\\)` });
+    return `\x01MATH${idx++}\x01`;
+  });
+  // Inline math $...$
+  src = src.replace(/(?<!\$)\$(?!\s)([^\$\n]+?)(?<!\s)\$(?!\$)/g, (_, t) => {
+    const { tex: fixed, log: ml } = repairInsideMath(t, false);
+    ml.forEach(e => log.push(e));
+    mathStash.push({ fixed: `$${fixed}$` });
+    return `\x01MATH${idx++}\x01`;
+  });
+
+  // ── Non-math repairs ──
+  // Restore stashed math
+  src = src.replace(/\x01MATH(\d+)\x01/g, (_, i) => mathStash[+i].fixed);
+
+  return { src, log };
+}
+
+/* ── MODE SWITCH ── */
+function switchMode(mode) {
+  currentMode = mode;
+  document.getElementById('btn-viewer').classList.toggle('active',   mode === 'viewer');
+  document.getElementById('btn-research').classList.toggle('active', mode === 'research');
+  document.getElementById('btn-editor').classList.toggle('active',   mode === 'editor');
+  document.getElementById('viewer-mode').style.display   = mode === 'viewer'   ? 'flex'  : 'none';
+  document.getElementById('research-mode').style.display = mode === 'research' ? 'block' : 'none';
+  document.getElementById('editor-mode').style.display   = mode === 'editor'   ? 'flex'  : 'none';
+
+  if (mode === 'research') {
+    const rc = document.getElementById('research-content');
+    const rd = document.getElementById('research-drop');
+    if (rawMarkdown) {
+      const { src: repaired } = repairLatex(rawMarkdown);
+      rc.innerHTML = mdToHTML(repaired);
+      applyKatex(rc);
+      rc.classList.add('research-render');
+      rc.style.display = '';
+      rd.style.display = 'none';
+    } else {
+      rc.style.display = 'none';
+      rd.style.display = '';
+    }
+  }
+  if (mode === 'editor')
+    document.getElementById('ed-sync-btn').style.display = rawMarkdown ? '' : 'none';
+}
+
+/* ── DRAG & DROP ── */
+function handleDragOver(e) { e.preventDefault(); document.getElementById('drop-zone').classList.add('drag-over'); }
+function handleDragLeave()  { document.getElementById('drop-zone').classList.remove('drag-over'); }
+function handleDrop(e) { e.preventDefault(); document.getElementById('drop-zone').classList.remove('drag-over'); const f = e.dataTransfer.files[0]; if (f) loadFile(f); }
+function handleResearchDragOver(e) { e.preventDefault(); document.getElementById('research-drop').style.borderColor = '#666'; }
+function handleResearchDragLeave() { document.getElementById('research-drop').style.borderColor = ''; }
+function handleResearchDrop(e) { e.preventDefault(); document.getElementById('research-drop').style.borderColor = ''; const f = e.dataTransfer.files[0]; if (f) loadFile(f); }
+
+/* ── FILE LOAD ── */
+function loadFile(file) {
+  if (!file) return;
+  currentFilename = file.name;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    rawMarkdown = e.target.result;
+    renderToViewer(rawMarkdown, file.name);
+    if (currentMode === 'research') {
+      const rc = document.getElementById('research-content');
+      const { src: repaired } = repairLatex(rawMarkdown);
+      rc.innerHTML = mdToHTML(repaired);
+      applyKatex(rc);
+      rc.classList.add('research-render');
+      rc.style.display = '';
+      document.getElementById('research-drop').style.display = 'none';
+    }
+    document.getElementById('ed-sync-btn').style.display = '';
+  };
+  reader.readAsText(file);
+}
+
+/* ── MATH ── */
+function renderMathStr(tex, display) {
+  try {
+    if (typeof katex === 'undefined') throw new Error('not ready');
+    const html = katex.renderToString(tex.trim(), {
+      displayMode: display, throwOnError: false,
+      errorColor: '#f07070', strict: false, trust: true,
+    });
+    return display
+      ? `<div class="math-block">${html}</div>`
+      : `<span class="math-inline">${html}</span>`;
+  } catch {
+    return display
+      ? `<div class="math-block math-raw" data-tex="${encodeURIComponent(tex)}" data-display="1">\\[${tex}\\]</div>`
+      : `<span class="math-inline math-raw" data-tex="${encodeURIComponent(tex)}" data-display="0">\\(${tex}\\)</span>`;
+  }
+}
+
+function applyKatex(el) {
+  el.querySelectorAll('.math-raw').forEach(node => {
+    if (typeof katex === 'undefined') return;
+    const tex     = decodeURIComponent(node.dataset.tex || '');
+    const display = node.dataset.display === '1';
+    try {
+      node.innerHTML = katex.renderToString(tex, { displayMode: display, throwOnError: false, strict: false });
+      node.classList.remove('math-raw');
+      delete node.dataset.tex; delete node.dataset.display;
+    } catch {}
+  });
+}
+
+/* ── MARKDOWN → HTML ── */
+function mdToHTML(mdText) {
+  const stash = [];
+  function hide(tex, display) { const id = stash.length; stash.push({ tex, display }); return `\x02M${id}\x03`; }
+
+  let src = mdText;
+  src = src.replace(/\$\$([\s\S]*?)\$\$/g,       (_, t) => hide(t, true));
+  src = src.replace(/\\\[([\s\S]*?)\\\]/g,        (_, t) => hide(t, true));
+  src = src.replace(/\\\(([^\n]*?)\\\)/g,         (_, t) => hide(t, false));
+  src = src.replace(/(?<!\$)\$(?!\s)([^\$\n]+?)(?<!\s)\$(?!\$)/g, (_, t) => hide(t, false));
+
+  marked.setOptions({ breaks: true, gfm: true });
+  const renderer = new marked.Renderer();
+
+  renderer.code = (code, lang) => {
+    if (code !== null && typeof code === 'object') { lang = code.lang || 'text'; code = code.text || ''; }
+    const language = (lang || 'text').toLowerCase();
+    let hi;
+    try { hi = hljs.highlight(code, { language, ignoreIllegals: true }).value; }
+    catch { hi = hljs.highlightAuto(code).value; }
+    const esc = code.replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\r?\n/g,'\\n');
+    return `<div class="code-wrapper"><div class="code-header"><span class="code-lang ${language}">${language}</span><button class="copy-btn" onclick="copyCode(this,'${esc}')">copy</button></div><pre><code class="hljs language-${language}">${hi}</code></pre></div>`;
+  };
+
+  let html = marked.parse(src, { renderer });
+  html = html.replace(/<p>\x02M(\d+)\x03<\/p>/g, (_, id) => renderMathStr(stash[+id].tex, true));
+  html = html.replace(/\x02M(\d+)\x03/g, (_, id) => renderMathStr(stash[+id].tex, stash[+id].display));
+  html = html
+    .replace(/\[CONFIDENT\]/g, '<span class="conf-tag conf-confident">CONFIDENT</span>')
+    .replace(/\[INFERRED\]/g,  '<span class="conf-tag conf-inferred">INFERRED</span>')
+    .replace(/\[UNCERTAIN\]/g, '<span class="conf-tag conf-uncertain">UNCERTAIN</span>');
+  return html;
+}
+
+/* ── RENDER TO VIEWER ── */
+function renderToViewer(mdText, filename) {
+  const { src: repairedText } = repairLatex(mdText);
+  const content = document.getElementById('viewer-content');
+  content.innerHTML = mdToHTML(repairedText);
+  content.style.display = 'block';
+  document.getElementById('drop-zone').style.display = 'none';
+  applyKatex(content);
+  buildTOC();
+  if (filename) { const b = document.getElementById('fname-badge'); b.textContent = filename; b.style.display = ''; }
+  document.getElementById('export-btn').disabled = false;
+  document.getElementById('viewer-scroll').scrollTop = 0;
+}
+
+/* ── EDITOR ── */
+function onEditorInput() {
+  const text = document.getElementById('raw-editor').value;
+  const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+  const lines  = text.split('\n').length;
+  document.getElementById('ed-words').textContent = `${words} words`;
+  document.getElementById('ed-lines').textContent = `${lines} lines`;
+  if (text.trim()) document.getElementById('export-btn').disabled = false;
+  clearTimeout(renderTimer);
+  renderTimer = setTimeout(() => {
+    // Run repair
+    const { src: repaired, log } = repairLatex(text);
+    lastRepairLog = log;
+    updateRepairBadge(log.length);
+    if (repairPanelOpen) renderRepairLog(log);
+
+    const preview = document.getElementById('editor-preview');
+    preview.innerHTML = mdToHTML(repaired);
+    applyKatex(preview);
+    attachPreviewClickHandlers();
+  }, 130);
+}
+
+function handleTab(e) {
+  if (e.key !== 'Tab') return;
+  e.preventDefault();
+  const ta = e.target, s = ta.selectionStart, en = ta.selectionEnd;
+  ta.value = ta.value.slice(0, s) + '  ' + ta.value.slice(en);
+  ta.selectionStart = ta.selectionEnd = s + 2;
+}
+
+function clearEditor() {
+  document.getElementById('raw-editor').value = '';
+  document.getElementById('editor-preview').innerHTML = '';
+  document.getElementById('ed-words').textContent = '0 words';
+  document.getElementById('ed-lines').textContent = '0 lines';
+  lastRepairLog = [];
+  updateRepairBadge(0);
+  renderRepairLog([]);
+}
+
+function loadEditorFromViewer() {
+  if (!rawMarkdown) return;
+  document.getElementById('raw-editor').value = rawMarkdown;
+  onEditorInput();
+}
+
+function setEditorLayout(layout) {
+  editorLayout = layout;
+  const panels = document.getElementById('editor-panels');
+  panels.className = 'editor-panels';
+  if (layout === 'raw')     panels.classList.add('raw-only');
+  if (layout === 'preview') panels.classList.add('preview-only');
+  document.getElementById('ed-split').classList.toggle('active',   layout === 'split');
+  document.getElementById('ed-raw').classList.toggle('active',     layout === 'raw');
+  document.getElementById('ed-preview').classList.toggle('active', layout === 'preview');
+  // Keep repair panel visibility
+  if (repairPanelOpen) document.getElementById('repair-pane').classList.add('visible');
+}
+
+/* ── REPAIR PANEL ── */
+function toggleRepairPanel() {
+  repairPanelOpen = !repairPanelOpen;
+  document.getElementById('repair-pane').classList.toggle('visible', repairPanelOpen);
+  document.getElementById('ed-repair-tab').classList.toggle('active', repairPanelOpen);
+  if (repairPanelOpen) renderRepairLog(lastRepairLog);
+}
+
+function updateRepairBadge(count) {
+  const badge = document.getElementById('repair-count-badge');
+  if (count > 0) {
+    badge.style.display = '';
+    badge.textContent = count;
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function renderRepairLog(log) {
+  const container = document.getElementById('repair-log');
+  const emptyMsg  = document.getElementById('repair-empty-msg');
+  if (!log || log.length === 0) {
+    container.innerHTML = '';
+    container.appendChild(Object.assign(document.createElement('div'), {
+      className: 'repair-empty',
+      innerHTML: 'No repairs applied.<br><span style="color:var(--text-dim);font-size:10px">LaTeX looks clean ✓</span>'
+    }));
+    return;
+  }
+  container.innerHTML = `<div class="repair-stats">${log.length} auto-repair${log.length !== 1 ? 's' : ''} applied</div>`;
+  log.forEach((item, i) => {
+    const el = document.createElement('div');
+    el.className = 'repair-item';
+    el.innerHTML = `
+      <div class="repair-item-head">
+        <span class="repair-badge rb-fix">FIX</span>
+        <span class="repair-desc">${escHtml(item.label)}</span>
+        <span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--text-dim)">#${i+1}</span>
+      </div>
+      <div class="repair-diff">
+        <div class="repair-before">− ${escHtml(truncate(item.before, 100))}</div>
+        <div class="repair-arrow">↓</div>
+        <div class="repair-after">+ ${escHtml(truncate(item.after, 100))}</div>
+      </div>`;
+    container.appendChild(el);
+  });
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function truncate(s, n) {
+  s = String(s);
+  return s.length > n ? s.slice(0, n) + '…' : s;
+}
+
+/* ─────────────────────────────────────────────────
+   SIDE-BY-SIDE SCROLL SYNC
+   Click a word/element in the preview → editor
+   scrolls to the corresponding line
+───────────────────────────────────────────────── */
+function attachPreviewClickHandlers() {
+  const preview  = document.getElementById('editor-preview');
+  const editor   = document.getElementById('raw-editor');
+
+  preview.querySelectorAll('p,h1,h2,h3,h4,h5,h6,li,td,th,code,pre,blockquote,.math-block').forEach(el => {
+    el.style.cursor = 'pointer';
+    el.addEventListener('click', function(e) {
+      e.stopPropagation();
+      // Get text content of this element (stripped)
+      const needle = el.textContent.trim().slice(0, 60).replace(/\s+/g, ' ');
+      if (!needle) return;
+      scrollEditorToText(needle, el);
+    }, { passive: true });
+  });
+}
+
+function scrollEditorToText(needle, previewEl) {
+  const editor = document.getElementById('raw-editor');
+  const text   = editor.value;
+  // Find best matching line
+  const lines  = text.split('\n');
+  let bestLine = -1;
+  let bestScore = 0;
+
+  // Build a simplified version of needle for matching
+  const simplify = s => s.replace(/[*_`#\[\]\\$]/g, '').replace(/\s+/g, ' ').trim().toLowerCase();
+  const needleSimple = simplify(needle);
+
+  lines.forEach((line, i) => {
+    const lineSimple = simplify(line);
+    if (!lineSimple) return;
+    // Score: how much of needleSimple is contained in lineSimple or vice versa
+    const shorter = needleSimple.length < lineSimple.length ? needleSimple : lineSimple;
+    const longer  = needleSimple.length >= lineSimple.length ? needleSimple : lineSimple;
+    if (longer.includes(shorter) && shorter.length > 3) {
+      const score = shorter.length / longer.length;
+      if (score > bestScore) { bestScore = score; bestLine = i; }
+    }
+  });
+
+  if (bestLine < 0) return;
+
+  // Calculate char position of that line
+  let charPos = 0;
+  for (let i = 0; i < bestLine; i++) charPos += lines[i].length + 1;
+
+  // Set cursor and scroll editor
+  editor.focus();
+  editor.setSelectionRange(charPos, charPos + lines[bestLine].length);
+
+  // Scroll editor textarea to that line
+  const lineHeight = parseFloat(getComputedStyle(editor).lineHeight) || 22;
+  const paddingTop = parseFloat(getComputedStyle(editor).paddingTop) || 24;
+  const targetScrollTop = Math.max(0, bestLine * lineHeight + paddingTop - editor.clientHeight / 3);
+  editor.scrollTop = targetScrollTop;
+
+  // Flash the preview element
+  if (previewEl) {
+    previewEl.classList.remove('scroll-flash');
+    void previewEl.offsetWidth; // reflow
+    previewEl.classList.add('scroll-flash');
+    previewEl.addEventListener('animationend', () => previewEl.classList.remove('scroll-flash'), { once: true });
+  }
+}
+
+/* ── COPY CODE ── */
+function copyCode(btn, code) {
+  navigator.clipboard.writeText(code).then(() => {
+    btn.textContent = 'copied!'; btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+/* ── TOC ── */
+function buildTOC() {
+  const content  = document.getElementById('viewer-content');
+  const headings = content.querySelectorAll('h1,h2,h3,h4');
+  const tocList  = document.getElementById('toc-list');
+  const tocPanel = document.getElementById('toc-panel');
+  if (headings.length < 2) { tocPanel.style.display = 'none'; return; }
+  tocList.innerHTML = '';
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      const a = tocList.querySelector(`a[href="#${e.target.id}"]`);
+      if (a) a.classList.toggle('active', e.isIntersecting);
+    });
+  }, { rootMargin: '-10% 0px -80% 0px' });
+  headings.forEach((h, i) => {
+    h.id = `h-${i}`;
+    const level = h.tagName.toLowerCase();
+    const li = document.createElement('li');
+    const a  = document.createElement('a');
+    a.className  = `toc-link ${level}`;
+    a.href       = `#h-${i}`;
+    a.textContent = h.textContent;
+    a.onclick = e => { e.preventDefault(); h.scrollIntoView({ behavior: 'smooth' }); };
+    li.appendChild(a); tocList.appendChild(li); obs.observe(h);
+  });
+  tocPanel.style.display = '';
+}
+
+/* ── EXPORT ── */
+function toggleExportMenu() { document.getElementById('export-menu').classList.toggle('open'); }
+document.addEventListener('click', e => {
+  if (!document.getElementById('export-wrap').contains(e.target))
+    document.getElementById('export-menu').classList.remove('open');
+});
+
+function exportPDF() {
+  document.getElementById('export-menu').classList.remove('open');
+  let sourceEl;
+  if (currentMode === 'viewer') {
+    sourceEl = document.getElementById('viewer-content');
+    if (!sourceEl.innerHTML.trim()) { alert('Open a file in Viewer first.'); return; }
+  } else if (currentMode === 'research') {
+    sourceEl = document.getElementById('research-content');
+    if (!sourceEl.innerHTML.trim()) { alert('Open a file in Research mode first.'); return; }
+  } else {
+    sourceEl = document.getElementById('editor-preview');
+    if (!sourceEl.innerHTML.trim()) { alert('Editor preview is empty. Type something first.'); return; }
+  }
+  const clone = sourceEl.cloneNode(true);
+  clone.style.cssText = 'font-family:Georgia,serif;font-size:13px;line-height:1.75;color:#111;max-width:720px;padding:0;';
+  clone.querySelectorAll('h1,h2,h3,h4').forEach(el => { el.style.color='#111'; el.style.borderColor='#ccc'; });
+  clone.querySelectorAll('p,li,td').forEach(el => el.style.color='#222');
+  clone.querySelectorAll('th').forEach(el => { el.style.background='#f0f0f0'; el.style.color='#333'; });
+  clone.querySelectorAll('code').forEach(el => { el.style.background='#f4f4f4'; el.style.color='#333'; el.style.border='1px solid #ddd'; });
+  clone.querySelectorAll('.code-wrapper').forEach(el => { el.style.background='#f4f4f4'; el.style.border='1px solid #ccc'; });
+  clone.querySelectorAll('.code-header').forEach(el => { el.style.background='#ebebeb'; el.style.borderBottom='1px solid #ccc'; });
+  clone.querySelectorAll('.copy-btn').forEach(el => el.remove());
+  clone.querySelectorAll('.math-block').forEach(el => { el.style.background='#f8f8f8'; el.style.borderColor='#bbb'; });
+  clone.querySelectorAll('.katex').forEach(el => el.style.color='#111');
+  const name = currentFilename.replace(/\.md$/i,'') || 'document';
+  html2pdf().set({
+    margin:[14,14,14,14], filename:`${name}.pdf`,
+    image:{type:'jpeg',quality:.98}, html2canvas:{scale:2,useCORS:true},
+    jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},
+    pagebreak:{mode:['avoid-all','css','legacy']}
+  }).from(clone).save();
+}
+
+function exportMD() {
+  document.getElementById('export-menu').classList.remove('open');
+  const md = currentMode === 'editor' ? document.getElementById('raw-editor').value : rawMarkdown;
+  if (!md.trim()) { alert('No markdown content to save.'); return; }
+  const blob = new Blob([md],{type:'text/markdown'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = currentFilename || 'document.md'; a.click();
+}
+
+function printDoc() {
+  document.getElementById('export-menu').classList.remove('open');
+  const wasEditor = currentMode === 'editor';
+  if (wasEditor) {
+    const edText = document.getElementById('raw-editor').value;
+    if (edText.trim()) { rawMarkdown = edText; renderToViewer(edText, currentFilename); }
+    switchMode('viewer');
+  }
+  setTimeout(() => {
+    window.print();
+    if (wasEditor) setTimeout(() => switchMode('editor'), 600);
+  }, 200);
+}
+</script>
+
+
+</body></html>

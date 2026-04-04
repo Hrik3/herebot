@@ -1,0 +1,11 @@
+{
+  "timestamp": 1775067438.3608985,
+  "user_input": "travels in bus",
+  "system_response": "[synthetic]",
+  "factor_vector": {},
+  "factor_dim": 0,
+  "intrinsic_reward": 0.0,
+  "metadata": {
+    "synthetic": true
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "timestamp": 1775067437.4962833,
+  "user_input": "like to play with doll",
+  "system_response": "[synthetic]",
+  "factor_vector": {},
+  "factor_dim": 0,
+  "intrinsic_reward": 0.0,
+  "metadata": {
+    "synthetic": true
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "timestamp": 1775066768.0594206,
+  "user_input": "earth means place",
+  "system_response": "Perhaps 'place' is related to 'earth', since they appear together often.",
+  "factor_vector": {
+    "curiosity": 1.2236251484468723,
+    "threat": 0.1993365443570215,
+    "trust": 0.7488817921634608,
+    "confidence": 0.6325308903573145,
+    "uncertainty": 0.010827573451175968,
+    "energy": 0.908,
+    "attention": 0.15,
+    "comprehension": 0.6666666666666666,
+    "fluency": 0.7,
+    "cognitive_load": 0.8638,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 3.2983364030452798,
+  "metadata": {
+    "ci_confidence": 0.6325308903573145
+  }
+}
