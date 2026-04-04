@@ -1,0 +1,23 @@
+{
+  "timestamp": 1774809613.39885,
+  "user_input": "ok",
+  "system_response": "I have no contextual clues about 'ok' yet.",
+  "factor_vector": {
+    "curiosity": 0.48505954322323974,
+    "threat": 0.24794101869319207,
+    "trust": 0.6560920517597122,
+    "confidence": 0.5526474532670198,
+    "uncertainty": 0.011185455218948228,
+    "energy": 0.975,
+    "attention": 0.05,
+    "comprehension": 0.5,
+    "fluency": 0.7,
+    "cognitive_load": 0.95125,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.2345164777411369,
+  "metadata": {
+    "ci_confidence": 0.5526474532670198
+  }
+}

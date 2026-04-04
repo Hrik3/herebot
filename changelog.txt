@@ -1,0 +1,29 @@
+1) reward fixing :
+ a) add neutral reward is zero 
+ b) for negative == -(positive reward)
+     create new link 
+       with condition 
+        eg:
+            car and crow 
+            , scentences :
+            car travels through roadways , crow travels by flying 
+            fly and roadways and fly are related to travelling 
+            hypothetical relation : run <-> fly  
+            2) crow fly <-> car roadways 
+            3) crow , car <-> transport 
+        fix :
+            make model propose a new link for differentiation between multi relational words along 
+            with context reasoning to understand [crow,fly] != transport != ([car,roadways] = [plane,fly])
+            add shadow proposals to validate new link or direct asking system in meta layer if similar topic 
+            conversation is detected through state detection. Initiate appropriate self correction loop for totally negative 
+            irrational changes which cant be embedded into a matrice.
+
+Fix : 
+    Your choice (1/2/3/4/5): 5
+Traceback (most recent call last):
+  File "/home/hrirake/herebot/herebot/main.py", line 113, in main
+    result = engine.process_input(user_input)
+  File "/home/hrirake/herebot/herebot/core/heart.py", line 1954, in process_input
+    vec1 = self.state_manager.states[l1]
+KeyError: 'chain forming'
+Attempting to recover and continue...

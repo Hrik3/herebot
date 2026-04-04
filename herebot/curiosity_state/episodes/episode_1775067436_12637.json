@@ -1,0 +1,11 @@
+{
+  "timestamp": 1775067436.0341022,
+  "user_input": "is my toy",
+  "system_response": "[synthetic]",
+  "factor_vector": {},
+  "factor_dim": 0,
+  "intrinsic_reward": 0.0,
+  "metadata": {
+    "synthetic": true
+  }
+}

@@ -71,32 +71,56 @@
     },
     "normal interaction": {
       "means": 0.655324180050058
+    },
+    "lily": {
+      "means": 0.6403456116644104
+    },
+    "resolution": {
+      "means": 0.7155981650698554
+    },
+    "unnamed_state": {
+      "means": 0.6863971606248143
+    },
+    "on": {
+      "means": 0.6453598383272424
+    },
+    "form": {
+      "means": 0.7113077183882779
+    },
+    "identitiy": {
+      "means": 0.7315956816570548
     }
   },
   "label_to_words": {
     "means": [
-      "cat",
-      "cautious inquiry",
-      "chain forming",
-      "is",
-      "exploration",
-      "animal",
-      "sound",
-      "girl",
-      "identity",
-      "hear",
-      "learning",
-      "normal interaction",
       "what",
-      "maths",
-      "means",
-      "confusion",
-      "pattern",
-      "how",
       "mean",
+      "identitiy",
+      "is",
+      "hear",
+      "plane",
+      "cautious inquiry",
+      "confusion",
+      "how",
+      "girl",
+      "cat",
+      "pattern",
+      "maths",
+      "exploration",
       "transport",
-      "crow",
-      "plane"
+      "identity",
+      "form",
+      "lily",
+      "chain forming",
+      "learning",
+      "resolution",
+      "means",
+      "sound",
+      "on",
+      "normal interaction",
+      "unnamed_state",
+      "animal",
+      "crow"
     ],
     "color": [
       "blue",

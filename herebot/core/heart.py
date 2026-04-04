@@ -1714,6 +1714,7 @@ class CuriosityEngine:
                 struct_score = self.structural_score(token)
 
                 # Adjust information gain for meta-learner to avoid structural contamination
+                
                 igain_adjusted = igain * (1 - struct_score)
                 self.meta_learner.update(factor_array, igain_adjusted)
 

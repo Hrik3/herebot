@@ -595,7 +595,7 @@ class CuriosityTracker:
         if cooccur:
             try:
                 import networkx as nx
-                top_pairs = sorted(cooccur, key=cooccur.get, reverse=True)[:40]
+                top_pairs = sorted(cooccur, key=cooccur.get, reverse=True)
                 G = nx.Graph()
                 for (w1, w2) in top_pairs:
                     G.add_edge(w1, w2, weight=cooccur[(w1, w2)])
@@ -610,7 +610,7 @@ class CuriosityTracker:
                 nx.draw_networkx_edges(G, pos,
                                        width=[1 + 3 * (w / max_w) for w in weights],
                                        alpha=0.5, edge_color=_PALETTE[3], ax=ax)
-                ax.set_title("Word Co-Curiosity Graph (top 40 pairs across all sessions)")
+                ax.set_title("Word Co-Curiosity Graph (all pairs across all sessions)")
                 ax.axis("off")
                 fig.tight_layout()
                 self._savefig(fig, "word_relation_graph.png")
