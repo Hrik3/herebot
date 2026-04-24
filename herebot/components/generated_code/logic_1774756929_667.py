@@ -8,11 +8,10 @@ import time
 import logging
 import psutil  # for resource monitoring (optional, gracefully degrades)
 from functools import wraps
-
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
-@resource_monitor
 def run(word: str, semantic_learner) -> float:
     """
     Returns similarity confidence (0-1) between word and known concept.
