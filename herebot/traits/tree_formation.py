@@ -103,7 +103,7 @@ class SyntaxTree:
         Convert the syntax tree to an expression, using the type system
         and operator definitions.
         """
-        # if root is an operator, build an expression with children as sub‑expressions
+        # if root is an operator, build an expression with children as sub-expressions
         if self.root in operator_registry:
             op = operator_registry[self.root]
             if op.arity == 2 and len(self.children) == 2:

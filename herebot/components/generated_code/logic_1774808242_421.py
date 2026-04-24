@@ -13,12 +13,11 @@ import numpy as np
 
 logger = logging.getLogger(__name__)
 
-@resource_monitor
 def run(factor_vector: list) -> bool:
     """
     Returns True if the current factor vector matches this state.
     """
-        try:
+    try:
         import numpy as np
     except ImportError:
         return False  # cannot compute without numpy

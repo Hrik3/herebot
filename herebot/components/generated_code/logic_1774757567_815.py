@@ -13,7 +13,6 @@ import numpy as np
 
 logger = logging.getLogger(__name__)
 
-@resource_monitor
 def run(factor_vector: list) -> bool:
     """
     Returns True if the current factor vector matches this state.
@@ -29,7 +28,7 @@ def run(factor_vector: list) -> bool:
     vec = np.array(factor_vector)
     sim = np.dot(vec, prototype) / (np.linalg.norm(vec) * np.linalg.norm(prototype) + 1e-12)
     # Threshold can be adjusted dynamically
-    threshold = rule.get("threshold", 0.85) if isinstance(rule, dict) else 0.85
+    threshold = 0.85
     return bool(sim > threshold)
     return False
 

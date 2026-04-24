@@ -1,6 +1,6 @@
 from importglobal import np,pickle
 # ------------------------------------------------------------
-# Language Model – base class for all self‑expanding language models
+# Language Model – base class for all self-expanding language models
 # ------------------------------------------------------------
 class LanguageModel:
     """
@@ -40,7 +40,7 @@ class LanguageModel:
 # ------------------------------------------------------------
 class LSTMLanguageModel(LanguageModel):
     """
-    A small LSTM‑based language model that learns from sentences.
+    A small LSTM-based language model that learns from sentences.
     Vocabulary expands automatically as new words are encountered.
     """
     def __init__(self, emb_dim=64, hidden_dim=128, vocab_size=None,

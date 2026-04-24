@@ -10,7 +10,7 @@ class SemanticLearner:
     - Observed co-occurrence and user definitions are generated from this vector.
     - Variational inference via stochastic gradient descent.
 
-    Now config‑aware: reads emb_dim, alpha.
+    Now config-aware: reads emb_dim, alpha.
     """
 
     def __init__(self, config_manager: Optional['ConfigManager'] = None,
@@ -34,7 +34,7 @@ class SemanticLearner:
             new_emb_dim = self.config_manager.get('semantic_learner.emb_dim', 64)
             new_alpha = self.config_manager.get('semantic_learner.alpha', 0.1)
             if new_emb_dim != self.emb_dim:
-                # Changing embedding dimension is non‑trivial; we ignore for hot reload
+                # Changing embedding dimension is non-trivial; we ignore for hot reload
                 print("Warning: semantic_learner.emb_dim changed but cannot be applied live.")
             self.alpha = new_alpha
 

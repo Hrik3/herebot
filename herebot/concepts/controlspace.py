@@ -143,7 +143,7 @@ class AdaptiveControlSpace:
         """
         # Example heuristic: if a base factor's variance drops below threshold,
         # but there is still unexplained variance in the state space, propose a new factor.
-        # For now, we return None (no auto‑expansion) – you can enable it later.
+        # For now, we return None (no auto-expansion) – you can enable it later.
         return None
     
 # ------------------------------------------------------------

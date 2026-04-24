@@ -50,7 +50,7 @@ class UnificationEngine:
             else:
                 return None
 
-        # Both are non‑leaves
+        # Both are non-leaves
         if expr1.root != expr2.root:
             return None
         # Check same arity (both have left and right or both missing)
@@ -91,7 +91,7 @@ class UnificationEngine:
             right = self.substitute(expr.right, subs) if expr.right else None
             return Expression(expr.root, left, right)
 # =============================================================================
-# PROCEDURAL LEARNING – Step‑by‑step problem solving
+# PROCEDURAL LEARNING – Step-by-step problem solving
 # =============================================================================
 class Procedure:
     """
@@ -123,7 +123,7 @@ class Procedure:
 
 class ProceduralLearner:
     """
-    Learns step‑by‑step solution procedures from user explanations.
+    Learns step-by-step solution procedures from user explanations.
     """
     def __init__(self, engine: 'ReasoningEngine'):
         self.engine = engine
@@ -131,7 +131,7 @@ class ProceduralLearner:
 
     def learn_procedure(self, problem: Expression, steps: List[str], solution: Expression):
         """
-        Record a procedure from user‑provided steps.
+        Record a procedure from user-provided steps.
         steps: list of natural language descriptions (for now).
         """
         # Convert steps to internal representation (simplified)
@@ -158,7 +158,7 @@ class SyntaxLearner:
     from observed sentences. Uses a Dirichlet process prior over rules
     to allow unbounded rule creation.
 
-    Now config‑aware (placeholder for future parameters).
+    Now config-aware (placeholder for future parameters).
     Extended with simple CYK parser to produce syntax trees.
     """
 
@@ -173,7 +173,7 @@ class SyntaxLearner:
 
     def parse(self, tokens: List[str]) -> Optional[SyntaxTree]:
         """
-        Simple CYK parser returning the highest‑probability parse tree.
+        Simple CYK parser returning the highest-probability parse tree.
         Returns None if no parse found.
         """
         n = len(tokens)

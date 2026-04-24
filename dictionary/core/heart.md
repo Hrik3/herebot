@@ -1321,7 +1321,7 @@ The function returns a normalized value between 0 and 1.
 34) ### process_input
 
     Full pipeline with meta-learning, reasoning, AND factor-based state learning.
-    Also increments interaction counter and triggers self‑reconfiguration.
+    Also increments interaction counter and triggers self-reconfiguration.
 
     FIXES applied vs previous version:
     - factor_dict initialized to {} at top to avoid NameError in section 8
@@ -3231,7 +3231,7 @@ The function returns a normalized value between 0 and 1.
             if len(members) >= 2:
                 macro_name = f"macro_{i}_{int(time.time())}"
                 self.state_manager.save_state(macro_name, cent, metadata={'members': members}, is_shadow=True)
-                print(f"   Created macro‑state '{macro_name}' from {len(members)} states.")
+                print(f"   Created macro-state '{macro_name}' from {len(members)} states.")
         ```
         - Assigns the centroids to `self.state_manifold`.
 

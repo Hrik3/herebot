@@ -7,7 +7,7 @@ class MetaCuriosityLearner:
     Learns the weights of curiosity factors via Bayesian linear regression.
     Target = actual information gain (reduction in uncertainty).
 
-    Now config‑aware and supports dynamic expansion of factor set.
+    Now config-aware and supports dynamic expansion of factor set.
     """
 
     def __init__(self, config_manager: Optional['ConfigManager'] = None,

@@ -144,7 +144,7 @@ def get_disk_usage(path: str = "/", use_cache: bool = True):
         Dictionary with keys: total, used, free, percent.
     """
     if use_cache:
-        # Simple time‑based cache: clear after 2 seconds.
+        # Simple time-based cache: clear after 2 seconds.
         # Since lru_cache has no TTL, we manually check.
         now = time.monotonic()
         if not hasattr(get_disk_usage, "_cache_timestamp") or \

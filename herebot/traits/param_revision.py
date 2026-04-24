@@ -10,7 +10,7 @@ class ParameterRevision:
     - A winner-take-all competition selects the most salient coalition.
     - The winner is broadcast globally, influencing all modules.
     Currently just updates Parameters with basic np maths
-    config‑aware (placeholder for future parameters).
+    config-aware (placeholder for future parameters).
     """
 
     def __init__(self, config_manager: Optional['ConfigManager'] = None):
