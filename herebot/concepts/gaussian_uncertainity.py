@@ -9,7 +9,7 @@ class GaussianProcessUncertainty:
     Approximates an RBF kernel for online uncertainty estimation.
     Maintains posterior over weights and predicts mean and variance.
 
-    Now config‑aware: reads input_dim, n_features, length_scale, sigma_noise.
+    Now config-aware: reads input_dim, n_features, length_scale, sigma_noise.
     """
 
     def __init__(self, config_manager: Optional['ConfigManager'] = None,

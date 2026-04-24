@@ -2,7 +2,7 @@
 Represents words as distributions over an unbounded set of latent concepts.
 Uses a Dirichlet Process prior (via Chinese Restaurant Process) to allow
 new concepts to be created as needed.
-Now config‑aware: reads alpha, beta from ConfigManager.
+Now config-aware: reads alpha, beta from ConfigManager.
 
 ---
 

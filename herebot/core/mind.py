@@ -13,7 +13,7 @@ class ActionGenerator:
     - Synonym/category hypotheses from the reasoning engine
     - High-trust spontaneous language attempts
 
-    Now config‑aware and uses reasoner for semantic queries.
+    Now config-aware and uses reasoner for semantic queries.
     """
 
     def __init__(self, semantic_learner: SemanticLearner,
@@ -98,7 +98,7 @@ class ActionGenerator:
         """
         Generate a spontaneous, possibly broken-English utterance when trust is high.
         Now also used when emotional state is negative – but with different templates.
-        Templates are not pre‑defined as positive/negative; the system learns
+        Templates are not pre-defined as positive/negative; the system learns
         appropriateness through feedback.
         """
         # Use threat level to decide tone
@@ -175,10 +175,10 @@ class ActionGenerator:
 
     def generate_chat_response(self, user_input: str, state: Dict) -> str:
         """
-        Generate a conversational, non‑interrogative response when chat mode is active.
+        Generate a conversational, non-interrogative response when chat mode is active.
         PRIORITY 1: generate a base reply addressing the user input (definitions, patterns, trigram).
         PRIORITY 2: modulate that base reply with the current internal state.
-        PRIORITY 3: if the base reply is generic, inject a state‑based comment.
+        PRIORITY 3: if the base reply is generic, inject a state-based comment.
         """
         user_input_lower = user_input.lower().strip()
         factor_dict = state.get('factor_vector', {})
@@ -327,7 +327,7 @@ class ActionGenerator:
         modulated = self._modulate_with_state(base_reply, factor_dict)
 
         # If the base reply is the generic "That's interesting...", we can optionally
-        # inject a more state‑specific comment instead.
+        # inject a more state-specific comment instead.
         if "That's interesting" in base_reply and factor_dict:
             # Determine dominant emotion
             emotions = ['curiosity', 'threat', 'trust', 'comprehension', 'energy']

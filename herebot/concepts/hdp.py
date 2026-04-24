@@ -9,7 +9,7 @@ class HierarchicalConceptModel:
     Uses a Dirichlet Process prior (via Chinese Restaurant Process) to allow
     new concepts to be created as needed.
 
-    Now config‑aware: reads alpha, beta from ConfigManager.
+    Now config-aware: reads alpha, beta from ConfigManager.
     """
 
     def __init__(self, config_manager: Optional['ConfigManager'] = None,
@@ -28,10 +28,10 @@ class HierarchicalConceptModel:
         self.feature_vocab = set()
         # Store previous posterior for each word (to compute Bayesian surprise)
         self.prev_posterior = {}     # word -> dict(concept: probability)
-        # New: meta‑concept layer
-        self.meta_concept_counts = Counter()           # meta‑concept -> count
-        self.concept_to_meta = {}                      # concept -> meta‑concept
-        self.meta_alpha = 0.1                           # concentration for meta‑DP
+        # New: meta-concept layer
+        self.meta_concept_counts = Counter()           # meta-concept -> count
+        self.concept_to_meta = {}                      # concept -> meta-concept
+        self.meta_alpha = 0.1                           # concentration for meta-DP
 
     def update_parameters_from_config(self):
         """Reload parameters from the config manager (for hot reload)."""
@@ -182,7 +182,7 @@ class HierarchicalConceptModel:
 
     def form_meta_concepts(self, min_concepts_per_meta=3):
         """
-        Cluster concepts into meta‑concepts using their feature distributions.
+        Cluster concepts into meta-concepts using their feature distributions.
         Uses a simple Chinese Restaurant Process on the concept features.
         """
         # Build feature vectors for concepts
@@ -202,11 +202,11 @@ class HierarchicalConceptModel:
         if len(concept_vectors) < min_concepts_per_meta:
             return
 
-        # Chinese Restaurant Process for meta‑concepts
+        # Chinese Restaurant Process for meta-concepts
         meta_counts = Counter()
         concept_to_meta = {}
         for c, vec in concept_vectors.items():
-            # Compute probabilities for existing meta‑concepts based on average feature similarity
+            # Compute probabilities for existing meta-concepts based on average feature similarity
             probs = []
             metas = []
             for m, count in meta_counts.items():
@@ -217,7 +217,7 @@ class HierarchicalConceptModel:
                     sim = np.dot(vec, avg_vec) / (np.linalg.norm(vec)*np.linalg.norm(avg_vec)+1e-12)
                     probs.append(count * sim)   # popularity * similarity
                     metas.append(m)
-            # New meta‑concept probability
+            # New meta-concept probability
             probs.append(self.meta_alpha)
             metas.append(max(meta_counts.keys(), default=-1) + 1)
 
@@ -234,7 +234,7 @@ class HierarchicalConceptModel:
 
         self.meta_concept_counts = meta_counts
         self.concept_to_meta = concept_to_meta
-        print(f"   [Meta‑Concept] Formed {len(meta_counts)} meta‑concepts from {len(concept_vectors)} base concepts.")
+        print(f"   [Meta-Concept] Formed {len(meta_counts)} meta-concepts from {len(concept_vectors)} base concepts.")
 
     @classmethod
     def load(cls, path: str, config_manager: Optional['ConfigManager'] = None):

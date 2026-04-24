@@ -9,7 +9,7 @@ class EpisodicMemory:
     Stores (state, action, reward, next_state) for reinforcement learning
     and offline consolidation. Episodes are saved to ./episodes/.
 
-    Now config‑aware: reads capacity from config.
+    Now config-aware: reads capacity from config.
     """
 
     EPISODE_DIR = os.path.join(STATE_DIR, "episodes")

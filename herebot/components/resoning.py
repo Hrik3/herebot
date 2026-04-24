@@ -7,7 +7,7 @@ from components.rules import RuleEngine, ConstraintPropagator
 from components.feedback_process import ContextualSentimentCorpus, FeedbackEntry
 from components.pattern_observer import PatternObserver
 # ------------------------------------------------------------
-# SymbolicReasoner – performs rule‑based inference on the knowledge graph
+# SymbolicReasoner – performs rule-based inference on the knowledge graph
 # ------------------------------------------------------------
 class SymbolicReasoner:
     """
@@ -50,7 +50,7 @@ class SymbolicReasoner:
             self.kg.apply_rule(rule)
 
     def generate_hypotheses_from_inferences(self):
-        """Convert recent inferences into user‑facing hypotheses."""
+        """Convert recent inferences into user-facing hypotheses."""
         if not hasattr(self.kg, 'inference_log'):
             return
         for entry in self.kg.inference_log[-10:]:  # recent only
@@ -85,7 +85,7 @@ class ReasoningEngine:
     Stores world knowledge, co-occurrence graphs, definitions, and semantic relations.
     Generates hypotheses about word meanings and plans queries.
 
-    Now config‑aware and supports definition learning & synonym detection.
+    Now config-aware and supports definition learning & synonym detection.
     Extended with typed symbols, formal operators, expression trees,
     deterministic rules, and constraint propagation.
     """
@@ -385,7 +385,7 @@ class ReasoningEngine:
             if len(tokens) <= 3:
                 pat["short_utterance"] += 1
 
-            # update co‑occurrence counts (original functionality)
+            # update co-occurrence counts (original functionality)
             for w2 in tokens[i+1:]:
                 self.co_occurrence[w1][w2] += 1
                 self.co_occurrence[w2][w1] += 1

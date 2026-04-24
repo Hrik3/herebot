@@ -8,7 +8,7 @@ class IntrinsicRewardTracker:
     Tracks cumulative intrinsic reward and provides reinforcement signal.
     Reward = prediction error (1 - confidence) + information gain + Bayesian surprise.
 
-    Now config‑aware (placeholder for future tunable parameters).
+    Now config-aware (placeholder for future tunable parameters).
     """
 
     def __init__(self, config_manager: Optional['ConfigManager'] = None):

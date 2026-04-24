@@ -508,25 +508,26 @@ def run(context: dict) -> str:
         if not prototype:
             prototype = [0.0] * 10  # default dimension
         proto_str = "[" + ", ".join(f"{x:.4f}" for x in prototype) + "]"
-        body = f'''    try:
-        if __import__('psutil').cpu_percent(interval=None) > 80:
-            logger.info("CPU load high, skipping state check")
-            return False
-    except Exception:
-        pass
-    try:
-        import numpy as np
-    except ImportError:
-        return False  # cannot compute without numpy
-
-    prototype = np.array({proto_str})
-    if len(factor_vector) != len(prototype):
-        return False
-    vec = np.array(factor_vector)
-    sim = np.dot(vec, prototype) / (np.linalg.norm(vec) * np.linalg.norm(prototype) + 1e-12)
-    # Threshold can be adjusted dynamically
-    threshold = {rule.get("threshold", 0.85) if isinstance(rule, dict) else 0.85}
-    return bool(sim > threshold)'''
+        threshold_val = rule.get("threshold", 0.85) if isinstance(rule, dict) else 0.85
+        body = (
+        '    try:\n'
+        '        if __import__(\'psutil\').cpu_percent(interval=None) > 80:\n'
+        '            logger.info("CPU load high, skipping state check")\n'
+        '            return False\n'
+        '    except Exception:\n'
+        '        pass\n'
+        '    try:\n'
+        '        import numpy as np\n'
+        '    except ImportError:\n'
+        '        return False  # cannot compute without numpy\n'
+        f'    prototype = np.array({proto_str})\n'
+        '    if len(factor_vector) != len(prototype):\n'
+        '        return False\n'
+        '    vec = np.array(factor_vector)\n'
+        '    sim = np.dot(vec, prototype) / (np.linalg.norm(vec) * np.linalg.norm(prototype) + 1e-12)\n'
+        f'    threshold = {threshold_val}\n'
+        '    return bool(sim > threshold)'
+        )
         return cls.STATE_TEMPLATE.format(
             logic_id=logic_id,
             label=label,

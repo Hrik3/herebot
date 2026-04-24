@@ -44,7 +44,7 @@ class SymbolRegistry:
             json.dump(data, f, indent=2)
 
     def load(self, path: str):
-        """Load symbol metadata (semantics must be re‑registered separately)."""
+        """Load symbol metadata (semantics must be re-registered separately)."""
         if not os.path.exists(path):
             return
         with open(path, 'r') as f:
@@ -53,7 +53,7 @@ class SymbolRegistry:
             sym = Symbol(d['name'], d['sym_type'], arity=d['arity'], semantics=None)
             self.symbols[name] = sym
 # =============================================================================
-# RULE SCHEMA LEARNING – Variable‑based rule generalization
+# RULE SCHEMA LEARNING – Variable-based rule generalization
 # =============================================================================
 class Variable:
     """Represents a variable symbol in a rule schema (e.g., a, b)."""
@@ -112,7 +112,7 @@ class RuleSchema:
 class SchemaLearner:
     """
     Induces rule schemas from observed expressions and user feedback.
-    Uses anti‑unification to find common patterns with variables.
+    Uses anti-unification to find common patterns with variables.
     """
     def __init__(self, engine: 'ReasoningEngine'):
         self.engine = engine
@@ -141,7 +141,7 @@ class SchemaLearner:
                 ((expr1.left is None) == (expr2.left is None)) and
                 ((expr1.right is None) == (expr2.right is None))):
 
-            # Recursively anti‑unify children
+            # Recursively anti-unify children
             new_left = None
             new_right = None
             all_vars = []
@@ -173,11 +173,11 @@ class SchemaLearner:
         if gen is None or not vars_found:
             return None
 
-        # If we have a result expression, anti‑unify that too?
+        # If we have a result expression, anti-unify that too?
         # For now, we assume expr1 and expr2 are two instances of a pattern.
         # We'll create a schema: For all vars, pattern holds? But we need a conclusion.
         # In the example "1+1=2", we have two expressions: the left side (Add(1,1)) and the right side (2).
-        # So we anti‑unify left1 and left2? Actually we have one equation: left = right.
+        # So we anti-unify left1 and left2? Actually we have one equation: left = right.
         # To learn Add(a,b) = Sum(a,b), we need multiple examples of the form left = right.
         # We'll collect equations.
 
@@ -202,7 +202,7 @@ class SchemaLearner:
             # For now, skip; we'll implement later with more structure.
             pass
 
-        # Attempt to anti‑unify left with something? Not yet.
+        # Attempt to anti-unify left with something? Not yet.
 
         # For now, we just note the equation.
         pass
