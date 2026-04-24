@@ -1,7 +1,7 @@
 from importglobal import json,time,os,traceback,io,importlib,redirect_stderr,redirect_stdout
 from components.directory_handler import CODE_GEN_DIR, STATE_DIR
 # ------------------------------------------------------------
-# CodeGenerator – writes Python code from confirmed logic rules
+# CodeGenerator , writes Python code from confirmed logic rules
 # Enhanced with resource monitoring, error handling, and dynamic code generation
 # ------------------------------------------------------------
 class CodeGenerator:
@@ -16,6 +16,7 @@ class CodeGenerator:
 import logging
 import psutil  # for resource monitoring (optional, gracefully degrades)
 from functools import wraps
+import numpy as np
 '''
 
     # Template for behavioral rules (identity aliases, pronoun mappings)
@@ -52,7 +53,6 @@ def resource_monitor(func):
         return result
     return wrapper
 
-@resource_monitor
 def run(context: dict) -> str:
     """
     context: {{'user_input': str, 'tokens': list, 'state': dict, ...}}
@@ -114,7 +114,7 @@ def run(factor_vector: list) -> bool:
     """
     Returns True if the current factor vector matches this state.
     """
-    {body}
+{body}
     return False
 '''
     @classmethod
@@ -509,6 +509,12 @@ def run(context: dict) -> str:
             prototype = [0.0] * 10  # default dimension
         proto_str = "[" + ", ".join(f"{x:.4f}" for x in prototype) + "]"
         body = f'''    try:
+        if __import__('psutil').cpu_percent(interval=None) > 80:
+            logger.info("CPU load high, skipping state check")
+            return False
+    except Exception:
+        pass
+    try:
         import numpy as np
     except ImportError:
         return False  # cannot compute without numpy
@@ -519,7 +525,7 @@ def run(context: dict) -> str:
     vec = np.array(factor_vector)
     sim = np.dot(vec, prototype) / (np.linalg.norm(vec) * np.linalg.norm(prototype) + 1e-12)
     # Threshold can be adjusted dynamically
-    threshold = rule.get("threshold", 0.85) if isinstance(rule, dict) else 0.85
+    threshold = {rule.get("threshold", 0.85) if isinstance(rule, dict) else 0.85}
     return bool(sim > threshold)'''
         return cls.STATE_TEMPLATE.format(
             logic_id=logic_id,
