@@ -54,6 +54,7 @@ class StateManager:
         except Exception as e:
             print(f"[WARN] Could not create STATE_DIR: {e}")
         self.states = {}          # label -> factor_vector (np.array)
+        self.aliases = {}  # old_label -> new_label
         self._load_all_states()
 
         # Conflict management
@@ -82,7 +83,15 @@ class StateManager:
         with open(tmp, 'w') as f:
             json.dump(self.state_metadata, f, indent=2)
         os.replace(tmp, meta_path)
-
+    def resolve_label(self, label: str) -> str:
+        """Follow alias chain to get the final canonical label."""
+        visited = set()
+        while label in self.aliases:
+            if label in visited:
+                break  # safety against loops
+            visited.add(label)
+            label = self.aliases[label]
+        return label
     def _update_ref_dim(self):
         """Set reference dimension to the mode of all stored vectors."""
         dims = [len(vec) for vec in self.states.values()]
@@ -91,28 +100,37 @@ class StateManager:
         else:
             self.ref_dim = 10  # default base dimension
 
-    def _normalize_vector(self, vector: np.ndarray) -> np.ndarray:
-        """Pad or truncate vector to match reference dimension."""
-
-        # --- ensure attribute exists ---
-        if not hasattr(self, "ref_dim") or self.ref_dim is None:
-            if vector is not None and len(vector) > 0:
-                self.ref_dim = len(vector)
-            else:
-                self.ref_dim = 64   # safe fallback default
+    def _normalize_vector(self, vector: np.ndarray, *, align: bool = False) -> np.ndarray:
+        """
+        Normalize vector (unit norm). Optionally align to reference dimension.
+        
+        - Default: pure normalization (mathematically correct)
+        - align=True: normalize + pad/truncate to ref_dim
+        """
+        import numpy as np
 
         if vector is None or len(vector) == 0:
-            return np.zeros(self.ref_dim)
+            return np.array([])
 
-        if len(vector) < self.ref_dim:
-            return np.pad(vector, (0, self.ref_dim - len(vector)), 'constant')
+        vector = np.array(vector, dtype=float)
 
-        if len(vector) > self.ref_dim:
-            return vector[:self.ref_dim]
+        # --- normalize FIRST (always correct math) ---
+        norm = np.linalg.norm(vector)
+        if norm != 0:
+            vector = vector / norm
+
+        # --- alignment ONLY if explicitly requested ---
+        if align:
+            if not hasattr(self, "ref_dim") or self.ref_dim is None:
+                self.ref_dim = len(vector)
+
+            if len(vector) < self.ref_dim:
+                vector = np.pad(vector, (0, self.ref_dim - len(vector)))
+            elif len(vector) > self.ref_dim:
+                vector = vector[:self.ref_dim]
 
         return vector
-
-
+    
     def update_parameters_from_config(self):
         """Reload parameters from config (hot reload)."""
         pass
@@ -435,6 +453,9 @@ class StateManager:
             to_delete = l2
         else:
             to_delete = l1
+
+        # Preserve identity before deletion
+        self.aliases[to_delete] = winning_label
 
         if delete_other:
             self.delete_state(to_delete)
