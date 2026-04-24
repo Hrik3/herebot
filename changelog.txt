@@ -27,3 +27,5 @@ Traceback (most recent call last):
     vec1 = self.state_manager.states[l1]
 KeyError: 'chain forming'
 Attempting to recover and continue...
+
+describe precisely what this function does , which variables it intialises and uses perfect and strictly what it does , do not use uncertain wods and keep wordings deterministic formal tone and precise avoid use of words like many or several and give specific values,also include maths formula in KAtex if any 

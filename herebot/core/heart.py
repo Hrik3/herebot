@@ -313,7 +313,17 @@ class CuriosityEngine:
 
         predictive_gain = d.get('predictive_gain', 0.0)
         cost = d.get('energy_cost', 0.5)
-        effective_gain = predictive_gain * recent_usage / (1 + dt)
+
+        # ---- HARD OVERRIDE: high-value items survive regardless of usage ----
+        if predictive_gain * 2 > cost:
+            d['phase'] = 'active'
+            return
+
+        # normal effective gain
+        effective_gain = max(
+            predictive_gain * 0.5,
+            predictive_gain * recent_usage / (1 + dt)
+        )
 
         if effective_gain < cost:
             phase = d.get('phase', 'active')
@@ -329,7 +339,11 @@ class CuriosityEngine:
 
     def _align_factor_vector(self, vec: np.ndarray) -> np.ndarray:
         return align_vector(vec, len(self.meta_learner.factor_names))
-
+    def resolve_state_label(self, label):
+        if label is None:
+            return None
+        return self.state_manager.resolve_label(label)
+    
     def _memory_pressure_backoff(self):
         """Slow cognition when memory is low."""
         try:
@@ -413,6 +427,10 @@ class CuriosityEngine:
             except Exception as e:
                 print(f"Could not load identity aliases: {e}")
         guilt_path = os.path.join(STATE_DIR, 'guilt_tracker.pkl')
+        alias_path = os.path.join(STATE_DIR, 'state_aliases.json')
+        if os.path.exists(alias_path):
+            with open(alias_path, 'r') as f:
+                self.state_manager.aliases = json.load(f)
         if os.path.exists(guilt_path):
             self.guilt_tracker.load(guilt_path)
         # Ensure conscience_manager shares the same guilt_tracker instance
@@ -440,20 +458,34 @@ class CuriosityEngine:
                     data = json.load(f)
                 labels = data.get('labels', [])
                 if labels:
+                    self.current_state_labels = [
+                        self.resolve_state_label(l)
+                        for l in self.current_state_labels
+                        if self.resolve_state_label(l) is not None
+                    ]
                     self.current_state_labels = labels
                 else:
                     # backward compatibility with old single-label format
                     single = data.get('label')
                     if single:
+                        self.current_state_labels = [
+                            self.resolve_state_label(l)
+                            for l in self.current_state_labels
+                            if self.resolve_state_label(l) is not None
+                        ]
                         self.current_state_labels = [single]
                 emb = data.get('embedding')
                 if emb is not None:
                     self.current_state_embedding = np.array(emb)
             except Exception as e:
-                print(f"Could not load current state: {e}")
                 self.current_state_labels = []
                 self.current_state_embedding = None
         else:
+            self.current_state_labels = [
+                self.resolve_state_label(l)
+                for l in self.current_state_labels
+                if self.resolve_state_label(l) is not None
+            ]
             self.current_state_labels = []
             self.current_state_embedding = None
         token_profile_path = os.path.join(STATE_DIR, 'token_profile.pkl')
@@ -544,6 +576,9 @@ class CuriosityEngine:
                 'labels': self.current_state_labels,
                 'embedding': self.current_state_embedding.tolist() if self.current_state_embedding is not None else None
             }
+            alias_path = os.path.join(STATE_DIR, 'state_aliases.json')
+            with open(alias_path, 'w') as f:
+                json.dump(self.state_manager.aliases, f)
             with open(current_state_path, 'w') as f:
                 json.dump(data, f, indent=2)
         except Exception as e:
@@ -872,6 +907,7 @@ class CuriosityEngine:
         active_labels = []
         active_embeddings = []
         for label, sim in similar:
+            label = self.resolve_state_label(label)
             stored_vec = self.state_manager.states.get(label)
             if stored_vec is not None:
                 v1 = self.state_manager._normalize_vector(factor_vector)
@@ -988,6 +1024,7 @@ class CuriosityEngine:
         # update state usage
         if self.current_state_labels:
             current_label = self.current_state_labels[0]  # use first active state for metadata
+            current_label = self.resolve_state_label(current_label)
             meta = self.state_manager.state_metadata.get(current_label)
             if meta:
                 now = time.time()
@@ -1266,7 +1303,15 @@ class CuriosityEngine:
             compute_function=curiosity_compute_function,
             metadata={'source': 'control_space', 'original_factor': factor_name}
         )
-        print(f" [Drive Creation] New curiosity factor 'ctrl_{factor_name}' created from control dimension '{factor_name}'.")  
+        ctrl_name = f"ctrl_{factor_name}"
+
+        # Ensure metadata is tracked (for tests + consistency)
+        if ctrl_name not in self.meta_learner.factor_metadata:
+            self.meta_learner.factor_metadata[ctrl_name] = {
+                'source': 'control_space',
+                'original_factor': factor_name
+            }
+        print(f" [Drive Creation] New curiosity factor 'ctrl_{factor_name}' created from control dimension '{factor_name}'.")
 
     def build_world_model_transitions(self):
         """Scan episodic memory to build transition counts for the structured world model."""
@@ -1334,6 +1379,8 @@ class CuriosityEngine:
                     # Could add a factor to meta-learner
                     print(f"   [Prediction Error] Expected {self._expected_next_state}, got {actual_state}")
                 self._expected_next_state = None   # reset
+            
+            
             # ----------------- RESPONSE HANDLING -----------------
             # If we are in any waiting state, handle the response and return early.
             # All waiting-state handlers live here so the main pipeline is never entered
@@ -1359,7 +1406,7 @@ class CuriosityEngine:
                     "episode_reward": 0.0,
                     "factor_vector": {},
                 }
-
+#done
             # 2. Response feedback (emergent sentiment learning)
             if not self.chat_mode_active and self.expecting_response_feedback:
                 feedback_lower = text.lower()
@@ -1567,6 +1614,7 @@ class CuriosityEngine:
                     "episode_reward": 0.0,
                     "factor_vector": {},
                 }
+#done2
 
             # 8. Definition response (when last_asked_word is set and user provides a definition)
             handled_definition = False
@@ -1909,6 +1957,8 @@ class CuriosityEngine:
                     print("\n [Conflict Resolution] I have some unresolved state conflicts from previous idle introspection.")
                     for conflict in unresolved[:2]:
                         l1, l2 = conflict["labels"]
+                        l1 = self.state_manager.resolve_label(l1)
+                        l2 = self.state_manager.resolve_label(l2)
                         sim = conflict["similarity"]
                         shadow_label = conflict.get("resolution_label")
                         print(f"    Conflict: '{l1}' ↔ '{l2}' (similarity={sim:.3f})")
@@ -1929,8 +1979,16 @@ class CuriosityEngine:
                         elif choice == "3":
                             new_label1 = input(f"    New label for '{l1}': ").strip() or l1
                             new_label2 = input(f"    New label for '{l2}': ").strip() or l2
-                            vec1 = self.state_manager.states[l1]
-                            vec2 = self.state_manager.states[l2]
+                            l1 = self.state_manager.resolve_label(l1)
+                            l2 = self.state_manager.resolve_label(l2)
+
+                            vec1 = self.state_manager.states.get(l1)
+                            vec2 = self.state_manager.states.get(l2)
+
+                            if vec1 is None:
+                                raise ValueError(f"State '{l1}' not found even after resolution")
+                            if vec2 is None:
+                                raise ValueError(f"State '{l2}' not found even after resolution")
                             self.state_manager.save_state(new_label1, vec1)
                             self.state_manager.save_state(new_label2, vec2)
                             self.state_manager.delete_state(l1)
@@ -1948,12 +2006,27 @@ class CuriosityEngine:
                                 perm_label = input(f"    Permanent name for this merged state: ").strip() or f"merged_{l1}_{l2}"
                                 self.state_manager.save_state(perm_label, vec, is_shadow=False)
                                 self.state_manager.delete_state(shadow_label)
+                                # Preserve both original identities
+                                l1_res = self.state_manager.resolve_label(l1)
+                                l2_res = self.state_manager.resolve_label(l2)
+
+                                self.state_manager.aliases[l1_res] = perm_label
+                                self.state_manager.aliases[l2_res] = perm_label
+
                                 self.state_manager.resolve_conflict_permanently(conflict, perm_label, delete_other=True)
                                 print(f"    ✅ Shadow state promoted to '{perm_label}', both originals deleted.")
                         elif choice == "5":
                             # Show factor vectors and allow editing
-                            vec1 = self.state_manager.states[l1]
-                            vec2 = self.state_manager.states[l2]
+                            l1 = self.state_manager.resolve_label(l1)
+                            l2 = self.state_manager.resolve_label(l2)
+
+                            vec1 = self.state_manager.states.get(l1)
+                            vec2 = self.state_manager.states.get(l2)
+
+                            if vec1 is None:
+                                raise ValueError(f"State '{l1}' not found even after resolution")
+                            if vec2 is None:
+                                raise ValueError(f"State '{l2}' not found even after resolution")
                             # Align to same length (max of both)
                             max_len = max(len(vec1), len(vec2))
                             v1_aligned = np.pad(vec1, (0, max_len - len(vec1)), 'constant') if len(vec1) < max_len else vec1[:max_len]
@@ -2099,7 +2172,7 @@ class CuriosityEngine:
             self._last_action = system_reply
             # ---- Top‑down expectation: predict next state using world model ----
             if self.structured_world_model and self.current_state_labels:
-                current_state = self.current_state_labels[0] if self.current_state_labels else None
+                current_state = self.resolve_state_label(self.current_state_labels[0]) if self.current_state_labels else None
                 if current_state:
                     action = system_reply  # the action we just took
                     predicted_next = self.structured_world_model.predict_next_state(current_state, action)
@@ -2414,6 +2487,7 @@ class CuriosityEngine:
                 self.semantic_learner.observe_context(t, context)
             self.syntax_learner.add_sentence(user_input)
         print("    Offline consolidation complete.\n")
+#done3
     # =========================================================================
     # IDLE TASK METHODS (called by IdleReasoner)
     # =========================================================================
@@ -2427,6 +2501,7 @@ class CuriosityEngine:
             mem = psutil.virtual_memory()
             mem_percent = mem.percent
         except Exception:
+            print("psutil failed [throttle mode]")
             # if psutil fails, assume everything is fine (but throttle a little)
             return True, True, 0.8, 0.0, 0.0
 
@@ -3220,7 +3295,7 @@ class CuriosityEngine:
             print(f"   [Resource Aware] Skipping Social Cognition Simulation (CPU:{cpu_p:.1f}%  MEM:{mem_p:.1f}%).")
             return
 
-        print("🧑‍🤝‍🧑 [Social Cognition] Simulating user responses...")
+        print("[Social Cognition] Simulating user responses...")
         # collect feedback events (stored in reasoner.hypotheses with type 'shadow_trust')
         pos_features = []
         neg_features = []
@@ -3248,7 +3323,7 @@ class CuriosityEngine:
             print(f"   [Resource Aware] Skipping Long‑horizon Planning (CPU:{cpu_p:.1f}%  MEM:{mem_p:.1f}%).")
             return
 
-        print("🎭 [Long‑horizon Planning] Simulating multi‑turn dialogues...")
+        print("[Long‑horizon Planning] Simulating multi‑turn dialogues...")
         # simple rollout: start from a random state, simulate turns, accumulate reward
         if not self.state_manager.states:
             return
@@ -3737,7 +3812,7 @@ class CuriosityEngine:
 
         avg_loss = total_loss / len(batch)
         print(f"   [Language Model] Trained on {len(batch)} sentences, avg loss {avg_loss:.4f}, vocab size {self.language_model.vocab_size}, total steps {self.language_model.steps}")
-
+#done3
     def _build_lm_validation_set(self, size=50):
         """Create a validation set from recent episodes, excluding training data."""
         sentences = []

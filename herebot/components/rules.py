@@ -2,11 +2,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from components.resoning import ReasoningEngine
+    from core.heart import CuriosityEngine
 from importglobal import Optional, Dict, Any, Set, Callable, List,json,os,Tuple,dataclass,field,time
 from components.config_manager import ConfigManager
 from traits.traits_global import Expression
 from concepts.concepts_global import *
-from core.heart import CuriosityEngine
 # =============================================================================
 # RULE ENGINE & CONSTRAINT PROPAGATOR
 # =============================================================================

@@ -1,0 +1,37 @@
+{
+  "+": {
+    "name": "+",
+    "sym_type": "operator",
+    "arity": 2
+  },
+  "-": {
+    "name": "-",
+    "sym_type": "operator",
+    "arity": 2
+  },
+  "*": {
+    "name": "*",
+    "sym_type": "operator",
+    "arity": 2
+  },
+  "/": {
+    "name": "/",
+    "sym_type": "operator",
+    "arity": 2
+  },
+  "=": {
+    "name": "=",
+    "sym_type": "operator",
+    "arity": 2
+  },
+  ">": {
+    "name": ">",
+    "sym_type": "operator",
+    "arity": 2
+  },
+  "<": {
+    "name": "<",
+    "sym_type": "operator",
+    "arity": 2
+  }
+}
