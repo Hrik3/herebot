@@ -1,0 +1,11 @@
+{
+  "timestamp": 1777615151.4527795,
+  "user_input": "travel means car",
+  "system_response": "[synthetic]",
+  "factor_vector": {},
+  "factor_dim": 0,
+  "intrinsic_reward": 0.0,
+  "metadata": {
+    "synthetic": true
+  }
+}
