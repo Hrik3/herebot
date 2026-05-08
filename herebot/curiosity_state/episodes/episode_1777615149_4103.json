@@ -1,0 +1,11 @@
+{
+  "timestamp": 1777615149.4325054,
+  "user_input": "car has wheels",
+  "system_response": "[synthetic]",
+  "factor_vector": {},
+  "factor_dim": 0,
+  "intrinsic_reward": 0.0,
+  "metadata": {
+    "synthetic": true
+  }
+}

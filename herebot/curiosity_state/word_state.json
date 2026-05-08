@@ -89,42 +89,54 @@
     },
     "identitiy": {
       "means": 0.7315956816570548
+    },
+    "earth": {
+      "means": 0.688645756741142
+    },
+    "discovering": {
+      "means": 0.6902497396830031
+    },
+    "cars": {
+      "means": 0.7744458371127118
     }
   },
   "label_to_words": {
     "means": [
-      "what",
-      "mean",
-      "identitiy",
-      "is",
-      "hear",
-      "plane",
-      "cautious inquiry",
-      "confusion",
-      "how",
-      "girl",
       "cat",
+      "animal",
+      "unnamed_state",
+      "normal interaction",
+      "what",
       "pattern",
+      "identitiy",
+      "how",
+      "is",
+      "learning",
+      "on",
+      "resolution",
+      "discovering",
+      "mean",
       "maths",
-      "exploration",
-      "transport",
-      "identity",
-      "form",
+      "hear",
       "lily",
       "chain forming",
-      "learning",
-      "resolution",
+      "cautious inquiry",
       "means",
+      "confusion",
+      "form",
       "sound",
-      "on",
-      "normal interaction",
-      "unnamed_state",
-      "animal",
+      "girl",
+      "cars",
+      "transport",
+      "plane",
+      "earth",
+      "identity",
+      "exploration",
       "crow"
     ],
     "color": [
-      "blue",
-      "green"
+      "green",
+      "blue"
     ]
   },
   "conflict_history": []
