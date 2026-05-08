@@ -5,3 +5,5 @@ bot/
 chart/
 .envchart/
 .env
+key
+key.pub
