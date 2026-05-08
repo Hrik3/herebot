@@ -3,4 +3,5 @@ __pycache__/
 Addons/
 bot/
 chart/
+.envchart/
 .env
