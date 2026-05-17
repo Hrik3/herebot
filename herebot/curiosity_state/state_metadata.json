@@ -113,10 +113,10 @@
   },
   "maths": {
     "energy_cost": 1.0,
-    "recent_usage": 0.20145908801628543,
+    "recent_usage": 0.1,
     "predictive_gain": 1.0,
     "phase": "dormant",
-    "last_used": 1777614630.6753387,
+    "last_used": 1779038120.6531346,
     "confidence": 1.0
   },
   "shadow_exploration_stable_1774808232": {
@@ -293,6 +293,78 @@
     "predictive_gain": 1.0,
     "phase": "active",
     "last_used": 1777615155.927356,
+    "confidence": 1.0
+  },
+  "shadow_unnamed_state_identitiy_1779037856": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.0,
+    "predictive_gain": 1.0,
+    "phase": "active",
+    "last_used": 1779037856.2124033,
+    "confidence": 1.0
+  },
+  "shadow_unnamed_state_confusion_1779037856": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.0,
+    "predictive_gain": 1.0,
+    "phase": "active",
+    "last_used": 1779037856.3275743,
+    "confidence": 1.0
+  },
+  "shadow_resolution_learning_1779037856": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.0,
+    "predictive_gain": 1.0,
+    "phase": "active",
+    "last_used": 1779037856.3676047,
+    "confidence": 1.0
+  },
+  "shadow_resolution_normal interaction_1779037856": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.0,
+    "predictive_gain": 1.0,
+    "phase": "active",
+    "last_used": 1779037856.4581807,
+    "confidence": 1.0
+  },
+  "shadow_resolution_confusion_1779037856": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.0,
+    "predictive_gain": 1.0,
+    "phase": "active",
+    "last_used": 1779037856.4734483,
+    "confidence": 1.0
+  },
+  "shadow_learning_normal interaction_1779037856": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.0,
+    "predictive_gain": 1.0,
+    "phase": "active",
+    "last_used": 1779037856.4746566,
+    "confidence": 1.0
+  },
+  "shadow_maths_normal interaction_1779038118": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.0,
+    "predictive_gain": 1.0,
+    "phase": "active",
+    "last_used": 1779038118.885015,
+    "confidence": 1.0
+  },
+  "shadow_maths_identitiy_1779038118": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.0,
+    "predictive_gain": 1.0,
+    "phase": "active",
+    "last_used": 1779038118.9310346,
+    "confidence": 1.0
+  },
+  "shadow_normal interaction_identitiy_1779038118": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.0,
+    "predictive_gain": 1.0,
+    "phase": "active",
+    "last_used": 1779038118.958324,
     "confidence": 1.0
   }
 }
