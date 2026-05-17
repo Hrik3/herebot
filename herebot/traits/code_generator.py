@@ -592,12 +592,12 @@ def run(context: dict) -> str:
         Returns a string of code to execute, which should set a `response` variable.
         """
         if not action:
-            return '    response = "[acknowledged]"'
+            return '    response = "TPL.ACK.ACTION"'
 
         lines = []
         if "self_reference" in action:
             alias = action["self_reference"]
-            lines.append(f'    response = "I am {alias}."')
+            lines.append(f'    response = "TPL.IDENTITY.ALIAS alias=\'{alias}\'"')
         elif "say" in action:
             text = action["say"]
             lines.append(f'    response = "{text}"')
@@ -606,9 +606,9 @@ def run(context: dict) -> str:
             mod = action["modify_state"]
             for k, v in mod.items():
                 lines.append(f'    state["{k}"] = "{v}"')
-            lines.append('    response = "[state updated]"')
+            lines.append('    response = "TPL.STATE.UPDATED"')
         else:
-            lines.append('    response = "[acknowledged]"')
+            lines.append('    response = "TPL.ACK.ACTION"')
 
         # Add optional logging
         lines.append('    logger.debug(f"Action executed: {{response}}")')

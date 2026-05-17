@@ -253,7 +253,7 @@ class HeartLanguageMixin:
     def idle_reflection(self) -> str:
         """Autonomous introspection – now includes current state label if known."""
         if not self.word_history:
-            return "I have no knowledge yet. I wonder what the world is like?"
+            return "TPL.IDLE.EMPTY"
 
         total_words = len(self.word_history)
         avg_entropy = np.mean([self.concept_model.entropy_word(w) for w in self.word_history])
@@ -274,28 +274,27 @@ class HeartLanguageMixin:
             hypothesis = self.reasoner.generate_hypothesis(most_curious, {})
 
         thought = (
-            f"[Idle Meta-Thought] I know {total_words} words and have formed {total_concepts} latent concepts. "
-            f"My average uncertainty is {avg_entropy:.3f}. "
-            f"I have accumulated {self.reward_tracker.total_reward:.2f} intrinsic reward so far. "
+            f"TPL.IDLE.STATS words={total_words} concepts={total_concepts} "
+            f"avg_unc={avg_entropy:.3f} reward={self.reward_tracker.total_reward:.2f} "
         )
 
         # ---- Mention current state if we have a recent factor vector ----
         num_states = len(self.state_manager.states)
-        thought += f"I have learned {num_states} distinct interaction states. "
+        thought += f"states={num_states} "
 
         if most_curious:
             thought += (
-                f"The word I'm most curious about is '{most_curious}' (score={word_scores[most_curious]:.3f}). "
+                f"curious='{most_curious}' score={word_scores[most_curious]:.3f} "
                 f"{hypothesis} "
-                f"I should ask about it to reduce my GP uncertainty and Bayesian surprise."
+                f"action=ask"
             )
         else:
-            thought += "I have no strong curiosities at the moment."
+            thought += "curious=none"
 
         if np.random.rand() < 0.3:
             weights = self.meta_learner.get_weights()
             top_factor = max(weights, key=lambda k: abs(weights[k]))
-            thought += f" I've learned that '{top_factor}' is currently the most informative curiosity factor."
+            thought += f" top_factor='{top_factor}'"
 
         return thought
 # ------------------------------------------------------------

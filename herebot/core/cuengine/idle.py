@@ -412,15 +412,15 @@ class HeartIdleMixin:
         max_queue = max(1, int(10 * throttle))
         for item, ig, typ in all_candidates[:max_queue]:
             if typ == "definition":
-                query = f"What does '{item}' mean?"
+                query = f"TPL.ASK.DEF target='{item}'?"
             elif typ == "synonym":
                 hyp = next((h for h in self.reasoner.hypotheses if h.get('word')==item and h.get('type')=='synonym'), None)
                 if hyp:
-                    query = f"Is '{item}' similar to '{hyp['candidate']}'?"
+                    query = f"TPL.ASK.SYN word='{item}' candidate='{hyp['candidate']}'?"
                 else:
                     continue
             elif typ == "sentence_meaning":
-                query = f"What does the sentence '{item}' mean?"
+                query = f"TPL.ASK.SENT sentence='{item}'?"
             else:
                 continue
             self.research_queue.append({
@@ -827,9 +827,9 @@ class HeartIdleMixin:
         max_items = max(1, int(20 * throttle))
         for word, ig, typ in frontiers[:max_items]:
             if typ == "definition":
-                query = f"What does '{word}' mean?"
+                query = f"TPL.ASK.DEF target='{word}'?"
             else:
-                query = f"Could you clarify '{word}'?"
+                query = f"TPL.ASK.CLARIFY target='{word}'?"
             self.research_queue.append({
                 'query': query,
                 'target': word,
