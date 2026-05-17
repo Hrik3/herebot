@@ -1,6 +1,55 @@
 from ..curioimport import *
 
 class HeartProcessingMixin:
+    def _feedback_reward_magnitude(self, entry=None) -> float:
+        """Return the feedback reward magnitude saved for the rated turn."""
+        magnitude = None
+        if entry is not None:
+            try:
+                magnitude = entry.metadata.get('reward_magnitude')
+            except Exception:
+                magnitude = None
+        if magnitude is None:
+            magnitude = getattr(self.reward_tracker, 'episode_reward', 0.0)
+        try:
+            return abs(float(magnitude or 0.0))
+        except Exception:
+            return 0.0
+
+    def _apply_feedback_rating(self, rating: str, magnitude: float, source: str) -> float:
+        """Apply signed reward for explicit user feedback."""
+        return self.reward_tracker.apply_feedback_reward(rating, magnitude, source=source)
+
+    def _ask_shadow_differentiation_link(self, proposal):
+        if not proposal:
+            return
+        proposal['asked'] = True
+        self.expecting_shadow_diff_confirmation = True
+        self.pending_shadow_diff_key = proposal['key']
+        print(f" Herebot> {proposal['text']}")
+
+    def _propose_negative_feedback_link(
+        self,
+        context_tokens=None,
+        response_tokens=None,
+        source: str = "feedback",
+        rejected_response: str = None,
+        metadata: dict = None,
+    ):
+        condition = None
+        if self.current_state_labels:
+            condition = self.current_state_labels[0]
+        proposal = self.reasoner.propose_shadow_differentiation_link(
+            context_tokens=context_tokens or [],
+            response_tokens=response_tokens or [],
+            condition=condition,
+            source=source,
+            rejected_response=rejected_response,
+            metadata=metadata or {},
+        )
+        self._ask_shadow_differentiation_link(proposal)
+        return proposal
+
     def build_world_model_transitions(self):
         """Scan episodic memory to build transition counts for the structured world model."""
         episodes = self.episodic_memory.episodes[-500:]
@@ -95,6 +144,33 @@ class HeartProcessingMixin:
                     "factor_vector": {},
                 }
 #done
+            # 1.5 Shadow differentiation proposal confirmation
+            if not self.chat_mode_active and getattr(self, "expecting_shadow_diff_confirmation", False):
+                feedback_lower = text.lower()
+                is_positive = any(kw in feedback_lower for kw in ['yes', 'correct', 'right', 'yeah', 'true', 'yep', 'ok', 'sure', 'confirm'])
+                is_negative = any(kw in feedback_lower for kw in ['no', 'wrong', 'incorrect', 'not', 'nope', 'never', 'reject'])
+                if is_positive:
+                    self.reasoner.commit_shadow_differentiation_link(self.pending_shadow_diff_key)
+                    artifact = "Shadow differentiation link committed."
+                elif is_negative:
+                    self.reasoner.reject_shadow_differentiation_link(self.pending_shadow_diff_key)
+                    artifact = "Shadow differentiation link rejected."
+                else:
+                    artifact = "Shadow differentiation link ignored."
+                self.expecting_shadow_diff_confirmation = False
+                self.pending_shadow_diff_key = None
+                return {
+                    "ci_report": {},
+                    "phon_score": 0,
+                    "diagnostic": {},
+                    "token_analyses": [],
+                    "curiosity_artifacts": [artifact],
+                    "meta_weights": self.meta_learner.get_weights(),
+                    "total_intrinsic_reward": self.reward_tracker.total_reward,
+                    "episode_reward": 0.0,
+                    "factor_vector": {},
+                }
+
             # 2. Response feedback (emergent sentiment learning)
             if not self.chat_mode_active and self.expecting_response_feedback:
                 feedback_lower = text.lower()
@@ -111,11 +187,23 @@ class HeartProcessingMixin:
                     entry.rating = rating
                     entry.metadata['feedback_timestamp'] = time.time()
                     entry.metadata['feedback_text'] = text
+                    magnitude = self._feedback_reward_magnitude(entry)
+                    feedback_reward = self._apply_feedback_rating(rating, magnitude, source='response_feedback')
+                    entry.metadata['feedback_reward'] = feedback_reward
+                    entry.metadata['reward_magnitude'] = magnitude
                     self.reasoner.add_feedback(entry)
                     print(f"📊 [Feedback Recorded] User rated response as: {rating}")
 
                     if 'positive' in rating and hasattr(self, '_last_factor_vector'):
                         self._reinforce_identity(self._last_factor_vector, reward_signal=0.2)
+                    elif 'negative' in rating:
+                        self._propose_negative_feedback_link(
+                            context_tokens=entry.context_tokens,
+                            response_tokens=entry.response_tokens,
+                            source='response_feedback',
+                            rejected_response=entry.system_response,
+                            metadata=entry.metadata.copy(),
+                        )
                 else:
                     print(f"🌑 [Feedback] No clear rating detected, ignoring.")
 
@@ -174,6 +262,7 @@ class HeartProcessingMixin:
                 feedback_lower = text.lower()
                 is_positive = any(kw in feedback_lower for kw in ['yes', 'correct', 'right', 'yeah', 'true', 'yep', 'ok', 'sure', 'confirm'])
                 is_negative = any(kw in feedback_lower for kw in ['no', 'wrong', 'incorrect', 'not', 'nope', 'never'])
+                is_neutral = any(kw in feedback_lower for kw in ['neutral', 'maybe', 'unsure', 'average'])
 
                 if self.pending_logic_doubt:
                     logic_id = self.pending_logic_doubt['logic_id']
@@ -184,15 +273,27 @@ class HeartProcessingMixin:
                         self.logic_inheritance.confirm_logic(logic_id, is_correct=False)
                         print(f"❌ [Logic Rejected] User denied logic: {logic_id}")
 
-                    if is_positive or is_negative:
+                    if is_positive or is_negative or is_neutral:
+                        rating = "positive" if is_positive else "negative" if is_negative else "neutral"
+                        magnitude = self._feedback_reward_magnitude()
+                        self._apply_feedback_rating(rating, magnitude, source='logic_feedback')
                         self.generated_code_feedback.add_feedback(
                             logic_id,
-                            "positive" if is_positive else "negative",
+                            rating,
                             {"factor_dict": self._last_factor_dict.copy() if self._last_factor_dict else {}}
                         )
                         if self._last_factor_dict is not None:
-                            rating = "positive" if is_positive else "negative"
                             self.guilt_tracker.update_guilt(rating, self._last_factor_dict)
+                        if is_negative:
+                            rule = self.pending_logic_doubt.get('rule', {})
+                            context_tokens = self._tokenize(str(rule.get('description', logic_id)))
+                            self._propose_negative_feedback_link(
+                                context_tokens=context_tokens,
+                                response_tokens=[],
+                                source='logic_feedback',
+                                rejected_response=str(rule),
+                                metadata={'logic_id': logic_id, 'reward_magnitude': magnitude},
+                            )
                     else:
                         print(f"🌑 [Logic Shadow] No clear confirmation for logic: {logic_id}")
 
@@ -236,14 +337,26 @@ class HeartProcessingMixin:
                 feedback_lower = text.lower()
                 is_positive = any(kw in feedback_lower for kw in ['yes', 'correct', 'right', 'yeah', 'true', 'yep'])
                 is_negative = any(kw in feedback_lower for kw in ['no', 'wrong', 'incorrect', 'not', 'nope'])
+                is_neutral = any(kw in feedback_lower for kw in ['neutral', 'ok', 'fine', 'average', 'maybe'])
 
-                if is_positive or is_negative:
+                if is_positive or is_negative or is_neutral:
+                    rating = "positive" if is_positive else "negative" if is_negative else "neutral"
+                    magnitude = self._feedback_reward_magnitude()
+                    self._apply_feedback_rating(rating, magnitude, source='trust_feedback')
                     if is_positive:
                         print(f"✅ [Positive Feedback] User confirmed my attempt: '{self.feedback_attempt_response}'")
                         if hasattr(self, '_last_factor_vector'):
                             self._reinforce_identity(self._last_factor_vector, reward_signal=0.4)
-                    else:
+                    elif is_negative:
                         print(f"❌ [Negative Feedback] User corrected my attempt: '{self.feedback_attempt_response}'")
+                        prior_input = self.interaction_history[-2] if len(self.interaction_history) >= 2 else ""
+                        self._propose_negative_feedback_link(
+                            context_tokens=self._tokenize(prior_input),
+                            response_tokens=self._tokenize(self.feedback_attempt_response or ""),
+                            source='trust_feedback',
+                            rejected_response=self.feedback_attempt_response,
+                            metadata={'reward_magnitude': magnitude},
+                        )
                 else:
                     print(f"🌑 [Shadow Attempt] No feedback given for: '{self.feedback_attempt_response}'")
                     if self.feedback_attempt_response:
@@ -670,13 +783,17 @@ class HeartProcessingMixin:
                             l1 = self.state_manager.resolve_label(l1)
                             l2 = self.state_manager.resolve_label(l2)
 
-                            vec1 = self.state_manager.states.get(l1)
-                            vec2 = self.state_manager.states.get(l2)
+                            l1_found, vec1 = self.state_manager.get_state_vector(l1)
+                            l2_found, vec2 = self.state_manager.get_state_vector(l2)
 
-                            if vec1 is None:
-                                raise ValueError(f"State '{l1}' not found even after resolution")
-                            if vec2 is None:
-                                raise ValueError(f"State '{l2}' not found even after resolution")
+                            if vec1 is None or vec2 is None:
+                                reason = f"missing:{l1 if vec1 is None else l2}"
+                                self.state_manager.mark_conflict_stale(conflict, reason)
+                                self.state_manager.refresh_conflicts()
+                                print(f"    TPL.STATE.CONFLICT.STALE reason='{reason}'")
+                                continue
+                            l1 = l1_found
+                            l2 = l2_found
                             self.state_manager.save_state(new_label1, vec1)
                             self.state_manager.save_state(new_label2, vec2)
                             self.state_manager.delete_state(l1)
@@ -708,13 +825,17 @@ class HeartProcessingMixin:
                             l1 = self.state_manager.resolve_label(l1)
                             l2 = self.state_manager.resolve_label(l2)
 
-                            vec1 = self.state_manager.states.get(l1)
-                            vec2 = self.state_manager.states.get(l2)
+                            l1_found, vec1 = self.state_manager.get_state_vector(l1)
+                            l2_found, vec2 = self.state_manager.get_state_vector(l2)
 
-                            if vec1 is None:
-                                raise ValueError(f"State '{l1}' not found even after resolution")
-                            if vec2 is None:
-                                raise ValueError(f"State '{l2}' not found even after resolution")
+                            if vec1 is None or vec2 is None:
+                                reason = f"missing:{l1 if vec1 is None else l2}"
+                                self.state_manager.mark_conflict_stale(conflict, reason)
+                                self.state_manager.refresh_conflicts()
+                                print(f"    TPL.STATE.CONFLICT.STALE reason='{reason}'")
+                                continue
+                            l1 = l1_found
+                            l2 = l2_found
                             # Align to same length (max of both)
                             max_len = max(len(vec1), len(vec2))
                             v1_aligned = np.pad(vec1, (0, max_len - len(vec1)), 'constant') if len(vec1) < max_len else vec1[:max_len]
@@ -890,7 +1011,12 @@ class HeartProcessingMixin:
                         rating='pending',
                         context_tokens=tokens,
                         response_tokens=self._tokenize(system_reply),
-                        response_template_id=template_id
+                        response_template_id=template_id,
+                        metadata={
+                            'reward_magnitude': abs(float(getattr(self.reward_tracker, 'episode_reward', 0.0))),
+                            'current_state_labels': list(self.current_state_labels),
+                            'triplets': getattr(self.reasoner, 'last_observed_triplets', []),
+                        }
                     )
                     self.pending_feedback_context = entry
                     self.expecting_response_feedback = True

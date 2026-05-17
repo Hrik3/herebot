@@ -113,10 +113,10 @@
   },
   "maths": {
     "energy_cost": 1.0,
-    "recent_usage": 0.1,
+    "recent_usage": 0.1664727391622588,
     "predictive_gain": 1.0,
     "phase": "dormant",
-    "last_used": 1779038120.6531346,
+    "last_used": 1779042778.187087,
     "confidence": 1.0
   },
   "shadow_exploration_stable_1774808232": {

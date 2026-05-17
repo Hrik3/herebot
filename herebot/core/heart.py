@@ -158,6 +158,8 @@ class CuriosityEngine(HeartPersistenceMixin, HeartCuriosityMixin, HeartProcessin
         # ---- Logic doubt feedback ----
         self.expecting_logic_feedback = False
         self.pending_logic_doubt = None
+        self.expecting_shadow_diff_confirmation = False
+        self.pending_shadow_diff_key = None
 
         # ---- Procedure learning ----
         self.expecting_procedure_steps = False

@@ -12,6 +12,7 @@ Hardcoded response templates use the `TPL.` prefix. Text without this prefix is 
 - `TPL.ASK.CONN.ROLE` - ask what role a connector has.
 - `TPL.ASK.CONSCIENCE` - ask whether a conscience rule is appropriate.
 - `TPL.ASK.DEF` - ask for a word or phrase definition.
+- `TPL.ASK.DIFF.LINK` - ask whether a shadow differentiation link should be committed.
 - `TPL.ASK.FB` - ask for positive/negative/neutral feedback.
 - `TPL.ASK.ISA` - ask whether subject is an object.
 - `TPL.ASK.LOGIC` - ask for confirmation of a generated logic rule.
@@ -72,6 +73,7 @@ Hardcoded response templates use the `TPL.` prefix. Text without this prefix is 
 - `TPL.STATE.CONF` - confidence state.
 - `TPL.STATE.CONFLICT.MENU` - state conflict menu.
 - `TPL.STATE.CONFLICT.PENDING` - pending state conflict.
+- `TPL.STATE.CONFLICT.STALE` - stale state conflict skipped.
 - `TPL.STATE.CONTEXT` - current state context.
 - `TPL.STATE.CURIOUS` - curiosity state.
 - `TPL.STATE.CURRENT` - current state label.

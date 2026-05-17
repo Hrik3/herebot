@@ -465,10 +465,13 @@ class ActionGenerator:
 
         # --- Priority 2: Pending hypotheses (synonym, category, analogy, inference) ---
         for hyp in self.reasoner.hypotheses:
-            if hyp.get('type') in ('synonym', 'category', 'analogy', 'inference') and not hyp.get('asked', False):
+            if hyp.get('type') in ('synonym', 'category', 'analogy', 'inference', 'shadow_differentiation_link') and not hyp.get('asked', False):
                 hyp['asked'] = True
                 hyp['last_used'] = time.time()
                 hyp['recent_usage'] = hyp.get('recent_usage', 0.0) * 0.99 + 0.1
+                if hyp.get('type') == 'shadow_differentiation_link':
+                    self.engine.expecting_shadow_diff_confirmation = True
+                    self.engine.pending_shadow_diff_key = hyp.get('key')
                 return hyp['text']
 
         # --- Priority 2.5: Parallel reasoning thoughts (if multiple chains available) ---

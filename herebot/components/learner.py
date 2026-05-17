@@ -363,6 +363,7 @@ class KnowledgeGraph:
         self.nodes = {}          # node_id -> {'type': str, 'label': str, 'embedding': np.ndarray (optional), 'metadata': dict}
         self.edges = defaultdict(lambda: defaultdict(dict))  # node1 -> node2 -> {rel_type: confidence, ...} (supports multiple relation types between same nodes)
         self.edge_list = []       # list of (node1, node2, rel_type, confidence, timestamp) for fast iteration
+        self.edge_metadata = {}   # "node1|node2|rel_type" -> metadata
         self.node_counter = 0
         self._load()
 
@@ -445,6 +446,8 @@ class KnowledgeGraph:
             return
         # Update the adjacency dict
         self.edges[node1][node2][rel_type] = confidence
+        if metadata:
+            self.edge_metadata[f"{node1}|{node2}|{rel_type}"] = metadata
         # Also store in reverse direction for undirected? We'll treat as directed unless specified.
         # For many relations, we want symmetric (synonym, similar) but we'll store both ways if needed.
         # We'll store a separate list for easy iteration
@@ -452,6 +455,8 @@ class KnowledgeGraph:
         # Optional: add reverse edge for symmetric relations
         if rel_type in ['synonym', 'similar', 'co_occur']:
             self.edges[node2][node1][rel_type] = confidence
+            if metadata:
+                self.edge_metadata[f"{node2}|{node1}|{rel_type}"] = metadata
 
     def get_neighbors(self, node_id: str, rel_type: Optional[str] = None) -> List[Tuple[str, str, float]]:
         """Return list of (neighbor_id, rel_type, confidence) for given node."""
@@ -586,6 +591,7 @@ class KnowledgeGraph:
         data = {
             'nodes': nodes_serial,
             'edges': edges_serial,
+            'edge_metadata': self.edge_metadata,
             'node_counter': self.node_counter
         }
         tmp = path + ".tmp"
@@ -601,6 +607,7 @@ class KnowledgeGraph:
         nodes_serial = data['nodes']
         edges_serial = data['edges']
         self.node_counter = data.get('node_counter', 0)
+        self.edge_metadata = data.get('edge_metadata', {})
         self.nodes = {}
         for nid, ndata in nodes_serial.items():
             nd = ndata.copy()
