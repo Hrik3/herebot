@@ -92,6 +92,41 @@ class StateManager:
             visited.add(label)
             label = self.aliases[label]
         return label
+
+    def get_state_vector(self, label: str, include_shadows: bool = True):
+        """Safely resolve a state vector across labels, aliases, and shadows."""
+        candidates = []
+
+        def add_candidate(value):
+            if value and value not in candidates:
+                candidates.append(value)
+
+        add_candidate(label)
+        add_candidate(self.resolve_label(label))
+        add_candidate(self.aliases.get(label))
+        for old_label, new_label in self.aliases.items():
+            if new_label == label:
+                add_candidate(old_label)
+                add_candidate(self.resolve_label(old_label))
+
+        stores = [self.states]
+        if include_shadows:
+            stores.append(self.shadow_states)
+
+        for candidate in candidates:
+            for store in stores:
+                if candidate in store:
+                    return candidate, store[candidate]
+        return None, None
+
+    def mark_conflict_stale(self, conflict: Dict, reason: str):
+        """Mark a conflict stale when its labels no longer resolve to vectors."""
+        conflict["resolved"] = True
+        conflict["stale"] = True
+        conflict["resolution_type"] = "stale"
+        conflict["resolution_label"] = reason
+        conflict["stale_reason"] = reason
+        self._save_conflicts()
     def _update_ref_dim(self):
         """Set reference dimension to the mode of all stored vectors."""
         dims = [len(vec) for vec in self.states.values()]
@@ -375,6 +410,10 @@ class StateManager:
             if key in existing_map and existing_map[key].get("resolved", False):
                 c["resolved"] = True
                 c["resolution_label"] = existing_map[key].get("resolution_label")
+                c["resolution_type"] = existing_map[key].get("resolution_type")
+                if existing_map[key].get("stale", False):
+                    c["stale"] = True
+                    c["stale_reason"] = existing_map[key].get("stale_reason")
             merged.append(c)
 
         self.conflicts = merged
@@ -584,4 +623,3 @@ class FactorEngine:
             if not isinstance(v, (int, float)) or np.isnan(v) or np.isinf(v):
                 result[k] = 0.0
         return result
-

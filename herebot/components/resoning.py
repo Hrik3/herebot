@@ -186,6 +186,7 @@ class ReasoningEngine:
         self.procedural_learner = ProceduralLearner(self)
         # ---- Pattern observer: learns structural words + triplet extraction ----
         self.pattern_observer = PatternObserver()
+        self.last_observed_triplets = []
     # ------------------------------------------------------------------
     # Unification and constraint solving
     # ------------------------------------------------------------------
@@ -417,7 +418,7 @@ class ReasoningEngine:
                             metadata={'source': 'user', 'timestamp': time.time()})
 
         # --- Pattern observer: learn structural words from positional statistics ---
-        self.pattern_observer.observe(tokens)
+        self.last_observed_triplets = self.pattern_observer.observe(tokens)
 
         # --- NEW: Structural pattern learning ---
         pattern = self.structural_patterns.extract_pattern(sentence, tokens)
@@ -505,6 +506,156 @@ class ReasoningEngine:
             'last_used': None,
         }
         self.hypotheses.append(hyp)
+
+    def _shadow_link_content_tokens(self, tokens: List[str]) -> List[str]:
+        """Return compact content tokens for shadow differentiation proposals."""
+        if not tokens:
+            return []
+        clean = []
+        for token in tokens:
+            token = str(token).strip().lower()
+            if not token or token in {'tpl', 'ask', 'def', 'mean', 'fb'}:
+                continue
+            clean.append(token)
+        try:
+            content = self.pattern_observer.filter_content(clean)
+        except Exception:
+            content = clean
+        return content or clean
+
+    def _one_hop_neighbor_labels(self, tokens: List[str]) -> List[str]:
+        labels = []
+        seen = set(tokens)
+        for token in tokens:
+            nid = (
+                self.knowledge_graph.get_node_id(token, "word")
+                or self.knowledge_graph.get_node_id(token, "phrase")
+            )
+            if not nid:
+                continue
+            for neighbor_id, rel_type, confidence in self.knowledge_graph.get_neighbors(nid):
+                label = self.knowledge_graph.nodes.get(neighbor_id, {}).get('label')
+                if label and label not in seen and label not in labels:
+                    labels.append(label)
+                if len(labels) >= 4:
+                    return labels
+        return labels
+
+    def propose_shadow_differentiation_link(
+        self,
+        context_tokens: List[str] = None,
+        response_tokens: List[str] = None,
+        condition: str = None,
+        source: str = "feedback",
+        rejected_response: str = None,
+        metadata: Dict = None,
+    ) -> Optional[Dict]:
+        """
+        Create a pending hypothesis for a differentiating relation without
+        committing the edge to the knowledge graph.
+        """
+        context_tokens = self._shadow_link_content_tokens(context_tokens or [])
+        response_tokens = self._shadow_link_content_tokens(response_tokens or [])
+        triplets = list((metadata or {}).get('triplets') or self.last_observed_triplets or [])
+
+        subject = None
+        object_ = None
+        if len(triplets) >= 2:
+            h1, _c1, t1 = triplets[-2]
+            h2, _c2, t2 = triplets[-1]
+            subject = f"{h1} {t1}".strip()
+            object_ = f"{h2} {t2}".strip()
+        elif len(context_tokens) >= 4:
+            subject = " ".join(context_tokens[:2])
+            object_ = " ".join(context_tokens[2:4])
+        elif len(context_tokens) >= 2:
+            subject = context_tokens[0]
+            neighbors = self._one_hop_neighbor_labels(context_tokens)
+            object_ = " ".join(neighbors[:2]) if neighbors else context_tokens[1]
+        elif context_tokens and response_tokens:
+            subject = context_tokens[0]
+            object_ = response_tokens[0]
+
+        if not subject or not object_ or subject == object_:
+            return None
+
+        if condition is None:
+            condition = " ".join(context_tokens[:3]) if context_tokens else "feedback"
+
+        key = f"shadow_diff:{subject}:{object_}:{condition}"
+        for hyp in self.hypotheses:
+            if hyp.get('key') == key:
+                return hyp if hyp.get('status', 'pending') == 'pending' else None
+
+        hyp = {
+            'key': key,
+            'type': 'shadow_differentiation_link',
+            'subject': subject,
+            'object': object_,
+            'predicate': 'different_context',
+            'condition': condition,
+            'confidence': 0.25,
+            'status': 'pending',
+            'source': source,
+            'rejected_response': rejected_response,
+            'metadata': metadata or {},
+            'text': f"TPL.ASK.DIFF.LINK subject='{subject}' object='{object_}' condition='{condition}'?",
+            'asked': False,
+            'energy_cost': 0.4,
+            'recent_usage': 0.0,
+            'predictive_gain': 0.5,
+            'phase': 'active',
+            'last_used': None,
+        }
+        self.hypotheses.append(hyp)
+        return hyp
+
+    def _get_shadow_differentiation_hypothesis(self, proposal) -> Optional[Dict]:
+        if isinstance(proposal, dict):
+            return proposal
+        for hyp in self.hypotheses:
+            if hyp.get('key') == proposal and hyp.get('type') == 'shadow_differentiation_link':
+                return hyp
+        return None
+
+    def commit_shadow_differentiation_link(self, proposal) -> bool:
+        """Commit a pending differentiation proposal as low-confidence graph edges."""
+        hyp = self._get_shadow_differentiation_hypothesis(proposal)
+        if not hyp or hyp.get('status') in ('committed', 'rejected'):
+            return False
+        subject = hyp.get('subject')
+        object_ = hyp.get('object')
+        if not subject or not object_:
+            return False
+        n1 = self.knowledge_graph.get_node_id(subject, "phrase")
+        if n1 is None:
+            n1 = self.knowledge_graph.add_node(subject, "phrase")
+        n2 = self.knowledge_graph.get_node_id(object_, "phrase")
+        if n2 is None:
+            n2 = self.knowledge_graph.add_node(object_, "phrase")
+        metadata = {
+            'condition': hyp.get('condition'),
+            'source': hyp.get('source'),
+            'rejected_response': hyp.get('rejected_response'),
+            'proposal_key': hyp.get('key'),
+        }
+        confidence = hyp.get('confidence', 0.25)
+        self.knowledge_graph.add_edge(n1, n2, 'different_context', confidence=confidence, metadata=metadata)
+        self.knowledge_graph.add_edge(n2, n1, 'different_context', confidence=confidence, metadata=metadata)
+        hyp['status'] = 'committed'
+        hyp['asked'] = True
+        hyp['committed_at'] = time.time()
+        return True
+
+    def reject_shadow_differentiation_link(self, proposal) -> bool:
+        """Reject a pending differentiation proposal without touching the graph."""
+        hyp = self._get_shadow_differentiation_hypothesis(proposal)
+        if not hyp:
+            return False
+        hyp['status'] = 'rejected'
+        hyp['asked'] = True
+        hyp['rejected_at'] = time.time()
+        return True
 
     def infer_possible_meanings(self, word: str) -> List[str]:
         if word not in self.co_occurrence:

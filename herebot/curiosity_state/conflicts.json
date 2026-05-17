@@ -9,7 +9,8 @@
     "words2": [],
     "resolved": true,
     "resolution_label": "shadow_exploration_unnamed_state_1775067434",
-    "timestamp": 1779038119.1060326
+    "timestamp": 1779042776.7759576,
+    "resolution_type": null
   },
   {
     "labels": [
@@ -21,7 +22,8 @@
     "words2": [],
     "resolved": true,
     "resolution_label": "shadow_exploration_resolution_1775067434",
-    "timestamp": 1779038119.1060545
+    "timestamp": 1779042776.775976,
+    "resolution_type": null
   },
   {
     "labels": [
@@ -33,7 +35,8 @@
     "words2": [],
     "resolved": true,
     "resolution_label": "shadow_learning_exploration_1774755537",
-    "timestamp": 1779038119.1060708
+    "timestamp": 1779042776.775986,
+    "resolution_type": null
   },
   {
     "labels": [
@@ -45,7 +48,8 @@
     "words2": [],
     "resolved": true,
     "resolution_label": "shadow_exploration_confusion_1774755676",
-    "timestamp": 1779038119.1061368
+    "timestamp": 1779042776.776021,
+    "resolution_type": null
   },
   {
     "labels": [
@@ -57,7 +61,8 @@
     "words2": [],
     "resolved": true,
     "resolution_label": "shadow_unnamed_state_resolution_1777615147",
-    "timestamp": 1779038119.1061509
+    "timestamp": 1779042776.7760339,
+    "resolution_type": null
   },
   {
     "labels": [
@@ -69,7 +74,8 @@
     "words2": [],
     "resolved": true,
     "resolution_label": "shadow_unnamed_state_learning_1777615147",
-    "timestamp": 1779038119.1061602
+    "timestamp": 1779042776.7760427,
+    "resolution_type": null
   },
   {
     "labels": [
@@ -81,7 +87,8 @@
     "words2": [],
     "resolved": true,
     "resolution_label": "shadow_unnamed_state_normal interaction_1777615147",
-    "timestamp": 1779038119.1061766
+    "timestamp": 1779042776.776059,
+    "resolution_type": null
   },
   {
     "labels": [
@@ -93,7 +100,8 @@
     "words2": [],
     "resolved": true,
     "resolution_label": "shadow_unnamed_state_identitiy_1779037856",
-    "timestamp": 1779038119.1061854
+    "timestamp": 1779042776.776067,
+    "resolution_type": null
   },
   {
     "labels": [
@@ -105,7 +113,8 @@
     "words2": [],
     "resolved": true,
     "resolution_label": "shadow_unnamed_state_confusion_1779037856",
-    "timestamp": 1779038119.1061943
+    "timestamp": 1779042776.7760756,
+    "resolution_type": null
   },
   {
     "labels": [
@@ -117,7 +126,8 @@
     "words2": [],
     "resolved": true,
     "resolution_label": "shadow_resolution_learning_1779037856",
-    "timestamp": 1779038119.1062067
+    "timestamp": 1779042776.7760878,
+    "resolution_type": null
   },
   {
     "labels": [
@@ -129,7 +139,8 @@
     "words2": [],
     "resolved": true,
     "resolution_label": "shadow_resolution_normal interaction_1779037856",
-    "timestamp": 1779038119.1062229
+    "timestamp": 1779042776.7761035,
+    "resolution_type": null
   },
   {
     "labels": [
@@ -141,7 +152,8 @@
     "words2": [],
     "resolved": true,
     "resolution_label": "shadow_resolution_confusion_1779037856",
-    "timestamp": 1779038119.1062393
+    "timestamp": 1779042776.776119,
+    "resolution_type": null
   },
   {
     "labels": [
@@ -153,7 +165,8 @@
     "words2": [],
     "resolved": true,
     "resolution_label": "shadow_learning_normal interaction_1779037856",
-    "timestamp": 1779038119.1062598
+    "timestamp": 1779042776.7761388,
+    "resolution_type": null
   },
   {
     "labels": [
@@ -165,7 +178,8 @@
     "words2": [],
     "resolved": true,
     "resolution_label": "shadow_learning_confusion_1774755537",
-    "timestamp": 1779038119.1062756
+    "timestamp": 1779042776.7761543,
+    "resolution_type": null
   },
   {
     "labels": [
@@ -177,7 +191,8 @@
     "words2": [],
     "resolved": true,
     "resolution_label": "shadow_maths_normal interaction_1779038118",
-    "timestamp": 1779038119.1062872
+    "timestamp": 1779042776.7761667,
+    "resolution_type": null
   },
   {
     "labels": [
@@ -189,7 +204,8 @@
     "words2": [],
     "resolved": true,
     "resolution_label": "shadow_maths_identitiy_1779038118",
-    "timestamp": 1779038119.106296
+    "timestamp": 1779042776.776175,
+    "resolution_type": null
   },
   {
     "labels": [
@@ -201,7 +217,8 @@
     "words2": [],
     "resolved": true,
     "resolution_label": "shadow_normal interaction_identitiy_1779038118",
-    "timestamp": 1779038119.106316
+    "timestamp": 1779042776.7761946,
+    "resolution_type": null
   },
   {
     "labels": [
@@ -213,6 +230,7 @@
     "words2": [],
     "resolved": true,
     "resolution_label": "shadow_confusion_normal interaction_1774757557",
-    "timestamp": 1779038119.1063244
+    "timestamp": 1779042776.7762027,
+    "resolution_type": null
   }
 ]

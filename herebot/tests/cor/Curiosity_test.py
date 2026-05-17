@@ -10,6 +10,7 @@ Run:
 """
 
 import unittest
+import tempfile
 import numpy as np
 
 # ---------------------------------------------------------------------------
@@ -19,6 +20,10 @@ import numpy as np
 #   from engine.heart import CuriosityEngine
 # ---------------------------------------------------------------------------
 from core.heart import CuriosityEngine  
+from components.feedback_process import FeedbackEntry
+from components.factor_handler import StateManager
+from components.resoning import ReasoningEngine
+from components.reward import IntrinsicRewardTracker
 
 
 # ---------------------------------------------------------------------------
@@ -81,6 +86,132 @@ class TestInit(unittest.TestCase):
         expected = {'count_mean', 'count_std', 'ctx_mean', 'ctx_std',
                     'surp_mean', 'surp_std', 'drift_mean', 'drift_std'}
         self.assertEqual(expected, set(self.e.token_profile_stats))
+
+
+# ===========================================================================
+# reward polarity
+# ===========================================================================
+
+class TestRewardTrackerPolarity(unittest.TestCase):
+
+    def test_intrinsic_reward_is_unweighted_positive_magnitude(self):
+        tracker = IntrinsicRewardTracker()
+        reward = tracker.compute_reward({'confidence': 0.2}, 0.3, 0.4)
+        self.assertAlmostEqual(reward, 1.5)
+        self.assertAlmostEqual(tracker.episode_reward, 1.5)
+
+    def test_positive_feedback_reward_equals_magnitude(self):
+        tracker = IntrinsicRewardTracker()
+        reward = tracker.apply_feedback_reward('positive', 2.5)
+        self.assertAlmostEqual(reward, 2.5)
+
+    def test_neutral_feedback_reward_is_zero(self):
+        tracker = IntrinsicRewardTracker()
+        reward = tracker.apply_feedback_reward('neutral', 2.5)
+        self.assertEqual(reward, 0.0)
+
+    def test_negative_feedback_reward_is_negative_positive_magnitude(self):
+        pos_tracker = IntrinsicRewardTracker()
+        neg_tracker = IntrinsicRewardTracker()
+        positive = pos_tracker.apply_feedback_reward('positive', 2.5)
+        negative = neg_tracker.apply_feedback_reward('negative', 2.5)
+        self.assertAlmostEqual(negative, -positive)
+
+
+# ===========================================================================
+# shadow differentiation links
+# ===========================================================================
+
+class TestShadowDifferentiationLinks(unittest.TestCase):
+
+    def test_negative_response_feedback_creates_shadow_proposal(self):
+        e = make_engine()
+        e.expecting_response_feedback = True
+        e.pending_feedback_context = FeedbackEntry(
+            timestamp=0.0,
+            user_input="unit_crow unit_fly unit_car unit_roadways",
+            system_response="TPL.DEF word='unit_crow'",
+            factor_dict={},
+            rating='pending',
+            context_tokens=['unit_crow', 'unit_fly', 'unit_car', 'unit_roadways'],
+            response_tokens=['tpl', 'def', 'unit_crow'],
+            metadata={'reward_magnitude': 2.0}
+        )
+
+        e.process_input("negative")
+
+        proposals = [
+            h for h in e.reasoner.hypotheses
+            if h.get('type') == 'shadow_differentiation_link'
+            and h.get('source') == 'response_feedback'
+        ]
+        self.assertTrue(proposals)
+        self.assertEqual(e.reward_tracker.reward_history[-1]['reward'], -2.0)
+        self.assertTrue(e.expecting_shadow_diff_confirmation)
+
+    def test_shadow_proposal_does_not_commit_edge_before_confirmation(self):
+        r = ReasoningEngine()
+        hyp = r.propose_shadow_differentiation_link(
+            context_tokens=['unit_alpha', 'unit_move', 'unit_beta', 'unit_path'],
+            condition='unit_transport',
+            source='test'
+        )
+        edges = [
+            edge for edge in r.knowledge_graph.get_all_edges()
+            if edge[2] == 'different_context'
+            and hyp['subject'] in r.knowledge_graph.nodes.get(edge[0], {}).get('label', '')
+        ]
+        self.assertEqual(edges, [])
+
+    def test_confirming_shadow_proposal_commits_edge(self):
+        r = ReasoningEngine()
+        hyp = r.propose_shadow_differentiation_link(
+            context_tokens=['unit_gamma', 'unit_air', 'unit_delta', 'unit_road'],
+            condition='unit_transport',
+            source='test'
+        )
+        self.assertTrue(r.commit_shadow_differentiation_link(hyp['key']))
+        n1 = r.knowledge_graph.get_node_id(hyp['subject'], "phrase")
+        n2 = r.knowledge_graph.get_node_id(hyp['object'], "phrase")
+        self.assertIn('different_context', r.knowledge_graph.edges[n1][n2])
+        self.assertEqual(hyp['status'], 'committed')
+
+    def test_rejecting_shadow_proposal_leaves_graph_unchanged(self):
+        r = ReasoningEngine()
+        hyp = r.propose_shadow_differentiation_link(
+            context_tokens=['unit_reject_a', 'unit_reject_b', 'unit_reject_c', 'unit_reject_d'],
+            condition='unit_transport',
+            source='test'
+        )
+        self.assertTrue(r.reject_shadow_differentiation_link(hyp['key']))
+        self.assertIsNone(r.knowledge_graph.get_node_id(hyp['subject'], "phrase"))
+        self.assertEqual(hyp['status'], 'rejected')
+
+
+# ===========================================================================
+# stale state conflict lookup
+# ===========================================================================
+
+class TestStateConflictLookup(unittest.TestCase):
+
+    def test_alias_state_vector_lookup(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            sm = StateManager(state_dir=tmp)
+            sm.states = {'canonical_state': np.array([1.0, 0.0])}
+            sm.aliases = {'chain forming': 'canonical_state'}
+            label, vec = sm.get_state_vector('chain forming')
+            self.assertEqual(label, 'canonical_state')
+            np.testing.assert_array_equal(vec, np.array([1.0, 0.0]))
+
+    def test_stale_conflict_marking(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            sm = StateManager(state_dir=tmp)
+            sm._save_conflicts = lambda: None
+            conflict = {'labels': ['chain forming', 'missing'], 'resolved': False}
+            sm.mark_conflict_stale(conflict, 'missing:chain forming')
+            self.assertTrue(conflict['resolved'])
+            self.assertTrue(conflict['stale'])
+            self.assertEqual(conflict['resolution_type'], 'stale')
 
 
 # ===========================================================================

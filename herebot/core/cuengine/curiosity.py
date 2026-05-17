@@ -460,6 +460,7 @@ class HeartCuriosityMixin:
         # 1. Feed tokens to pattern observer: updates structural word stats,
         #    returns (head, connector, tail) triplets for this sentence.
         triplets = self.reasoner.pattern_observer.observe(tokens)
+        self.reasoner.last_observed_triplets = triplets
 
         # 2. Try to parse as a math sentence using learned number/operator words.
         math_result = self.reasoner.pattern_observer.try_parse_math(
