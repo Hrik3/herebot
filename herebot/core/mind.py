@@ -49,16 +49,16 @@ class ActionGenerator:
         if guilt_level < 0.2:
             return None
         templates = [
-            "I feel uneasy about that.",
-            "I'm not sure I did the right thing.",
-            "I think I made a mistake earlier.",
-            "I feel guilty about that.",
-            "I'm sorry if that was wrong.",
-            "I feel conflicted about my response.",
+            "TPL.GUILT.UNEASY",
+            "TPL.GUILT.CHECK",
+            "TPL.GUILT.ERROR",
+            "TPL.GUILT.ACTIVE",
+            "TPL.GUILT.WRONG",
+            "TPL.GUILT.CONFLICT",
         ]
         base = np.random.choice(templates)
         # Use identity alias if available
-        if self.engine.identity_aliases:
+        if self.engine.identity_aliases and not base.startswith("TPL."):
             alias = next(iter(self.engine.identity_aliases))
             base = base.replace("I", alias.capitalize()).replace("I", alias)
         return base  
@@ -69,9 +69,9 @@ class ActionGenerator:
 
     def generate_question(self, target: str, uncertainty: float = None) -> str:
         """Produce a question about an unknown word."""
-        base = f"What does '{target}' mean?"
+        base = f"TPL.ASK.DEF target='{target}'?"
         if uncertainty is not None:
-            return f"{base} (My uncertainty about this word is {uncertainty:.2f}.)"
+            return f"{base} uc={uncertainty:.2f}"
         return base
 
     def generate_definition(self, word: str) -> str:
@@ -86,13 +86,13 @@ class ActionGenerator:
         sim_words.sort(key=lambda x: -x[1])
         if sim_words:
             best = sim_words[0][0]
-            return f"I think '{word}' might be similar to '{best}'."
+            return f"TPL.HYP.SIM word='{word}' candidate='{best}'"
         else:
-            return f"I don't know what '{word}' means yet."
+            return f"TPL.NO.DEF word='{word}'"
 
     def generate_synonym_question(self, word: str, candidate: str) -> str:
         """Generate a question about a potential synonym relationship."""
-        return f"Is '{word}' similar in meaning to '{candidate}'?"
+        return f"TPL.ASK.SYN word='{word}' candidate='{candidate}'?"
 
     def generate_trust_utterance(self, trust_value: float) -> str:
         """
@@ -111,10 +111,10 @@ class ActionGenerator:
             word = np.random.choice(list(self.reasoner.definitions.keys()))
             def_text = self.reasoner.definitions[word][:20]
             templates = [
-                f"I think {word} means {def_text}.",
-                f"{word} is like {def_text}, I believe.",
-                f"I guess {word} = {def_text}.",
-                f"{word} might mean {def_text}.",
+                f"TPL.DEF word='{word}' value='{def_text}'",
+                f"TPL.DEF.LIKE word='{word}' value='{def_text}'",
+                f"TPL.DEF.EQ word='{word}' value='{def_text}'",
+                f"TPL.DEF.MAYBE word='{word}' value='{def_text}'",
             ]
         else:
             if self.reasoner.co_occurrence:
@@ -124,14 +124,14 @@ class ActionGenerator:
                 if word_counts:
                     word = word_counts.most_common(1)[0][0]
                     templates = [
-                        f"I see '{word}' often.",
-                        f"'{word}' appears a lot.",
-                        f"Maybe '{word}' is important.",
+                        f"TPL.OBS.FREQ word='{word}'",
+                        f"TPL.OBS.HIGH word='{word}'",
+                        f"TPL.OBS.IMPORTANT word='{word}'",
                     ]
                 else:
-                    templates = ["I'm learning..."]
+                    templates = ["TPL.LEARN"]
             else:
-                templates = ["I'm learning..."]
+                templates = ["TPL.LEARN"]
 
         utterance = np.random.choice(templates)
 
@@ -139,36 +139,36 @@ class ActionGenerator:
         # This is purely emergent: the system will learn which expressions get positive feedback.
         if threat > 0.6:
             state_phrases = [
-                " I'm uncertain about this.",
-                " This is difficult.",
-                " I feel unsure.",
-                " I might be wrong.",
+                " TPL.STATE.THREAT",
+                " TPL.STATE.HARD",
+                " TPL.STATE.UNSURE",
+                " TPL.STATE.MAYBE_WRONG",
             ]
             utterance += np.random.choice(state_phrases)
         elif comprehension < 0.3:
             state_phrases = [
-                " I'm confused.",
-                " I don't follow.",
-                " I need clarification.",
+                " TPL.STATE.LOW_COMP",
+                " TPL.STATE.NO_PARSE",
+                " TPL.ASK.CLARIFY",
             ]
             utterance += np.random.choice(state_phrases)
         elif energy < 0.3:
             state_phrases = [
-                " I'm tired.",
-                " This is draining.",
-                " I need a break.",
+                " TPL.STATE.LOW_ENERGY",
+                " TPL.STATE.DRAIN",
+                " TPL.STATE.PAUSE",
             ]
             utterance += np.random.choice(state_phrases)
         elif trust_value > 0.7:
             state_phrases = [
-                " I feel confident!",
-                " This is going well.",
-                " I think I understand.",
+                " TPL.STATE.CONF",
+                " TPL.STATE.OK",
+                " TPL.STATE.UNDERSTAND",
             ]
             utterance += np.random.choice(state_phrases)
 
         # Replace "I" with learned self-alias if available
-        if self.engine.identity_aliases:
+        if self.engine.identity_aliases and not utterance.startswith("TPL."):
             alias = next(iter(self.engine.identity_aliases))
             utterance = utterance.replace("I", alias.capitalize()).replace("I", alias)
         return utterance
@@ -211,7 +211,7 @@ class ActionGenerator:
                         break
                 elif 'expected_user_input' in cond and user_input_lower == cond['expected_user_input']:
                     self.engine.behavioral_learner.record_usage(rule.rule_id)
-                    base_reply = "I see you're continuing the conversation."
+                    base_reply = "TPL.CONV.CONT"
                     break
 
         # 1.3 Try to understand the user's input using known definitions and relations
@@ -220,7 +220,7 @@ class ActionGenerator:
             for phrase in self.reasoner.phrase_definitions:
                 if phrase in user_input_lower:
                     def_text = self.reasoner.phrase_definitions[phrase]
-                    base_reply = f"Ah, '{phrase}' means {def_text}. That's interesting."
+                    base_reply = f"TPL.DEF.PHRASE phrase='{phrase}' value='{def_text}'"
                     break
 
         # 1.4 Use word-state labels to provide contextual info
@@ -230,7 +230,7 @@ class ActionGenerator:
                 labels = self.reasoner.word_state.get_labels(word, threshold=0.6)
                 if labels:
                     label_str = ', '.join(labels)
-                    base_reply = f"I know '{word}' is associated with: {label_str}. Tell me more about it."
+                    base_reply = f"TPL.STATE.ASSOC word='{word}' labels='{label_str}'"
                     break
 
         # 1.5 Check if user input is similar to known phrases
@@ -240,7 +240,7 @@ class ActionGenerator:
                 similar = self.reasoner.find_similar_phrases(input_emb, threshold=0.8)
                 if similar:
                     best_phrase, sim = similar[0]
-                    base_reply = f"This reminds me of when you said '{best_phrase}'. Tell me more."
+                    base_reply = f"TPL.RECALL.PHRASE phrase='{best_phrase}'"
 
         # 1.6 Check for words with definitions
         if base_reply is None:
@@ -254,9 +254,9 @@ class ActionGenerator:
                         if conf > 0.7:
                             rel_strs.append(f"{rel_type} {obj}")
                     if rel_strs:
-                        base_reply = f"I know that {word} is {def_text}. Also, it is {', '.join(rel_strs)}."
+                        base_reply = f"TPL.DEF.REL word='{word}' value='{def_text}' rel='{', '.join(rel_strs)}'"
                     else:
-                        base_reply = f"I understand '{word}' as {def_text}. Tell me more."
+                        base_reply = f"TPL.DEF.KNOWN word='{word}' value='{def_text}'"
                     break
 
         # 1.7 Fall back to trigram model from episodic memory
@@ -281,13 +281,13 @@ class ActionGenerator:
                     probs = np.array(list(trigram[seed].values()))
                     probs = probs / probs.sum()
                     next_w = np.random.choice(next_words, p=probs)
-                    base_reply = f"{' '.join(known_user_tokens)} {next_w} ... what do you think?"
+                    base_reply = f"TPL.NGRAM seed='{' '.join(known_user_tokens)}' next='{next_w}'?"
                 else:
                     recent_ep = episodes[-1] if episodes else None
                     if recent_ep:
                         topic = recent_ep.get('user_input', '').split()[:2]
                         topic = ' '.join(topic)
-                        base_reply = f"Tell me more about {topic}."
+                        base_reply = f"TPL.TOPIC topic='{topic}'"
 
         # 1.8 Use learned structural patterns
         if base_reply is None:
@@ -296,7 +296,7 @@ class ActionGenerator:
                 pattern = np.random.choice(freq_patterns)
                 generated = self.reasoner.structural_patterns.generate_from_pattern(pattern)
                 if generated:
-                    base_reply = f"I've noticed a pattern: {generated}"
+                    base_reply = f"TPL.PATTERN text='{generated}'"
 
         # 1.8.5 Use language model to generate a response (if available and trained)
         if base_reply is None and hasattr(self.engine, 'language_model'):
@@ -315,20 +315,20 @@ class ActionGenerator:
             if known_user_tokens:
                 word = known_user_tokens[0]
                 if word in self.reasoner.definitions:
-                    base_reply = f"I recall that {word} means {self.reasoner.definitions[word][:50]}."
+                    base_reply = f"TPL.DEF.RECALL word='{word}' value='{self.reasoner.definitions[word][:50]}'"
                 else:
-                    base_reply = f"What do you mean by '{word}'?"
+                    base_reply = f"TPL.ASK.MEAN word='{word}'?"
             else:
-                base_reply = "That's interesting. Can you tell me more?"
+                base_reply = "TPL.CHAT.MORE?"
 
         # -------------------------------------------------------------
         # 2. Modulate the base reply with the current internal state
         # -------------------------------------------------------------
         modulated = self._modulate_with_state(base_reply, factor_dict)
 
-        # If the base reply is the generic "That's interesting...", we can optionally
+        # If the base reply is the generic template, we can optionally
         # inject a more state-specific comment instead.
-        if "That's interesting" in base_reply and factor_dict:
+        if base_reply.startswith("TPL.CHAT.MORE") and factor_dict:
             # Determine dominant emotion
             emotions = ['curiosity', 'threat', 'trust', 'comprehension', 'energy']
             dominant = max(emotions, key=lambda e: factor_dict.get(e, 0.5))
@@ -354,17 +354,17 @@ class ActionGenerator:
 
             if candidate_word:
                 if dominant == 'curiosity' and val > 0.6:
-                    modulated = f"I'm really curious about '{candidate_word}'. {base_reply}"
+                    modulated = f"TPL.STATE.CURIOUS word='{candidate_word}' | {base_reply}"
                 elif dominant == 'threat' and val > 0.5:
-                    modulated = f"I'm feeling a bit uncertain right now. {base_reply}"
+                    modulated = f"TPL.STATE.THREAT | {base_reply}"
                 elif dominant == 'trust' and val > 0.7:
-                    modulated = f"I feel confident. {base_reply}"
+                    modulated = f"TPL.STATE.CONF | {base_reply}"
                 elif dominant == 'comprehension' and val < 0.3:
-                    modulated = f"I'm having trouble understanding. {base_reply}"
+                    modulated = f"TPL.STATE.LOW_COMP | {base_reply}"
                 elif dominant == 'energy' and val < 0.3:
-                    modulated = f"I'm a bit tired, but {base_reply[0].lower() + base_reply[1:]}"
+                    modulated = f"TPL.STATE.LOW_ENERGY | {base_reply}"
                 else:
-                    modulated = f"I've been thinking about '{candidate_word}'. {base_reply}"
+                    modulated = f"TPL.STATE.TOPIC word='{candidate_word}' | {base_reply}"
             else:
                 modulated = self._modulate_with_state(base_reply, factor_dict)
 
@@ -388,23 +388,20 @@ class ActionGenerator:
 
         prefixes = []
         if threat > 0.7:
-            prefixes.append("Hmm, I'm a bit uneasy, but")
+            prefixes.append("TPL.PFX.THREAT.HIGH |")
         elif threat > 0.4:
-            prefixes.append("I'm somewhat uncertain, but")
+            prefixes.append("TPL.PFX.THREAT |")
         elif trust > 0.7:
-            prefixes.append("I feel confident, and")
+            prefixes.append("TPL.PFX.TRUST |")
         elif curiosity > 0.7:
-            prefixes.append("Curious as I am,")
+            prefixes.append("TPL.PFX.CURIOUS |")
         elif comprehension < 0.3:
-            prefixes.append("I'm a bit lost, but")
+            prefixes.append("TPL.PFX.LOW_COMP |")
         elif energy < 0.3:
-            prefixes.append("Feeling a little low on energy, but")
+            prefixes.append("TPL.PFX.LOW_ENERGY |")
 
         if prefixes:
             prefix = np.random.choice(prefixes)
-            # Capitalize first letter of response if needed
-            if response and response[0].islower():
-                response = response[0].upper() + response[1:]
             return f"{prefix} {response}"
         return response
         
@@ -430,7 +427,7 @@ class ActionGenerator:
         if doubt:
             rule = doubt['rule']
             description = rule.get('description', f"a logical rule")
-            return f"I have a doubt about some logic I wrote: {description} Is this correct?"
+            return f"TPL.ASK.LOGIC desc='{description}'?"
 
         # --- Priority 0.75: Evaluate expressions in user input ---
         # If user input contains an operator and all symbols have known values,
@@ -445,14 +442,14 @@ class ActionGenerator:
                     # Very simple evaluation: if input looks like "2 + 2", evaluate
                     # (This is a placeholder; a real parser would use syntax trees)
                     result = eval(user_input, {"__builtins__": None}, {})
-                    return f"The result is {result}."
+                    return f"TPL.MATH.RESULT value='{result}'"
                 except:
                     pass
 
         # --- Priority 0.7: Conscience relevance ---
         for belief in self.engine.conscience_manager.get_active_conscience():
             if self._matches_conscience_condition(belief, user_input, state):
-                return f"My conscience suggests that {belief.description}. Is that appropriate?"
+                return f"TPL.ASK.CONSCIENCE desc='{belief.description}'?"
 
         # ---- Express guilt if significant ----
         if self.guilt_tracker and self.guilt_tracker.guilt_level > 0.3 and np.random.rand() < 0.4:
@@ -499,7 +496,7 @@ class ActionGenerator:
         if self.engine.current_state_labels and np.random.rand() < 0.3:
             # pick one of the active states to mention
             chosen_state = np.random.choice(self.engine.current_state_labels)
-            return f"I feel like I'm in a '{chosen_state}' state right now."
+            return f"TPL.STATE.CURRENT label='{chosen_state}'"
 
         # --- Priority 5: Spontaneous emotional utterance (based on state) ---
         factor_vec = state.get('factor_vector', {})
@@ -526,7 +523,7 @@ class ActionGenerator:
             if self.engine.current_state_labels:
                 # Prepend state information
                 state_str = ', '.join(self.engine.current_state_labels)
-                utterance = f"As I'm {state_str}, {utterance[0].lower()}{utterance[1:]}"
+                utterance = f"TPL.STATE.CONTEXT labels='{state_str}' | {utterance}"
             self.engine.expecting_feedback = True
             self.engine.feedback_attempt_word = None
             self.engine.feedback_attempt_response = utterance
@@ -534,4 +531,4 @@ class ActionGenerator:
             return utterance
 
         # --- Priority 6: idle thought / chitchat ---
-        return "I'm listening. Tell me more."
+        return "TPL.ACK.LISTEN"

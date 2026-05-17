@@ -240,8 +240,7 @@ class SyntaxLearner:
         Generate a grammatical sentence about `target`.
         Very simple template for now – expand later.
         """
-        # Example: "I think [target] might be related to ..."
-        return f"I think '{target}' might be related to something."
+        return f"TPL.HYP.REL word='{target}' candidate='unknown'"
 
     def save(self, path: str):
         tmp = path + ".tmp"
@@ -705,4 +704,3 @@ class StructuralPatternLearner:
     def get_frequent_patterns(self, min_freq=2) -> List[str]:
         """Return patterns that appear at least min_freq times."""
         return [p for p, cnt in self.pattern_counts.items() if cnt >= min_freq]
-

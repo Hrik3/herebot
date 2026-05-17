@@ -268,10 +268,8 @@ class SentenceTripletExtractor:
                 q = {
                     'connector': connector,
                     'text': (
-                        f"I've seen '{connector}' linking concepts {count} times "
-                        f"(e.g. {ex_str}).  What does '{connector}' express — "
-                        f"(1) equivalence/definition, (2) category membership, "
-                        f"(3) similarity, or (4) something else?"
+                        f"TPL.ASK.CONN.ROLE connector='{connector}' count={count} "
+                        f"examples='{ex_str}' options=eq|cat|sim|other?"
                     ),
                     'type': 'connector_role',
                 }

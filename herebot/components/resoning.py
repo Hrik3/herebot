@@ -483,11 +483,11 @@ class ReasoningEngine:
         if any(h.get('key') == key for h in self.hypotheses):
             return
         if rel_type == 'is_a':
-            text = f"Is '{subject}' a '{object}'?"
+            text = f"TPL.ASK.ISA subject='{subject}' object='{object}'?"
         elif rel_type == 'means':
-            text = f"Does '{subject}' mean '{object}'?"
+            text = f"TPL.ASK.MEANS subject='{subject}' object='{object}'?"
         else:
-            text = f"Does '{subject}' relate to '{object}'?"
+            text = f"TPL.ASK.REL subject='{subject}' object='{object}'?"
         hyp = {
             'key': key,
             'type': 'inference',
@@ -515,15 +515,15 @@ class ReasoningEngine:
     def generate_hypothesis(self, word: str, context: Dict) -> str:
         candidates = self.infer_possible_meanings(word)
         if candidates:
-            return f"Perhaps '{word}' is related to '{candidates[0]}', since they appear together often."
+            return f"TPL.HYP.REL word='{word}' candidate='{candidates[0]}'"
         else:
-            return f"I have no contextual clues about '{word}' yet."
+            return f"TPL.NO.CTX word='{word}'"
 
     def plan_query(self, target: str, uncertainty: float = None) -> str:
         """Generate a question; if uncertainty provided, mention it."""
-        base = f"What does '{target}' mean?"
+        base = f"TPL.ASK.DEF target='{target}'?"
         if uncertainty is not None:
-            return f"{base} (My uncertainty about this word is {uncertainty:.2f}.)"
+            return f"{base} uc={uncertainty:.2f}"
         return base
     
     def run_symbolic_inference(self):
@@ -603,7 +603,7 @@ class ReasoningEngine:
             'word': word,
             'candidate': best_word,
             'similarity': sim,
-            'text': f"Perhaps '{word}' is similar to '{best_word}' – they seem to share a definition. Is that right?",
+            'text': f"TPL.ASK.SYN word='{word}' candidate='{best_word}'?",
             'asked': False,
             # ---- metabolic ----
             'energy_cost': 0.5,
@@ -617,7 +617,7 @@ class ReasoningEngine:
 
     def plan_synonym_query(self, word: str, candidate: str) -> str:
         """Generate a direct question about synonymy."""
-        return f"Is '{word}' similar in meaning to '{candidate}'?"
+        return f"TPL.ASK.SYN word='{word}' candidate='{candidate}'?"
 
     # ------------------------------------------------------------------
     # Persistence (updated to include definitions and relations)
@@ -721,10 +721,7 @@ class ReasoningEngine:
 
         if init_ratio > 0.7 and short_ratio > 0.6:
             self.pattern_asked.add(word)
-            return (
-                f"I notice the word '{word}' appears in similar conversational situations. "
-                f"What should I call this type of word?"
-            )
+            return f"TPL.ASK.PATTERN.LABEL word='{word}'?"
         return None
     # ------------------------------------------------------------------
     # Sentence-level reasoning (cutting-edge)
@@ -790,7 +787,7 @@ class ReasoningEngine:
                     'type': 'category',
                     'subject': subj,
                     'object': obj,
-                    'text': f"Is '{subj}' a type of '{obj}'?",
+                    'text': f"TPL.ASK.CAT subject='{subj}' object='{obj}'?",
                     'asked': False,
                 }
                 self.hypotheses.append(hypothesis)
@@ -810,7 +807,7 @@ class ReasoningEngine:
                         'sentence': sentence,
                         'similar_sentence': best_sent,
                         'similarity': sim,
-                        'text': f"This sentence reminds me of something you said earlier: '{best_sent}'. Are they related?",
+                        'text': f"TPL.ASK.ANALOGY sentence='{sentence}' similar='{best_sent}'?",
                         'asked': False,
                     }
                     self.hypotheses.append(hypothesis)
@@ -822,9 +819,9 @@ class ReasoningEngine:
         if sentence in self.sentence_asked:
             return None
         self.sentence_asked.add(sentence)
-        base = f"What does the sentence '{sentence}' mean?"
+        base = f"TPL.ASK.SENT sentence='{sentence}'?"
         if uncertainty is not None:
-            return f"{base} (My comprehension is {1-uncertainty:.2f}.)"
+            return f"{base} comp={1-uncertainty:.2f}"
         return base
 
     def detect_recurring_patterns(self, min_freq: int = 3) -> List[Tuple[tuple, int]]:
@@ -898,7 +895,7 @@ class ParallelReasoner:
                 nb_label = self.base.knowledge_graph.nodes.get(nb, {}).get('label', 'unknown')
                 related.append(nb_label)
         if related:
-            hyp3 = f"Perhaps '{token}' is related to {', '.join(related)}."
+            hyp3 = f"TPL.HYP.GRAPH token='{token}' related='{', '.join(related)}'"
         else:
             hyp3 = self.base.generate_hypothesis(token, context)
         thoughts.append({

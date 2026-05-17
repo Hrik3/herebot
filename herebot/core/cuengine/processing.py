@@ -79,9 +79,9 @@ class HeartProcessingMixin:
                 self.chat_mode_active = not self.chat_mode_active
                 if self.chat_mode_active:
                     self.chat_history = []   # start fresh
-                    system_reply = "Chat mode activated. I'll try to talk with you naturally. What shall we discuss?"
+                    system_reply = "TPL.MODE.CHAT.ON?"
                 else:
-                    system_reply = "Chat mode deactivated. Returning to normal learning mode."
+                    system_reply = "TPL.MODE.CHAT.OFF"
                 print(f" Herebot> {system_reply}")
                 return {
                     "ci_report": {},
@@ -365,7 +365,7 @@ class HeartProcessingMixin:
                         proc = self.reasoner.procedural_learner.learn_procedure(
                             self.pending_problem_expr, self.recorded_steps, None
                         )
-                        print(f" [Procedure Learned] I've learned a new procedure for {self.pending_problem_expr}")
+                        print(f" [Procedure Learned] TPL.PROC.LEARN expr='{self.pending_problem_expr}'")
                     self.expecting_procedure_steps = False
                     self.pending_problem_expr = None
                     self.recorded_steps = []
@@ -554,7 +554,7 @@ class HeartProcessingMixin:
                 self.expecting_procedure_steps = True
                 self.pending_problem_expr = expr
                 self.recorded_steps = []
-                teach_question = f"I don't know how to solve {expr}. Could you teach me step by step?"
+                teach_question = f"TPL.ASK.TEACH expr='{expr}'?"
                 print(f"\n [Teaching Request] {teach_question}")
                 print(f" Herebot> {teach_question}")
                 return {
@@ -572,8 +572,8 @@ class HeartProcessingMixin:
                 doubt = self.logic_inheritance.get_next_doubt()
                 if doubt:
                     rule = doubt['rule']
-                    description = rule.get('description', f"I wrote a logical rule: {rule}")
-                    query = f"I have a doubt about some logic I wrote: {description} Is this correct?"
+                    description = rule.get('description', f"rule={rule}")
+                    query = f"TPL.ASK.LOGIC desc='{description}'?"
                     print(f"\n [Logic Doubt] {query}")
                     print(f" Herebot> {query}")
                     self.expecting_logic_feedback = True
@@ -603,7 +603,7 @@ class HeartProcessingMixin:
                     # Only ask if structural score is not too high (i.e., it's likely semantic)
                     if struct_score <= 0.65:
                         self.last_asked_word = target
-                        system_reply = f"What does '{target}' mean?"
+                        system_reply = f"TPL.ASK.DEF target='{target}'?"
                         print(f"\n [Knowledge Gap] {system_reply}")
                         print(f" Herebot> {system_reply}")
                         return {
@@ -642,7 +642,7 @@ class HeartProcessingMixin:
             if not self.chat_mode_active:
                 unresolved = self.state_manager.get_unresolved_conflicts()
                 if unresolved:
-                    print("\n [Conflict Resolution] I have some unresolved state conflicts from previous idle introspection.")
+                    print("\n [Conflict Resolution] TPL.STATE.CONFLICT.PENDING")
                     for conflict in unresolved[:2]:
                         l1, l2 = conflict["labels"]
                         l1 = self.state_manager.resolve_label(l1)
@@ -651,12 +651,12 @@ class HeartProcessingMixin:
                         shadow_label = conflict.get("resolution_label")
                         print(f"    Conflict: '{l1}' ↔ '{l2}' (similarity={sim:.3f})")
                         print(f"    I created a temporary shadow state '{shadow_label}'.")
-                        print("    How would you like to resolve this?")
-                        print("      1. Keep both (no change)")
-                        print("      2. Keep only one (specify which)")
-                        print("      3. Rename and keep both")
-                        print("      4. Accept shadow state as permanent")
-                        print("      5. Both states are different – show factors and edit")
+                        print("    TPL.STATE.CONFLICT.MENU")
+                        print("      1. keep_both")
+                        print("      2. keep_one")
+                        print("      3. rename_both")
+                        print("      4. promote_shadow")
+                        print("      5. edit_vectors")
                         choice = input("    Your choice (1/2/3/4/5): ").strip()
 
                         if choice == "2":
@@ -782,11 +782,11 @@ class HeartProcessingMixin:
                     rule = max(testable, key=lambda r: r.confidence)
                     if rule.rule_type == 'identity_alias':
                         alias = rule.condition['alias']
-                        query = f"Do you want me to be called '{alias}'? Should I refer to myself as '{alias}'?"
+                        query = f"TPL.ASK.ALIAS alias='{alias}'?"
                     elif rule.rule_type == 'pronoun_mapping':
-                        query = f"When you say '{rule.condition['pronoun']}', do you mean me?"
+                        query = f"TPL.ASK.PRONOUN pronoun='{rule.condition['pronoun']}'?"
                     else:
-                        query = f"I noticed a pattern: {rule.condition}. Is that correct?"
+                        query = f"TPL.ASK.RULE condition='{rule.condition}'?"
                     rule.asked = True
                     rule.last_tested = time.time()
                     self.behavioral_learner.save()
@@ -855,7 +855,7 @@ class HeartProcessingMixin:
                 'factor_vector': factor_dict,
             })
             if self.pending_solution is not None:
-                system_reply = f"Solution: {self.pending_solution}. " + system_reply
+                system_reply = f"TPL.MATH.SOLUTION value='{self.pending_solution}' | " + system_reply
                 self.pending_solution = None   # reset
             self._last_action = system_reply
             # ---- Top‑down expectation: predict next state using world model ----
@@ -868,9 +868,9 @@ class HeartProcessingMixin:
                         # Compare predicted vs actual next state (which we don't have yet – would need next turn)
                         # For now, we store the prediction to be checked later.
                         self._expected_next_state = predicted_next
-            if "What does" in system_reply and "'" in system_reply:
+            if system_reply.startswith(("TPL.ASK.DEF", "TPL.ASK.MEAN")) and "'" in system_reply:
                 import re
-                match = re.search(r"'([^']+)'", system_reply)
+                match = re.search(r"(?:target|word)='([^']+)'", system_reply)
                 if match:
                     self.last_asked_word = match.group(1)
             print(f" Herebot> {system_reply}")
@@ -912,7 +912,7 @@ class HeartProcessingMixin:
                     conflicts = self.reasoner.word_state.detect_conflicts(token)
                     if conflicts:
                         label1, label2 = conflicts[0]
-                        question = f"I'm unsure whether '{token}' means '{label1}' or '{label2}'. Which one is correct?"
+                        question = f"TPL.ASK.WORD.CONFLICT token='{token}' labels='{label1}|{label2}'?"
                         print(f"\n [Word Conflict] {question}")
                         print(f" Herebot> {question}")
                         self.expecting_word_conflict = True

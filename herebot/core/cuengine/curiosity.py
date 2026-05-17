@@ -505,7 +505,7 @@ class HeartCuriosityMixin:
                     'subject': subject,
                     'predicate': rel_type,
                     'object': object,
-                    'text': f"Did I understand correctly: '{subject}' {connector} '{object}'?",
+                    'text': f"TPL.ASK.CONN.REL subject='{subject}' connector='{connector}' object='{object}'?",
                     'asked': False,
                 })
 
@@ -629,13 +629,7 @@ class HeartCuriosityMixin:
 
     def _generate_feedback_question(self) -> str:
         """Generate a neutral question asking for user feedback."""
-        templates = [
-            "How would you rate my response? (positive/negative/neutral)",
-            "Was my answer helpful? (positive/negative/neutral)",
-            "Did that make sense? Please rate: positive, negative, or neutral.",
-            "How do you feel about my reply? (positive/negative/neutral)",
-        ]
-        return np.random.choice(templates)
+        return "TPL.ASK.FB rating=positive|negative|neutral?"
 
     # ------------------------------------------------------------------
     # Automatic drive creation: control factor → curiosity factor
