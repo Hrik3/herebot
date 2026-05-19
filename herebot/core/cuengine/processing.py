@@ -20,6 +20,39 @@ class HeartProcessingMixin:
         """Apply signed reward for explicit user feedback."""
         return self.reward_tracker.apply_feedback_reward(rating, magnitude, source=source)
 
+    def _backend_report_dict(self, report) -> Dict[str, Any]:
+        if report is None:
+            return {}
+        if hasattr(report, "to_dict"):
+            try:
+                return report.to_dict()
+            except Exception:
+                return {}
+        if isinstance(report, dict):
+            return report
+        return {}
+
+    def _sync_backend_turn(self, text: str):
+        bridge = getattr(self, "backend_memory_bridge", None)
+        if bridge is None:
+            add_sentence_to_memory(text)
+            return
+        try:
+            self.backend_sync_report = bridge.sync_turn(text, self)
+        except Exception as e:
+            self.backend_sync_report = {"ok": False, "errors": [str(e)], "corpus_size": 0}
+            print(f"[Backend Sync] skipped: {e}")
+
+    def _verify_backend_alignment(self):
+        bridge = getattr(self, "backend_memory_bridge", None)
+        if bridge is None:
+            return
+        try:
+            self.backend_verification_report = bridge.verify_engine_alignment(self)
+        except Exception as e:
+            self.backend_verification_report = {"ok": False, "errors": [str(e)], "corpus_size": 0}
+            print(f"[Backend Verify] skipped: {e}")
+
     def _ask_shadow_differentiation_link(self, proposal):
         if not proposal:
             return
@@ -511,7 +544,8 @@ class HeartProcessingMixin:
             self.interaction_counter += 1
 
             # 1. Memory ingestion
-            add_sentence_to_memory(text)
+            self._sync_backend_turn(text)
+            self._verify_backend_alignment()
 
             # 2. Whole-sentence evaluation
             ci_report = self.ci_engine.evaluate(text)
@@ -1072,6 +1106,7 @@ class HeartProcessingMixin:
                 intrinsic_reward=float(self.reward_tracker.episode_reward),
                 metadata={'ci_confidence': ci_report.get('confidence')}
             )
+            self._verify_backend_alignment()
 
             if self.chat_mode_active:
                 self.chat_history.append((text, system_reply))
@@ -1146,6 +1181,23 @@ class HeartProcessingMixin:
 
         artifacts.append(f"   • CI confidence: {ci_report.get('confidence', 0.5):.3f} | Stability: {ci_report.get('stability', 0.5):.3f}")
         artifacts.append(f"   • Phonotactic score: {phon_score:.3f}")
+
+        sync_report = self._backend_report_dict(getattr(self, "backend_sync_report", None))
+        if sync_report:
+            artifacts.append(
+                "   • Backend sync: "
+                f"ok={sync_report.get('ok')} "
+                f"corpus={sync_report.get('corpus_size', 0)} "
+                f"added={sync_report.get('added', 0)} "
+                f"skipped={sync_report.get('skipped', 0)}"
+            )
+        verification_report = self._backend_report_dict(getattr(self, "backend_verification_report", None))
+        if verification_report:
+            artifacts.append(
+                "   • Backend verification: "
+                f"ok={verification_report.get('ok')} "
+                f"aligned={verification_report.get('current_input_aligned', True)}"
+            )
 
         # Diagnostic summary
         artifacts.append(f"   • Diagnostic: {diag.get('summary', 'N/A')}")

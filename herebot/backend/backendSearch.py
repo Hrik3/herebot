@@ -1,25 +1,26 @@
 import json
 import time
-from collections import OrderedDict
 import numpy as np
-# import duckdb   # DISABLED (DB OFF)
 import sys, os
 sys.path.insert(0, os.getcwd())
-import SystemStats as system_stats
-from incremental_csr_lib import IncrementalCSR
+try:
+    from backend import SystemStats as system_stats
+    from backend.incremental_csr_lib import IncrementalCSR
+except Exception:
+    import SystemStats as system_stats
+    from incremental_csr_lib import IncrementalCSR
 
 
 class AdaptiveSearchBackend:
     """
-    Optimized semantic search backend (SHARD-ONLY MODE).
-
-    DuckDB Tier-1 disabled — uses IncrementalCSR shards only.
+    Live semantic search backend using the active IncrementalCSR memory.
     """
 
     def __init__(self,
                  config_path="search_config.json",
                  csr_config="config_listner.json",
-                 tier1_db="tier1.duckdb"):
+                 tier1_db="tier1.duckdb",
+                 memory_bridge=None):
 
         BASE_DIR = os.path.dirname(__file__)
         self.config_path = os.path.join(BASE_DIR, config_path)
@@ -29,28 +30,12 @@ class AdaptiveSearchBackend:
         # --------------------------------------------------------------
         # EXPERIENCE MEMORY (live incremental CSR)
         # --------------------------------------------------------------
-        self.live_csr = IncrementalCSR(csr_config)
+        self.memory_bridge = memory_bridge
+        self.live_csr = memory_bridge.csr if memory_bridge is not None else IncrementalCSR(csr_config)
         self.vectorizer = self.live_csr.get_vectorizer()
         self._live_cache = None
         self._live_cache_time = 0
         self.live_cache_interval = getattr(self, 'live_cache_interval', 5.0)
-
-        # --------------------------------------------------------------
-        # TIER-1 MEANING MEMORY (DISABLED)
-        # --------------------------------------------------------------
-        self.tier1_db = tier1_db
-        self.con = None
-        # self.con = duckdb.connect(self.tier1_db)
-        # try:
-        #     self.con.execute("LOAD fts;")
-        # except Exception:
-        #     pass
-
-        # --------------------------------------------------------------
-        # REFERENCE MEMORY (disabled)
-        # --------------------------------------------------------------
-        self.total_rows = 0
-        self.X_ref = None
 
         # --------------------------------------------------------------
         # SYSTEM STATS CACHE
@@ -60,20 +45,10 @@ class AdaptiveSearchBackend:
         self.stats_cache_interval = getattr(self, 'stats_cache_interval', 0.5)
 
         # --------------------------------------------------------------
-        # CACHE STRUCTURES (kept for compatibility)
-        # --------------------------------------------------------------
-        self._tier1_cache = OrderedDict()
-        self.tier1_cache_ttl = getattr(self, 'tier1_cache_ttl', 60)
-        self.tier1_cache_maxsize = getattr(self, 'tier1_cache_maxsize', 1000)
-
-        # --------------------------------------------------------------
         # PERFORMANCE COUNTERS
         # --------------------------------------------------------------
         self.search_count = 0
         self.live_hits = 0
-        self.tier1_hits = 0
-        self.cache_hits_tier1 = 0
-        self.cache_misses_tier1 = 0
         self.stats_calls = 0
 
     # ------------------------------------------------------------------
@@ -112,13 +87,6 @@ class AdaptiveSearchBackend:
         return self._live_cache
 
     # ------------------------------------------------------------------
-    # TIER-1 SEARCH (DISABLED)
-    # ------------------------------------------------------------------
-    def _search_tier1_cached(self, text, top_k):
-        # DuckDB disabled
-        return []
-
-    # ------------------------------------------------------------------
     # SEARCH
     # ------------------------------------------------------------------
     def search(self, text, top_k=5):
@@ -150,15 +118,10 @@ class AdaptiveSearchBackend:
     def cleanup(self, force=False):
         if force:
             self._live_cache = None
-            self._tier1_cache.clear()
             self._stats_cache = None
 
     def close(self):
-        # if self.con:
-        #     self.con.close()
-        #     self.con = None
         self._live_cache = None
-        self._tier1_cache.clear()
         self._stats_cache = None
 
     def __del__(self):
@@ -169,17 +132,11 @@ class AdaptiveSearchBackend:
         return {
             "search_count": self.search_count,
             "live_hits": self.live_hits,
-            "tier1_hits": self.tier1_hits,
-            "tier1_cache_hits": self.cache_hits_tier1,
-            "tier1_cache_misses": self.cache_misses_tier1,
-            "tier1_cache_size": len(self._tier1_cache),
             "system_stats_calls": self.stats_calls,
+            "memory_source": "bridge" if self.memory_bridge is not None else "csr",
             "live_cache_age": (
                 time.time() - self._live_cache_time
                 if self._live_cache is not None
                 else -1
             ),
         }
-
-    def _search_tier1(self, text, top_k):
-        return []

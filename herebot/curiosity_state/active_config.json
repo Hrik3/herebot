@@ -1,16 +1,16 @@
 {
   "hierarchical_concept_model": {
-    "alpha": 1.1479768175222633,
+    "alpha": 0.5,
     "beta": 1.0
   },
   "gaussian_process": {
     "input_dim": 5,
     "n_features": 100,
     "length_scale": 1.0,
-    "sigma_noise": 0.10231008680088828
+    "sigma_noise": 0.1
   },
   "meta_curiosity_learner": {
-    "n_factors": 0.1976141751640894
+    "n_factors": 9
   },
   "intrinsic_reward_tracker": {},
   "semantic_learner": {

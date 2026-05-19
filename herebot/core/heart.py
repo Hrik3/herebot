@@ -6,6 +6,7 @@ from .cuengine import (
     HeartPersistenceMixin,
     HeartProcessingMixin,
 )
+from backend.herebot_memory import HerebotMemoryBridge
 
 
 class CuriosityEngine(HeartPersistenceMixin, HeartCuriosityMixin, HeartProcessingMixin, HeartIdleMixin, HeartLanguageMixin):
@@ -23,9 +24,12 @@ class CuriosityEngine(HeartPersistenceMixin, HeartCuriosityMixin, HeartProcessin
         else:
             self.config_manager = config_manager
 
-        # Real engines
-        self.ci_engine = CIEngine()
-        self.phon_engine = PhonotacticEngine()
+        # Real engines backed by unified Herebot memory.
+        self.backend_memory_bridge = HerebotMemoryBridge(config_manager=self.config_manager)
+        self.backend_sync_report = None
+        self.backend_verification_report = None
+        self.ci_engine = CIEngine(memory_bridge=self.backend_memory_bridge, config_manager=self.config_manager)
+        self.phon_engine = PhonotacticEngine(memory_bridge=self.backend_memory_bridge)
         self.diag_engine = DiagnosticEngine()
 
         # Probabilistic concept model
