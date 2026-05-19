@@ -1,5 +1,575 @@
+import hashlib
+import re
 from importglobal import json,time,os,traceback,io,importlib,redirect_stderr,redirect_stdout
 from components.directory_handler import CODE_GEN_DIR, STATE_DIR
+
+
+def _safe_json_value(value, depth=0, max_items=50):
+    """Convert unstable Herebot runtime values into bounded JSON-safe data."""
+    if depth > 4:
+        return repr(value)[:200]
+    if value is None or isinstance(value, (str, int, float, bool)):
+        return value
+    if hasattr(value, "tolist"):
+        try:
+            return _safe_json_value(value.tolist(), depth + 1, max_items)
+        except Exception:
+            return repr(value)[:200]
+    if isinstance(value, dict):
+        out = {}
+        for idx, (key, item) in enumerate(value.items()):
+            if idx >= max_items:
+                out["_truncated"] = True
+                break
+            out[str(key)] = _safe_json_value(item, depth + 1, max_items)
+        return out
+    if isinstance(value, (list, tuple, set)):
+        return [_safe_json_value(item, depth + 1, max_items) for item in list(value)[:max_items]]
+    return repr(value)[:200]
+
+
+def _stable_hash(*parts) -> str:
+    payload = json.dumps(_safe_json_value(parts), sort_keys=True, ensure_ascii=True)
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:16]
+
+
+def _tokenize_for_codegen(text) -> list:
+    return [t.lower() for t in re.findall(r"[a-zA-Z']+|\d+\.?\d*", str(text or "")) if len(t) >= 2]
+
+
+class HerebotCapabilityFacade:
+    """
+    Read-oriented facade passed to generated plugins.
+
+    Generated code receives this object instead of the raw CuriosityEngine.  It can
+    inspect current Herebot memory and ask for proposals to be recorded, but it
+    does not expose graph/state mutation methods.
+    """
+
+    def __init__(self, engine=None, max_items: int = 50):
+        self._engine = engine
+        self.max_items = max_items
+        self.proposals = []
+
+    def _bounded_dict(self, data, limit=None):
+        limit = self.max_items if limit is None else limit
+        if not isinstance(data, dict):
+            return {}
+        out = {}
+        for idx, (key, value) in enumerate(data.items()):
+            if idx >= limit:
+                out["_truncated"] = True
+                break
+            out[str(key)] = _safe_json_value(value)
+        return out
+
+    def get_memory_corpus(self, limit=None):
+        engine = self._engine
+        limit = self.max_items if limit is None else limit
+        texts = []
+        try:
+            bridge = getattr(engine, "backend_memory_bridge", None)
+            if bridge is not None:
+                texts.extend(bridge.get_corpus(limit=limit) or [])
+        except Exception:
+            pass
+        try:
+            for ep in getattr(getattr(engine, "episodic_memory", None), "episodes", [])[-limit:]:
+                user = str(ep.get("user_input", "")).strip()
+                reply = str(ep.get("system_response", "")).strip()
+                if user:
+                    texts.append(user)
+                if reply:
+                    texts.append(reply)
+        except Exception:
+            pass
+        try:
+            texts.extend(list(getattr(engine, "interaction_history", []) or [])[-limit:])
+        except Exception:
+            pass
+
+        seen = set()
+        deduped = []
+        for text in texts:
+            clean = " ".join(str(text).split())
+            if not clean:
+                continue
+            key = _stable_hash(clean)
+            if key in seen:
+                continue
+            seen.add(key)
+            deduped.append(clean)
+            if len(deduped) >= limit:
+                break
+        return deduped
+
+    def get_reasoner_summary(self, limit=None):
+        engine = self._engine
+        limit = self.max_items if limit is None else limit
+        reasoner = getattr(engine, "reasoner", None)
+        if reasoner is None:
+            return {"available": False}
+        return {
+            "available": True,
+            "definitions": self._bounded_dict(getattr(reasoner, "definitions", {}) or {}, limit),
+            "phrase_definitions": self._bounded_dict(getattr(reasoner, "phrase_definitions", {}) or {}, limit),
+            "phrase_relations": self._bounded_dict(getattr(reasoner, "phrase_relations", {}) or {}, limit),
+            "hypotheses": _safe_json_value((getattr(reasoner, "hypotheses", []) or [])[-limit:]),
+        }
+
+    def get_graph_summary(self, limit=None):
+        engine = self._engine
+        limit = self.max_items if limit is None else limit
+        reasoner = getattr(engine, "reasoner", None)
+        graph = getattr(reasoner, "knowledge_graph", None)
+        if graph is None:
+            return {"available": False, "nodes": [], "edges": []}
+        nodes = []
+        try:
+            for nid, data in list(graph.nodes.items())[:limit]:
+                nodes.append({
+                    "id": nid,
+                    "label": data.get("label"),
+                    "type": data.get("type"),
+                    "metadata": _safe_json_value(data.get("metadata", {})),
+                })
+        except Exception:
+            nodes = []
+        edges = []
+        try:
+            for n1, n2, rel, conf in graph.get_all_edges()[:limit]:
+                edges.append({"from": n1, "to": n2, "relation": rel, "confidence": conf})
+        except Exception:
+            edges = []
+        return {"available": True, "nodes": nodes, "edges": edges}
+
+    def get_state_summary(self, limit=None):
+        engine = self._engine
+        limit = self.max_items if limit is None else limit
+        manager = getattr(engine, "state_manager", None)
+        if manager is None:
+            return {"available": False, "states": [], "shadow_states": []}
+        states = []
+        for label, vec in list((getattr(manager, "states", {}) or {}).items())[:limit]:
+            states.append({"label": label, "dim": len(vec) if hasattr(vec, "__len__") else None})
+        shadows = []
+        for label, vec in list((getattr(manager, "shadow_states", {}) or {}).items())[:limit]:
+            shadows.append({"label": label, "dim": len(vec) if hasattr(vec, "__len__") else None})
+        return {"available": True, "states": states, "shadow_states": shadows}
+
+    def semantic_similarity(self, word, candidate):
+        learner = getattr(self._engine, "semantic_learner", None)
+        if learner is None:
+            return 0.0
+        try:
+            return float(learner.similarity(str(word), str(candidate)))
+        except Exception:
+            try:
+                emb1 = learner.word_embeddings.get(str(word))
+                emb2 = learner.word_embeddings.get(str(candidate))
+                if emb1 is None or emb2 is None:
+                    return 0.0
+                import numpy as np
+                return float(np.dot(emb1, emb2) / (np.linalg.norm(emb1) * np.linalg.norm(emb2) + 1e-12))
+            except Exception:
+                return 0.0
+
+    def evaluate_ci(self, text):
+        ci = getattr(self._engine, "ci_engine", None)
+        if ci is None:
+            return {"mode": "unavailable", "confidence": 0.5}
+        try:
+            return _safe_json_value(ci.evaluate(str(text)))
+        except Exception as e:
+            return {"mode": "error", "confidence": 0.5, "error": str(e)}
+
+    def score_phon(self, text):
+        phon = getattr(self._engine, "phon_engine", None)
+        if phon is None:
+            return {"score": 0.0, "diagnostics": []}
+        try:
+            score, diagnostics = phon.score_text(str(text))
+            return {"score": float(score), "diagnostics": _safe_json_value(diagnostics)}
+        except Exception as e:
+            return {"score": 0.0, "diagnostics": [{"mode": "error", "error": str(e)}]}
+
+    def get_factor_snapshot(self):
+        return _safe_json_value(getattr(self._engine, "_last_factor_dict", {}) or {})
+
+    def get_feedback_summary(self, logic_id=None):
+        feedback = getattr(self._engine, "generated_code_feedback", None)
+        if feedback is None:
+            return {"available": False}
+        if logic_id:
+            try:
+                return feedback.get_feedback_summary(logic_id)
+            except Exception:
+                return {"available": True, "error": "summary_failed"}
+        return {"available": True, "logic_ids": list(getattr(feedback, "feedback", {}).keys())[:self.max_items]}
+
+    def propose_change(self, proposal_type, payload=None, source=None):
+        proposal = {
+            "type": str(proposal_type),
+            "payload": _safe_json_value(payload or {}),
+            "source": source or "generated_plugin",
+            "timestamp": time.time(),
+        }
+        self.proposals.append(proposal)
+        return proposal
+
+    def capability_summary(self):
+        corpus = self.get_memory_corpus(limit=10)
+        return {
+            "memory_items": len(corpus),
+            "reasoner": self.get_reasoner_summary(limit=5).get("available", False),
+            "graph": self.get_graph_summary(limit=5).get("available", False),
+            "states": len(self.get_state_summary(limit=5).get("states", [])),
+            "factors": self.get_factor_snapshot(),
+        }
+
+
+class GeneratedPluginManager:
+    """Registry, trial runner, health tracker, and decay manager for generated plugins."""
+
+    ACTIVE_PHASES = {"trial", "active", "weak"}
+    INACTIVE_PHASES = {"disabled", "dormant", "archived"}
+
+    def __init__(self, engine=None, registry_path: str = None, min_healthy_trials: int = 3, similarity_threshold: float = 0.2):
+        self.engine = engine
+        self.registry_path = registry_path or os.path.join(STATE_DIR, "generated_plugin_registry.json")
+        self.min_healthy_trials = min_healthy_trials
+        self.similarity_threshold = similarity_threshold
+        self.records = {}
+        self._module_cache = {}
+        self._load()
+
+    def bind_engine(self, engine):
+        self.engine = engine
+
+    def _load(self):
+        if os.path.exists(self.registry_path):
+            try:
+                with open(self.registry_path, "r", encoding="utf-8") as f:
+                    self.records = json.load(f)
+            except Exception:
+                self.records = {}
+
+    def save(self):
+        directory = os.path.dirname(self.registry_path)
+        if directory:
+            os.makedirs(directory, exist_ok=True)
+        tmp = self.registry_path + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(_safe_json_value(self.records), f, indent=2, sort_keys=True)
+        os.replace(tmp, self.registry_path)
+
+    def build_generation_snapshot(self, engine, rule, limit=50):
+        facade = HerebotCapabilityFacade(engine, max_items=limit)
+        corpus = facade.get_memory_corpus(limit=limit)
+        corpus_hashes = [_stable_hash(text) for text in corpus]
+        snapshot = {
+            "logic_id": rule.get("logic_id"),
+            "rule_type": rule.get("rule_type", rule.get("type", "unknown")),
+            "rule_hash": _stable_hash(rule),
+            "memory": {
+                "count": len(corpus),
+                "hashes": corpus_hashes,
+                "sample": corpus[: min(10, len(corpus))],
+            },
+            "reasoner": facade.get_reasoner_summary(limit=limit),
+            "graph": facade.get_graph_summary(limit=limit),
+            "states": facade.get_state_summary(limit=limit),
+            "factors": facade.get_factor_snapshot(),
+            "feedback": facade.get_feedback_summary(rule.get("logic_id")),
+            "capabilities": facade.capability_summary(),
+        }
+        snapshot["snapshot_hash"] = _stable_hash(snapshot)
+        return snapshot
+
+    def register(self, logic_id, filepath, rule=None, snapshot=None):
+        now = time.time()
+        rule = rule or {}
+        snapshot = snapshot or {}
+        existing = self.records.get(logic_id, {})
+        trigger_tokens = sorted(set(existing.get("trigger_tokens") or self.extract_trigger_tokens(rule, snapshot)))
+        record = {
+            "logic_id": logic_id,
+            "filepath": filepath,
+            "rule_type": rule.get("rule_type", rule.get("type", "unknown")),
+            "description": rule.get("description", ""),
+            "trigger_tokens": trigger_tokens,
+            "trigger_state_labels": list(rule.get("state_labels", []) or []),
+            "phase": existing.get("phase", "generated"),
+            "created": existing.get("created", now),
+            "last_used": existing.get("last_used"),
+            "recent_usage": existing.get("recent_usage", 0.0),
+            "predictive_gain": existing.get("predictive_gain", 0.0),
+            "trial_count": existing.get("trial_count", 0),
+            "healthy_trials": existing.get("healthy_trials", 0),
+            "unhealthy_trials": existing.get("unhealthy_trials", 0),
+            "feedback_reward_total": existing.get("feedback_reward_total", 0.0),
+            "shadow_success": existing.get("shadow_success", False),
+            "last_error": existing.get("last_error", ""),
+            "snapshot_hash": snapshot.get("snapshot_hash"),
+            "snapshot": {
+                "snapshot_hash": snapshot.get("snapshot_hash"),
+                "memory_count": (snapshot.get("memory") or {}).get("count", 0),
+                "memory_hashes": (snapshot.get("memory") or {}).get("hashes", [])[:20],
+                "rule_hash": snapshot.get("rule_hash"),
+            },
+            "evidence": existing.get("evidence", []),
+        }
+        self.records[logic_id] = record
+        self.save()
+        return record
+
+    def extract_trigger_tokens(self, rule, snapshot=None):
+        texts = [
+            rule.get("description", ""),
+            rule.get("word", ""),
+            rule.get("candidate", ""),
+            rule.get("label", ""),
+            json.dumps(_safe_json_value(rule.get("condition", {})), sort_keys=True),
+            json.dumps(_safe_json_value(rule.get("action", {})), sort_keys=True),
+        ]
+        snapshot = snapshot or {}
+        for item in (snapshot.get("memory") or {}).get("sample", [])[:5]:
+            texts.append(item)
+        return sorted(set(t for text in texts for t in _tokenize_for_codegen(text)))
+
+    def mark_shadow_result(self, logic_id, success, error="", output=""):
+        record = self.records.get(logic_id)
+        if not record:
+            return None
+        record["shadow_success"] = bool(success)
+        record["last_error"] = error or ""
+        record["last_shadow_output"] = str(output or "")[:500]
+        record["phase"] = "trial" if success else "disabled"
+        record["last_shadow_test"] = time.time()
+        self.save()
+        return record
+
+    def build_runtime_context(self, engine=None, **kwargs):
+        engine = engine or self.engine
+        facade = HerebotCapabilityFacade(engine)
+        context = {
+            "facade": facade,
+            "capabilities": facade.capability_summary(),
+            "timestamp": time.time(),
+            "state": list(getattr(engine, "current_state_labels", []) or []),
+        }
+        context.update(kwargs)
+        context.setdefault("tokens", _tokenize_for_codegen(context.get("user_input", "")))
+        context.setdefault("factor_dict", getattr(engine, "_last_factor_dict", {}) or {})
+        return context
+
+    def _load_plugin(self, logic_id, filepath):
+        if logic_id in self._module_cache:
+            return self._module_cache[logic_id]
+        if not filepath or not os.path.exists(filepath):
+            raise FileNotFoundError(filepath or logic_id)
+        module_name = f"generated_plugin_{logic_id}_{int(time.time()*1000)}"
+        spec = importlib.util.spec_from_file_location(module_name, filepath)
+        if spec is None or spec.loader is None:
+            raise RuntimeError("Failed to load generated plugin spec")
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        if hasattr(module, "HerebotGeneratedPlugin"):
+            plugin = module.HerebotGeneratedPlugin()
+        elif hasattr(module, "run"):
+            class LegacyPlugin:
+                def inspect(self, context):
+                    return {"legacy": True, "matches": True}
+                def propose(self, context):
+                    result = module.run(context)
+                    return {"type": "legacy_result", "result": result, "confidence": 0.5}
+                def run(self, context):
+                    proposal = self.propose(context)
+                    return {"ok": True, "plugin_id": logic_id, "proposals": [proposal]}
+            plugin = LegacyPlugin()
+        else:
+            raise RuntimeError("Generated file has no HerebotGeneratedPlugin or run(context)")
+        self._module_cache[logic_id] = plugin
+        return plugin
+
+    def _context_similarity(self, record, context):
+        trigger = set(record.get("trigger_tokens") or [])
+        tokens = set(context.get("tokens") or _tokenize_for_codegen(context.get("user_input", "")))
+        if not trigger:
+            return 1.0
+        if not tokens:
+            return 0.0
+        overlap = len(trigger & tokens)
+        union = len(trigger | tokens)
+        token_score = overlap / max(union, 1)
+        coverage_score = overlap / max(min(len(trigger), len(tokens)), 1)
+        current_states = set(context.get("state") or [])
+        trigger_states = set(record.get("trigger_state_labels") or [])
+        state_score = 0.0
+        if trigger_states and current_states:
+            state_score = len(trigger_states & current_states) / max(len(trigger_states | current_states), 1)
+        return max(token_score, coverage_score, state_score)
+
+    def run_matching_plugins(self, context):
+        proposals = []
+        now = time.time()
+        for logic_id, record in list(self.records.items()):
+            if record.get("phase") not in self.ACTIVE_PHASES:
+                continue
+            similarity = self._context_similarity(record, context)
+            if similarity < self.similarity_threshold:
+                continue
+            try:
+                plugin = self._load_plugin(logic_id, record.get("filepath"))
+                facade = context.get("facade")
+                facade_start = len(getattr(facade, "proposals", []) or []) if facade is not None else 0
+                result = plugin.run(context)
+                result = result if isinstance(result, dict) else {"ok": True, "result": result}
+                plugin_proposals = result.get("proposals", [])
+                if isinstance(plugin_proposals, dict):
+                    plugin_proposals = [plugin_proposals]
+                if facade is not None:
+                    plugin_proposals = list(plugin_proposals) + list(getattr(facade, "proposals", [])[facade_start:])
+                for proposal in plugin_proposals:
+                    if not isinstance(proposal, dict):
+                        continue
+                    proposal = _safe_json_value(proposal)
+                    envelope = {
+                        "logic_id": logic_id,
+                        "phase": record.get("phase"),
+                        "similarity": similarity,
+                        "proposal": proposal,
+                        "inspect": _safe_json_value(result.get("inspect", {})),
+                    }
+                    proposals.append(envelope)
+                record["last_used"] = now
+                record["recent_usage"] = record.get("recent_usage", 0.0) * 0.99 + 0.1
+                if record.get("phase") == "trial":
+                    record["trial_count"] = record.get("trial_count", 0) + 1
+            except Exception as e:
+                record["last_error"] = f"{type(e).__name__}: {e}"
+                record["unhealthy_trials"] = record.get("unhealthy_trials", 0) + 1
+                if record["unhealthy_trials"] >= 2:
+                    record["phase"] = "disabled"
+        self.decay_unused(now=now)
+        self.save()
+        return proposals
+
+    def select_response_candidate(self, proposals):
+        best = None
+        best_score = -1.0
+        for envelope in proposals or []:
+            proposal = envelope.get("proposal", {})
+            if proposal.get("type") not in ("response_candidate", "behavior_proposal", "legacy_result"):
+                continue
+            candidate = proposal.get("response_candidate") or proposal.get("text") or proposal.get("result")
+            if not candidate:
+                continue
+            confidence = float(proposal.get("confidence", 0.5) or 0.5)
+            score = confidence * float(envelope.get("similarity", 0.0) or 0.0)
+            if score > best_score:
+                best = {
+                    "logic_id": envelope.get("logic_id"),
+                    "candidate": str(candidate),
+                    "confidence": confidence,
+                    "similarity": envelope.get("similarity", 0.0),
+                    "phase": envelope.get("phase"),
+                }
+                best_score = score
+        return best
+
+    def record_trial_health(self, influence, factor_dict=None, reward=0.0):
+        if not influence:
+            return None
+        logic_id = influence.get("logic_id")
+        record = self.records.get(logic_id)
+        if not record:
+            return None
+        factor_dict = factor_dict or {}
+        try:
+            reward = float(reward or 0.0)
+        except Exception:
+            reward = 0.0
+        threat = float(factor_dict.get("threat", 0.0) or 0.0)
+        trust = float(factor_dict.get("trust", 0.5) or 0.5)
+        confidence = float(factor_dict.get("confidence", 0.5) or 0.5)
+        guilt = float(factor_dict.get("guilt", 0.0) or 0.0)
+        healthy = reward >= 0.0 and threat <= 0.75 and trust >= 0.25 and confidence >= 0.2 and guilt <= 0.45
+        entry = {
+            "timestamp": time.time(),
+            "rating": "factor_health_positive" if healthy else "factor_health_negative",
+            "reward": reward,
+            "factors": _safe_json_value(factor_dict),
+        }
+        record.setdefault("evidence", []).append(entry)
+        record["evidence"] = record["evidence"][-20:]
+        if healthy:
+            record["healthy_trials"] = record.get("healthy_trials", 0) + 1
+            record["predictive_gain"] = record.get("predictive_gain", 0.0) * 0.9 + min(1.0, max(0.0, reward)) * 0.1
+        else:
+            record["unhealthy_trials"] = record.get("unhealthy_trials", 0) + 1
+            if record.get("phase") == "active":
+                record["phase"] = "weak"
+            elif record.get("unhealthy_trials", 0) >= 2:
+                record["phase"] = "disabled"
+        self._maybe_promote(record)
+        self.save()
+        return record
+
+    def record_feedback(self, influence, rating, reward=0.0, factor_dict=None):
+        if not influence:
+            return None
+        logic_id = influence.get("logic_id")
+        record = self.records.get(logic_id)
+        if not record:
+            return None
+        try:
+            reward = float(reward or 0.0)
+        except Exception:
+            reward = 0.0
+        record["feedback_reward_total"] = record.get("feedback_reward_total", 0.0) + reward
+        record.setdefault("evidence", []).append({
+            "timestamp": time.time(),
+            "rating": rating,
+            "reward": reward,
+            "factors": _safe_json_value(factor_dict or {}),
+        })
+        record["evidence"] = record["evidence"][-20:]
+        if str(rating).lower().startswith("negative") or reward < 0:
+            record["phase"] = "disabled"
+            record["unhealthy_trials"] = record.get("unhealthy_trials", 0) + 1
+        else:
+            self.record_trial_health(influence, factor_dict=factor_dict, reward=max(0.0, reward))
+        self._maybe_promote(record)
+        self.save()
+        return record
+
+    def _maybe_promote(self, record):
+        if record.get("phase") != "trial":
+            return
+        if record.get("healthy_trials", 0) >= self.min_healthy_trials and record.get("feedback_reward_total", 0.0) >= 0:
+            if record.get("unhealthy_trials", 0) == 0:
+                record["phase"] = "active"
+                record["promoted_at"] = time.time()
+
+    def decay_unused(self, now=None):
+        now = now or time.time()
+        for record in self.records.values():
+            phase = record.get("phase")
+            if phase in self.INACTIVE_PHASES:
+                continue
+            last_used = record.get("last_used")
+            if last_used is None:
+                last_used = record.get("created")
+            if last_used is None:
+                last_used = now
+            age_days = max(0.0, (now - last_used) / 86400.0)
+            if age_days > 180:
+                record["phase"] = "archived"
+            elif age_days > 90 and phase != "active":
+                record["phase"] = "dormant"
+            elif age_days > 30 and phase == "active":
+                record["phase"] = "weak"
 # ------------------------------------------------------------
 # CodeGenerator , writes Python code from confirmed logic rules
 # Enhanced with resource monitoring, error handling, and dynamic code generation
@@ -10,6 +580,15 @@ class CodeGenerator:
     Uses safe templates; every generated file contains a `run()` function.
     Enhanced to be resource-aware and scalable, with built-in performance tracking.
     """
+
+    def __init__(self, engine=None, code_dir: str = None, snapshot_limit: int = 50):
+        self.engine = engine
+        self.code_dir = code_dir or CODE_GEN_DIR
+        self.snapshot_limit = snapshot_limit
+        self.last_generation_snapshot = None
+
+    def bind_engine(self, engine):
+        self.engine = engine
 
     # Common imports added to every generated file
     BASE_IMPORTS = '''import time
@@ -116,6 +695,209 @@ def run(factor_vector: list) -> bool:
     """
 {body}
     return False
+'''
+
+    def _build_snapshot(self, rule: dict, engine=None) -> dict:
+        engine = engine or self.engine
+        if engine is None:
+            snapshot = {
+                "logic_id": rule.get("logic_id"),
+                "rule_type": rule.get("rule_type", rule.get("type", "unknown")),
+                "rule_hash": _stable_hash(rule),
+                "memory": {"count": 0, "hashes": [], "sample": []},
+                "snapshot_hash": _stable_hash(rule, "no_engine"),
+            }
+            self.last_generation_snapshot = snapshot
+            return snapshot
+        snapshot = GeneratedPluginManager(engine=engine).build_generation_snapshot(
+            engine, rule, limit=self.snapshot_limit
+        )
+        self.last_generation_snapshot = snapshot
+        return snapshot
+
+    @staticmethod
+    def _plugin_action_descriptor(action: dict) -> dict:
+        if not isinstance(action, dict):
+            return {"type": "response_candidate", "response_candidate": "TPL.ACK.ACTION", "confidence": 0.45}
+        if "self_reference" in action:
+            alias = str(action.get("self_reference", ""))
+            return {
+                "type": "response_candidate",
+                "response_candidate": f"TPL.IDENTITY.ALIAS alias='{alias}'",
+                "confidence": 0.65,
+            }
+        if "say" in action:
+            return {
+                "type": "response_candidate",
+                "response_candidate": str(action.get("say", "")),
+                "confidence": 0.65,
+            }
+        if "modify_state" in action:
+            return {
+                "type": "state_proposal",
+                "payload": _safe_json_value(action.get("modify_state", {})),
+                "response_candidate": "TPL.STATE.PROPOSED",
+                "confidence": 0.55,
+            }
+        if "response_template" in action:
+            return {
+                "type": "response_candidate",
+                "response_candidate": str(action.get("response_template")),
+                "confidence": 0.65,
+            }
+        return {"type": "response_candidate", "response_candidate": "TPL.ACK.ACTION", "confidence": 0.45}
+
+    def _generate_plugin(self, rule: dict, logic_id: str, timestamp: str, snapshot: dict) -> str:
+        rule_type = rule.get("rule_type", rule.get("type", "unknown"))
+        metadata = {
+            "logic_id": logic_id,
+            "rule_type": rule_type,
+            "created": timestamp,
+            "contract": "HerebotGeneratedPlugin.v1",
+            "snapshot_hash": snapshot.get("snapshot_hash"),
+            "rule_hash": snapshot.get("rule_hash"),
+            "memory_count": (snapshot.get("memory") or {}).get("count", 0),
+            "memory_hashes": (snapshot.get("memory") or {}).get("hashes", [])[:20],
+            "trigger_tokens": GeneratedPluginManager().extract_trigger_tokens(rule, snapshot),
+        }
+        descriptor = self._plugin_action_descriptor(rule.get("action", {}))
+        metadata_json = json.dumps(_safe_json_value(metadata), sort_keys=True, indent=2)
+        rule_json = json.dumps(_safe_json_value(rule), sort_keys=True, indent=2)
+        descriptor_json = json.dumps(_safe_json_value(descriptor), sort_keys=True, indent=2)
+
+        return f'''# AUTO-GENERATED HEREBOT PLUGIN
+# Logic ID: {logic_id}
+# Rule type: {rule_type}
+# Created: {timestamp}
+# Contract: HerebotGeneratedPlugin.v1
+
+import math
+import re
+import time
+
+GENERATED_PLUGIN_METADATA = {metadata_json}
+GENERATED_RULE = {rule_json}
+ACTION_DESCRIPTOR = {descriptor_json}
+
+
+class HerebotGeneratedPlugin:
+    plugin_id = GENERATED_PLUGIN_METADATA.get("logic_id")
+    rule_type = GENERATED_PLUGIN_METADATA.get("rule_type")
+    snapshot_hash = GENERATED_PLUGIN_METADATA.get("snapshot_hash")
+    trigger_tokens = GENERATED_PLUGIN_METADATA.get("trigger_tokens", [])
+
+    def inspect(self, context):
+        tokens = set(context.get("tokens") or [])
+        trigger = set(self.trigger_tokens or [])
+        overlap = len(tokens & trigger)
+        similarity = overlap / max(len(tokens | trigger), 1) if trigger else 1.0
+        capabilities = context.get("capabilities", {{}})
+        return {{
+            "plugin_id": self.plugin_id,
+            "rule_type": self.rule_type,
+            "snapshot_hash": self.snapshot_hash,
+            "token_overlap": overlap,
+            "similarity": similarity,
+            "capabilities": capabilities,
+        }}
+
+    def _condition_matches(self, context):
+        condition = GENERATED_RULE.get("condition") or {{}}
+        if not isinstance(condition, dict) or not condition:
+            return True
+        user_input = str(context.get("user_input", "")).lower()
+        tokens = [str(t).lower() for t in (context.get("tokens") or [])]
+        state = context.get("factor_dict") or context.get("state") or {{}}
+        if "alias" in condition and str(condition.get("alias", "")).lower() not in user_input:
+            return False
+        if "pronoun" in condition and str(condition.get("pronoun", "")).lower() not in tokens:
+            return False
+        if "keyword" in condition and str(condition.get("keyword", "")).lower() not in user_input:
+            return False
+        if "tokens" in condition:
+            required = [str(t).lower() for t in condition.get("tokens") or []]
+            if required and not any(t in tokens for t in required):
+                return False
+        if "regex" in condition:
+            try:
+                if re.search(str(condition.get("regex")), user_input) is None:
+                    return False
+            except Exception:
+                return False
+        if "state_key" in condition and "state_value" in condition and isinstance(state, dict):
+            if state.get(condition.get("state_key")) != condition.get("state_value"):
+                return False
+        return True
+
+    def _semantic_proposal(self, context):
+        word = GENERATED_RULE.get("word")
+        candidate = GENERATED_RULE.get("candidate")
+        if not word or not candidate:
+            return None
+        facade = context.get("facade")
+        similarity = 0.0
+        if facade is not None and hasattr(facade, "semantic_similarity"):
+            similarity = facade.semantic_similarity(word, candidate)
+        if similarity <= 0.0:
+            similarity = float(GENERATED_RULE.get("similarity", 0.0) or 0.0)
+        return {{
+            "type": "semantic_relation",
+            "word": word,
+            "candidate": candidate,
+            "relation": GENERATED_RULE.get("type", "synonym"),
+            "confidence": max(0.0, min(1.0, similarity or 0.5)),
+            "source": "generated_plugin",
+        }}
+
+    def _state_proposal(self, context):
+        prototype = GENERATED_RULE.get("prototype") or []
+        if not prototype:
+            return None
+        factor_dict = context.get("factor_dict") or {{}}
+        if isinstance(factor_dict, dict):
+            values = list(factor_dict.values())[:len(prototype)]
+        else:
+            values = list(factor_dict or [])[:len(prototype)]
+        if len(values) != len(prototype):
+            return None
+        dot = sum(float(a) * float(b) for a, b in zip(values, prototype))
+        n1 = math.sqrt(sum(float(a) * float(a) for a in values))
+        n2 = math.sqrt(sum(float(b) * float(b) for b in prototype))
+        similarity = dot / (n1 * n2 + 1e-12)
+        return {{
+            "type": "state_match",
+            "label": GENERATED_RULE.get("label", "unknown_state"),
+            "confidence": max(0.0, min(1.0, similarity)),
+            "source": "generated_plugin",
+        }}
+
+    def propose(self, context):
+        if not self._condition_matches(context):
+            return None
+        if self.rule_type in ("synonym", "category", "analogy"):
+            return self._semantic_proposal(context)
+        if self.rule_type == "state_definition":
+            return self._state_proposal(context)
+        proposal = dict(ACTION_DESCRIPTOR)
+        proposal["source"] = "generated_plugin"
+        proposal["logic_id"] = self.plugin_id
+        return proposal
+
+    def run(self, context):
+        inspected = self.inspect(context)
+        proposal = self.propose(context)
+        proposals = [proposal] if isinstance(proposal, dict) else []
+        return {{
+            "ok": True,
+            "plugin_id": self.plugin_id,
+            "inspect": inspected,
+            "proposals": proposals,
+            "metadata": GENERATED_PLUGIN_METADATA,
+        }}
+
+
+def run(context):
+    return HerebotGeneratedPlugin().run(context)
 '''
     @classmethod
     def _generate_language_model(cls, rule: dict, logic_id: str, timestamp: str, base_imports: str) -> str:
@@ -409,35 +1191,30 @@ class ImprovedLSTMLanguageModel(LanguageModel):
         self.max_vocab = data['max_vocab']
 '''
         return code
-    @classmethod
-    def generate(cls, logic_rule: dict) -> str:
+    def generate(self, logic_rule: dict = None) -> str:
         """
         Dispatch to the appropriate template based on rule type.
-        Enhanced with dynamic condition/action parsing.
+        Generates Herebot plugin-class code for behavioral/semantic/state rules.
+        Keeps the language-model generator on its original class contract because
+        the language improvement path imports the generated model class directly.
         """
+        if not isinstance(self, CodeGenerator):
+            # Backward compatibility for CodeGenerator.generate(rule).
+            return CodeGenerator().generate(self if logic_rule is None else logic_rule)
+        if logic_rule is None:
+            logic_rule = {}
         rule_type = logic_rule.get("rule_type", logic_rule.get("type", "unknown"))
         logic_id = logic_rule.get("logic_id", f"gen_{int(time.time())}")
         timestamp = time.strftime("%Y-%m-%d %H:%M:%S")
 
         # Common imports will be inserted by the template formatter
-        base_imports = cls.BASE_IMPORTS
+        base_imports = self.BASE_IMPORTS
 
-        if rule_type in ("identity_alias", "pronoun_mapping", "behavioral"):
-            return cls._generate_behavioral(logic_rule, logic_id, timestamp, base_imports)
-        elif rule_type in ("synonym", "category", "analogy"):
-            return cls._generate_semantic(logic_rule, logic_id, timestamp, base_imports)
-        elif rule_type == "state_definition":
-            return cls._generate_state(logic_rule, logic_id, timestamp, base_imports)
-        elif rule_type == "language_model":
-            return cls._generate_language_model(logic_rule, logic_id, timestamp, base_imports)
-        else:
-            # Fallback: generic template with minimal functionality
-            return f"""# No template for rule type {rule_type}
-{base_imports}
+        if rule_type == "language_model":
+            return self._generate_language_model(logic_rule, logic_id, timestamp, base_imports)
 
-def run(context: dict) -> str:
-    return None
-"""
+        snapshot = self._build_snapshot(logic_rule)
+        return self._generate_plugin(logic_rule, logic_id, timestamp, snapshot)
 
     @classmethod
     def _generate_behavioral(cls, rule: dict, logic_id: str, timestamp: str, base_imports: str) -> str:
@@ -614,12 +1391,15 @@ def run(context: dict) -> str:
         lines.append('    logger.debug(f"Action executed: {{response}}")')
         return "\n".join(lines)
 
-    @staticmethod
-    def save_code_file(logic_id: str, code: str) -> str:
+    def save_code_file(self, logic_id: str = None, code: str = None) -> str:
         """Write code to a .py file and return the full path."""
+        if not isinstance(self, CodeGenerator):
+            # Backward compatibility for CodeGenerator.save_code_file(logic_id, code).
+            return CodeGenerator().save_code_file(self, logic_id)
         safe_id = "".join(c for c in logic_id if c.isalnum() or c == "_")
         filename = f"{safe_id}.py"
-        filepath = os.path.join(CODE_GEN_DIR, filename)
+        os.makedirs(self.code_dir, exist_ok=True)
+        filepath = os.path.join(self.code_dir, filename)
         with open(filepath, "w", encoding="utf-8") as f:
             f.write(code)
         return filepath
@@ -641,9 +1421,15 @@ class ShadowExecutor:
         if not os.path.exists(filepath):
             return False, "File not found", ""
 
-        # Prepare a dummy context for behavioral rules
+        # Prepare a dummy context for plugin or legacy behavioral rules.
         if test_input is None:
-            test_input = {"user_input": "hello", "tokens": ["hello"], "state": "neutral"}
+            test_input = {
+                "user_input": "hello",
+                "tokens": ["hello"],
+                "state": ["neutral"],
+                "factor_dict": {"trust": 0.5, "confidence": 0.5, "threat": 0.0},
+                "capabilities": {},
+            }
 
         module_name = f"shadow_{int(time.time()*1000)}_{os.path.basename(filepath)[:-3]}"
         spec = importlib.util.spec_from_file_location(module_name, filepath)
@@ -660,7 +1446,18 @@ class ShadowExecutor:
                 spec.loader.exec_module(module)
                 if time.time() - start_time > 12.0:
                     raise RuntimeError("Shadow execution timeout")
-                if hasattr(module, "run"):
+                if hasattr(module, "HerebotGeneratedPlugin"):
+                    plugin = module.HerebotGeneratedPlugin()
+                    missing = [
+                        name for name in ("inspect", "propose", "run")
+                        if not hasattr(plugin, name)
+                    ]
+                    if missing:
+                        raise RuntimeError(f"Generated plugin missing methods: {missing}")
+                    result = plugin.run(test_input)
+                    if not isinstance(result, dict):
+                        raise RuntimeError("Generated plugin run(context) must return a dict")
+                elif hasattr(module, "run"):
                     result = module.run(test_input)
                 else:
                     result = None

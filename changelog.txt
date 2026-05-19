@@ -28,4 +28,126 @@ Traceback (most recent call last):
 KeyError: 'chain forming'
 Attempting to recover and continue...
 
-describe precisely what this function does , which variables it intialises and uses perfect and strictly what it does , do not use uncertain wods and keep wordings deterministic formal tone and precise avoid use of words like many or several and give specific values,also include maths formula in KAtex if any 
+describe precisely what this function does , which variables it intialises and uses perfect and strictly what it does , do not use uncertain wods and keep wordings deterministic formal tone and precise avoid use of words like many or several and give specific values,also include maths formula in KAtex if any
+
+
+Session update - 2026-05-19
+
+1) Curiosity engine file split:
+ a) Kept core/heart.py as the surface CuriosityEngine entrypoint.
+ b) Moved background engine behavior into core/cuengine modules:
+    - curiosity.py
+    - idle.py
+    - language.py
+    - persistence.py
+    - processing.py
+ c) Preserved CuriosityEngine public ownership of the engine components.
+
+2) Template abbreviation cleanup:
+ a) Replaced generated/user-facing templates with compact technical template IDs.
+ b) Added abbreavations.md to list template IDs so model output templates and project templates stay separated.
+
+3) Reward and conflict fix:
+ a) Updated IntrinsicRewardTracker so intrinsic token reward uses an unweighted nonnegative magnitude:
+    $m=\operatorname{clip}(1-c)+\operatorname{clip}(igain)+\operatorname{clip}(bayes\_surprise)$
+ b) Applied explicit feedback reward as:
+    $R_{positive}=+m$
+    $R_{neutral}=0$
+    $R_{negative}=-m$
+ c) Stored feedback reward history with source, rating, magnitude, and reward.
+ d) Wired response feedback, trust feedback, and logic feedback into signed reward handling.
+ e) Added shadow differentiation-link proposals for negative feedback instead of directly corrupting the graph.
+ f) Added commit/reject handling for shadow differentiation links.
+ g) Fixed state conflict option 5 so missing or aliased state labels use safe vector lookup and stale conflicts do not raise KeyError.
+
+4) Mathematical research documentation:
+ a) Added docs/herebot_mathematical_state_research.md.
+ b) Documented the input processing path and evaluation formulas from code.
+ c) Added assumptions where the implementation uses heuristic or learned approximations.
+
+5) Backend memory and engine integration:
+ a) Added herebot/backend/herebot_memory.py as a bridge between CuriosityEngine runtime data and backend engines.
+ b) Added runtime and snapshot sync for current input, episodic memory, reasoner definitions, phrase definitions, graph labels, graph relations, and CSR text.
+ c) Extended IncrementalCSR with document ingestion and dedupe/index persistence.
+ d) Updated CIEngine to use injected bridge/corpus data and removed hidden "hello world" runtime seed behavior.
+ e) Updated CIEngine empty-corpus behavior to return a neutral insufficient_corpus diagnostic.
+ f) Updated PhonotacticEngine so data-adaptive scoring is primary and fallback mode is explicit as fallback_heuristic.
+ g) Removed static/mock phon reference words from production scoring.
+ h) Simplified backend search so disabled/mock Tier-1 paths are not reported as live capability.
+ i) Wired CuriosityEngine process_input to sync and verify backend memory alignment.
+ j) Added BackendIntegration_test coverage for CSR documents, backend bridge, CI, phon, search, and CuriosityEngine sync.
+
+6) Herebot-aware code generator integration:
+ a) Added HerebotCapabilityFacade in traits/code_generator.py.
+ b) Facade exposes read-oriented access to unified memory, reasoner summaries, graph summaries, state summaries, semantic similarity, CI evaluation, phon scoring, factor snapshots, and feedback summaries.
+ c) Facade does not expose raw CuriosityEngine mutation methods.
+ d) Added GeneratedPluginManager in traits/code_generator.py.
+ e) Generated behavioral, semantic, and state code now uses the plugin contract:
+    - HerebotGeneratedPlugin.inspect(context) -> dict
+    - HerebotGeneratedPlugin.propose(context) -> dict
+    - HerebotGeneratedPlugin.run(context) -> dict
+ f) ShadowExecutor now supports both new HerebotGeneratedPlugin files and legacy run(context) files.
+ g) CodeGenerator now builds a bounded whole-memory generation snapshot with hashes and metadata.
+ h) CuriosityEngine now owns one CodeGenerator, ShadowExecutor, and GeneratedPluginManager.
+ i) LogicInheritanceManager now receives the shared generator, executor, feedback manager, plugin manager, and engine reference instead of creating isolated instances.
+ j) Shadow-passing generated plugins enter trial phase automatically.
+ k) Trial plugins run only on similar contexts using trigger-token and state similarity.
+ l) Trial plugin output is indirect: it produces response/action proposals, and response candidates surface as TPL.PLUGIN.CANDIDATE.
+ m) Trial health is tracked with reward, factor state, trust, confidence, threat, and guilt signals.
+ n) Healthy repeated evidence promotes a trial plugin to active.
+ o) Negative feedback or unhealthy factor evidence disables or demotes a plugin.
+ p) Unused plugins decay through weak, dormant, and archived phases.
+ q) Added GeneratedCodePlugin_test coverage for plugin generation, facade access, legacy executor compatibility, shared runtime ownership, trial promotion/demotion, and archive decay.
+
+7) Probabilistic concept and state label convention:
+ a) Added components/probabilistic_labeling.py as the shared interaction-clock probability helper.
+ b) Label decay now uses CuriosityEngine.interaction_counter instead of wall-clock time.
+ c) Dynamic horizon is:
+    $H(t)=80(1+0.25\log(1+t))$
+ d) Reward trace normalization uses:
+    $r_t=\tanh(R_t)$
+ e) Per-label decay rate uses:
+    $\lambda_i(t)=\frac{\ln 2}{H(t)}\operatorname{clip}(1-0.5\tanh(q_i),0.25,2.0)$
+ f) Usage and reward traces update as:
+    $u_i \leftarrow u_i e^{-\lambda_i\Delta t}+w_i$
+    $q_i \leftarrow q_i e^{-\lambda_i\Delta t}+w_i r_t$
+ g) Label activation and field probability use:
+    $a_i=\max(10^{-9},u_i\frac{1+\tanh(q_i)}{2})$
+    $p_i=\frac{a_i}{\sum_{j\in field}a_j}$
+ h) Archive pressure uses:
+    $D_i=\tanh(\Delta t/H(t))(1-p_i)(1-\max(0,\tanh(q_i)))$
+ i) Labels archive when archive pressure is at least 0.98 and interaction gap is at least the dynamic horizon.
+ j) Concept assignments in concepts/hdp.py now use probability-weighted active concepts and persist word_concept_stats.
+ k) WordStateAssociator now keeps multiple labels per word with usage, reward_trace, probability, tier, and phase metadata.
+ l) break_bridge now demotes the rejected label through negative reward and promotes the kept label.
+ m) StateManager now stores probabilistic metadata for state labels, excludes archived labels from active matching, and keeps multiple active similar states.
+ n) Exact state selection ties within 1e-9 similarity and probability now use random choice.
+ o) Added probability tiers 0 through 4 with:
+    $tier=\min(4,\lfloor 5p_i\rfloor)$
+ p) Added config defaults for hierarchical_concept_model, state_manager, and probabilistic_labeling.
+ q) Updated processing, idle learning, and state-learning paths to pass interaction_counter and reward into concept, word-state, and state-label updates.
+ r) Added ProbabilisticLabeling_test coverage for concept promotion/decay/archive, word-state multi-label behavior, bridge demotion, state tie selection, and interaction-count archive pressure.
+
+8) Automatic probabilistic state regrouping:
+ a) Replaced automatic interactive state conflict prompting with relation observation and regrouping by default.
+ b) Old manual conflict menu remains available only when state_manager.legacy_interactive_conflicts is true.
+ c) StateManager now stores state_relation_observations with labels, first_interaction, last_interaction, similarity_history, factor_delta_history, probability_delta_history, shared_tokens, reward_trace, positive_reward_trace, and phase.
+ d) Regroup score uses:
+    $G_{ij}(t)=s_{ij}(t)(1-|\Delta p_{ij}(t)|)R^+_{ij}(t)$
+ e) State groups now store head_label, child_labels, centroid_vector, dominant_tokens, dominant_phrases, factor_signature, probability, reward_trace, last_interaction, and phase.
+ f) Group centroid uses probability and positive reward-trace weighting:
+    $v_h=\frac{\sum_i p_i(1+\max(0,\tanh(q_i)))v_i}{\sum_i p_i(1+\max(0,\tanh(q_i)))}$
+ g) Head labels are selected from repeated rewarded user tokens first, then phrase definitions, word definitions, graph nodes, then deterministic group_<child> fallback.
+ h) Child states remain active and recoverable; group aliases are kept for summary/response use without collapsing vector matching.
+ i) Idle state introspection now refreshes relation observations and groups instead of creating shadow states.
+ j) process_input archives legacy unresolved conflict records when automatic regrouping is active.
+ k) Added config defaults for state_relation_similarity_threshold, state_regroup_similarity_threshold, state_regroup_min_observations, state_regroup_interval_interactions, state_group_token_evidence_floor, state_group_head_label_max_words, and legacy_interactive_conflicts.
+ l) Added ProbabilisticLabeling_test coverage for no interactive unresolved conflict, repeated regrouping, divergence/reconvergence, head-label selection, centroid weighting, and archived-state exclusion.
+
+9) Verification commands run:
+ a) ../bot/bin/python -m unittest tests.cor.GeneratedCodePlugin_test
+ b) ../bot/bin/python -m unittest tests.cor.BackendIntegration_test
+ c) ../bot/bin/python -m unittest tests.cor.Curiosity_test
+ d) ../bot/bin/python -m unittest tests.cor.ProbabilisticLabeling_test
+ e) ../bot/bin/python -m py_compile traits/code_generator.py components/barriers.py core/heart.py core/cuengine/processing.py core/cuengine/idle.py core/cuengine/language.py core/mind.py
+ f) ../bot/bin/python -m py_compile concepts/hdp.py components/factor_handler.py components/learner.py core/cuengine/curiosity.py core/cuengine/processing.py core/cuengine/idle.py core/heart.py components/config_manager.py components/probabilistic_labeling.py

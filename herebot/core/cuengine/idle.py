@@ -4,31 +4,47 @@ class HeartIdleMixin:
     def perform_state_introspection(self):
         """
         Long-idle task:
-        1. Detect conflicts among saved states, create shadow resolutions.
+        1. Refresh probabilistic state relation groups.
         2. Offline learning from episodic memory.
         """
-        print("\n [Deep State Introspection] Examining saved states for conflicts...")
-        threshold = self.config_manager.get('state_manager.conflict_threshold', 0.85)
-        self.state_manager.refresh_conflicts(threshold=threshold)
-        unresolved = self.state_manager.get_unresolved_conflicts()
-        if not unresolved:
-            print("    No unresolved conflicts found.")
+        if not self.config_manager.get('state_manager.legacy_interactive_conflicts', False):
+            print("\n [Deep State Introspection] Refreshing probabilistic state groups...")
+            self.state_manager.archive_legacy_conflicts(interaction_index=getattr(self, 'interaction_counter', 0))
+            observations = self.state_manager.refresh_state_relations(
+                interaction_index=getattr(self, 'interaction_counter', 0),
+                reward=float(getattr(self.reward_tracker, 'episode_reward', 0.0) or 0.0),
+                reasoner=getattr(self, 'reasoner', None),
+            )
+            groups = self.state_manager.refresh_state_regrouping(
+                interaction_index=getattr(self, 'interaction_counter', 0),
+                reasoner=getattr(self, 'reasoner', None),
+                force=True,
+            )
+            print(f"    Relation observations refreshed: {len(observations)}.")
+            print(f"    Active state groups: {len([g for g in groups.values() if g.get('phase') != 'archived'])}.")
         else:
-            print(f"    Found {len(unresolved)} unresolved conflict(s).")
-            for conflict in unresolved[:3]:
-                l1, l2 = conflict["labels"]
-                sim = conflict["similarity"]
-                words1 = conflict.get("words1", [])
-                words2 = conflict.get("words2", [])
-                print(f"    Conflict: '{l1}' ↔ '{l2}' (similarity={sim:.3f})")
-                if words1:
-                    print(f"      Words that led to '{l1}': {', '.join(words1)}")
-                if words2:
-                    print(f"      Words that led to '{l2}': {', '.join(words2)}")
-                shadow_label = self.state_manager.create_shadow_resolution(conflict)
-                self.state_manager.apply_shadow_to_conflict(conflict, shadow_label)
-                print(f"      → Created shadow state '{shadow_label}'. Will ask user at next interaction.")
-            self.state_manager._save_conflicts()
+            print("\n [Deep State Introspection] Examining saved states for conflicts...")
+            threshold = self.config_manager.get('state_manager.conflict_threshold', 0.85)
+            self.state_manager.refresh_conflicts(threshold=threshold)
+            unresolved = self.state_manager.get_unresolved_conflicts()
+            if not unresolved:
+                print("    No unresolved conflicts found.")
+            else:
+                print(f"    Found {len(unresolved)} unresolved conflict(s).")
+                for conflict in unresolved[:3]:
+                    l1, l2 = conflict["labels"]
+                    sim = conflict["similarity"]
+                    words1 = conflict.get("words1", [])
+                    words2 = conflict.get("words2", [])
+                    print(f"    Conflict: '{l1}' ↔ '{l2}' (similarity={sim:.3f})")
+                    if words1:
+                        print(f"      Words that led to '{l1}': {', '.join(words1)}")
+                    if words2:
+                        print(f"      Words that led to '{l2}': {', '.join(words2)}")
+                    shadow_label = self.state_manager.create_shadow_resolution(conflict)
+                    self.state_manager.apply_shadow_to_conflict(conflict, shadow_label)
+                    print(f"      → Created shadow state '{shadow_label}'. Will ask user at next interaction.")
+                self.state_manager._save_conflicts()
 
         # ---- Offline learning from episodic memory ----
         print("    Consolidating knowledge from recent episodes...")
@@ -160,7 +176,12 @@ class HeartIdleMixin:
             diag_explanation = self.diag_engine.explain(token_ci, token_phon)
             features = self._extract_features(token, token_ci, token_phon, diag_explanation)
             features_array = self._features_to_array(features)
-            concept = self.concept_model.add_word_observation(token, features)
+            concept = self.concept_model.add_word_observation(
+                token,
+                features,
+                interaction_index=getattr(self, 'interaction_counter', 0),
+                reward=0.0,
+            )
             new_entropy = self.concept_model.entropy_word(token)
             igain = self._information_gain(token, new_entropy)
             self.gp_model.update(features_array, token_ci['confidence'])
@@ -1137,11 +1158,25 @@ class HeartIdleMixin:
             # For each label in w1, add to w2 with confidence scaled by similarity
             for lab in labels1:
                 if lab not in labels2:
-                    assoc.add_association(w2, lab, confidence=sim * 0.8, source="similarity")
+                    assoc.add_association(
+                        w2,
+                        lab,
+                        confidence=sim * 0.8,
+                        source="similarity",
+                        interaction_index=getattr(self, 'interaction_counter', 0),
+                        reward=float(getattr(self.reward_tracker, 'episode_reward', 0.0) or 0.0),
+                    )
                     propagated += 1
             for lab in labels2:
                 if lab not in labels1:
-                    assoc.add_association(w1, lab, confidence=sim * 0.8, source="similarity")
+                    assoc.add_association(
+                        w1,
+                        lab,
+                        confidence=sim * 0.8,
+                        source="similarity",
+                        interaction_index=getattr(self, 'interaction_counter', 0),
+                        reward=float(getattr(self.reward_tracker, 'episode_reward', 0.0) or 0.0),
+                    )
                     propagated += 1
         print(f"   Propagated {propagated} label associations.")
 

@@ -1,7 +1,7 @@
 from importglobal import Optional,copy,Dict, Any,List,json,os,Tuple,dataclass,field,time,pickle,np
 from components.config_manager import ConfigManager
 from components.directory_handler import STATE_DIR, LOGIC_DIR, SHADOW_LOG_DIR
-from traits.code_generator import CodeGenerator,ShadowExecutor,GeneratedCodeFeedback
+from traits.code_generator import CodeGenerator,ShadowExecutor,GeneratedCodeFeedback,GeneratedPluginManager
 
 # ------------------------------------------------------------
 # GuiltTracker – models unease after negative feedback in positive contexts
@@ -289,14 +289,29 @@ class LogicInheritanceManager:
     """
     LOGIC_DIR = LOGIC_DIR
 
-    def __init__(self, config_manager: Optional['ConfigManager'] = None, conscience_manager: Optional[ConscienceManager] = None):
+    def __init__(
+        self,
+        config_manager: Optional['ConfigManager'] = None,
+        conscience_manager: Optional[ConscienceManager] = None,
+        code_generator: Optional[CodeGenerator] = None,
+        shadow_executor: Optional[ShadowExecutor] = None,
+        generated_code_feedback: Optional[GeneratedCodeFeedback] = None,
+        generated_plugin_manager: Optional[GeneratedPluginManager] = None,
+        engine: Any = None,
+    ):
         self.config_manager = config_manager
         self.conscience_manager = conscience_manager
+        self.engine = engine
         self.pending_doubts: List[Dict] = []
         self.confirmed_logic: Dict[str, Dict] = {}
-        self.code_generator = CodeGenerator()
-        self.shadow_executor = ShadowExecutor()
-        self.generated_code_feedback = GeneratedCodeFeedback()
+        self.code_generator = code_generator or CodeGenerator(engine=engine)
+        if hasattr(self.code_generator, "bind_engine") and engine is not None:
+            self.code_generator.bind_engine(engine)
+        self.shadow_executor = shadow_executor or ShadowExecutor()
+        self.generated_code_feedback = generated_code_feedback or GeneratedCodeFeedback()
+        self.generated_plugin_manager = generated_plugin_manager or GeneratedPluginManager(engine=engine)
+        if hasattr(self.generated_plugin_manager, "bind_engine") and engine is not None:
+            self.generated_plugin_manager.bind_engine(engine)
         self.generated_code_paths = {}   # logic_id -> filepath
         self._load()
 
@@ -377,6 +392,15 @@ class LogicInheritanceManager:
         code = self.code_generator.generate(rule)
         filepath = self.code_generator.save_code_file(logic_id, code)
         self.generated_code_paths[logic_id] = filepath
+        if rule.get("rule_type", rule.get("type")) != "language_model":
+            self.generated_plugin_manager.register(
+                logic_id,
+                filepath,
+                rule=rule,
+                snapshot=getattr(self.code_generator, "last_generation_snapshot", None),
+            )
+            self.generated_plugin_manager.save()
+        self.save()
         return filepath
 
     def shadow_test_generated_code(self, logic_id: str) -> dict:
@@ -387,7 +411,23 @@ class LogicInheritanceManager:
             return {"success": False, "error": "No generated file"}
 
         filepath = self.generated_code_paths[logic_id]
-        success, error, output = self.shadow_executor.test_code_file(filepath)
+        test_input = None
+        try:
+            if self.generated_plugin_manager and self.engine is not None:
+                test_input = self.generated_plugin_manager.build_runtime_context(
+                    self.engine,
+                    user_input="hello",
+                    tokens=["hello"],
+                    factor_dict={"trust": 0.5, "confidence": 0.5, "threat": 0.0},
+                    ci_report={},
+                    phon_score=0.0,
+                    diagnostic={},
+                )
+        except Exception:
+            test_input = None
+        success, error, output = self.shadow_executor.test_code_file(filepath, test_input=test_input)
+        if self.generated_plugin_manager and logic_id in self.generated_plugin_manager.records:
+            self.generated_plugin_manager.mark_shadow_result(logic_id, success, error=error, output=output)
 
         # Log the test run
         log_entry = {

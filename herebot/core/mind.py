@@ -94,6 +94,19 @@ class ActionGenerator:
         """Generate a question about a potential synonym relationship."""
         return f"TPL.ASK.SYN word='{word}' candidate='{candidate}'?"
 
+    def _generated_plugin_candidate(self, state: Dict) -> Optional[str]:
+        proposals = state.get('generated_plugin_proposals', []) if isinstance(state, dict) else []
+        manager = getattr(self.engine, 'generated_plugin_manager', None)
+        if manager is None or not proposals:
+            return None
+        candidate = manager.select_response_candidate(proposals)
+        if not candidate:
+            return None
+        text = str(candidate.get('candidate', '')).replace("'", "\\'")[:180]
+        logic_id = str(candidate.get('logic_id', 'unknown'))
+        self.engine._last_generated_plugin_influence = candidate
+        return f"TPL.PLUGIN.CANDIDATE id='{logic_id}' value='{text}'"
+
     def generate_trust_utterance(self, trust_value: float) -> str:
         """
         Generate a spontaneous, possibly broken-English utterance when trust is high.
@@ -474,6 +487,11 @@ class ActionGenerator:
                     self.engine.pending_shadow_diff_key = hyp.get('key')
                 return hyp['text']
 
+        # --- Priority 2.25: generated plugin response candidates ---
+        plugin_candidate = self._generated_plugin_candidate(state)
+        if plugin_candidate:
+            return plugin_candidate
+
         # --- Priority 2.5: Parallel reasoning thoughts (if multiple chains available) ---
         if 'token_analyses' in state and state['token_analyses']:
             # pick the most curious token
@@ -498,7 +516,8 @@ class ActionGenerator:
         # --- Priority 4: State awareness utterance (30% chance) ---
         if self.engine.current_state_labels and np.random.rand() < 0.3:
             # pick one of the active states to mention
-            chosen_state = np.random.choice(self.engine.current_state_labels)
+            mention_labels = getattr(self.engine, 'current_state_group_labels', None) or self.engine.current_state_labels
+            chosen_state = np.random.choice(mention_labels)
             return f"TPL.STATE.CURRENT label='{chosen_state}'"
 
         # --- Priority 5: Spontaneous emotional utterance (based on state) ---
@@ -525,7 +544,8 @@ class ActionGenerator:
             utterance = self.generate_trust_utterance(trust)  # now handles all emotional tones
             if self.engine.current_state_labels:
                 # Prepend state information
-                state_str = ', '.join(self.engine.current_state_labels)
+                mention_labels = getattr(self.engine, 'current_state_group_labels', None) or self.engine.current_state_labels
+                state_str = ', '.join(mention_labels)
                 utterance = f"TPL.STATE.CONTEXT labels='{state_str}' | {utterance}"
             self.engine.expecting_feedback = True
             self.engine.feedback_attempt_word = None

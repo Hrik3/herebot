@@ -48,6 +48,7 @@ class CuriosityEngine(HeartPersistenceMixin, HeartCuriosityMixin, HeartProcessin
         from components.resoning import ReasoningEngine
         self.reasoner = ReasoningEngine(config_manager=self.config_manager)
         self._last_state_learning_time = 0
+        self._last_state_learning_interaction = -self.config_manager.get('engine.state_learning_cooldown_interactions', 30)
         # ---- Language & consciousness modules ----
         self.semantic_learner = SemanticLearner(config_manager=self.config_manager)
         self.syntax_learner = SyntaxLearner(config_manager=self.config_manager)
@@ -82,6 +83,7 @@ class CuriosityEngine(HeartPersistenceMixin, HeartCuriosityMixin, HeartProcessin
 
         # ---- Persistent latent state concept ----
         self.current_state_labels = []          # label of the currently recognized state
+        self.current_state_group_labels = []    # automatic head labels for active state families
         self.current_state_embedding = None      # embedding of that state (aligned to emb_dim)
         # ---------------------------------------
 
@@ -184,8 +186,9 @@ class CuriosityEngine(HeartPersistenceMixin, HeartCuriosityMixin, HeartProcessin
         self.conscience_manager = ConscienceManager(config_manager=self.config_manager)
 
         # ---- Code generation & guilt ----
-        self.code_generator = CodeGenerator()
+        self.code_generator = CodeGenerator(engine=self)
         self.shadow_executor = ShadowExecutor()
+        self.generated_plugin_manager = GeneratedPluginManager(engine=self)
         # Only create a new GuiltTracker if one wasn't loaded from disk
         if not hasattr(self, 'guilt_tracker') or self.guilt_tracker is None:
             self.guilt_tracker = GuiltTracker()
@@ -199,7 +202,12 @@ class CuriosityEngine(HeartPersistenceMixin, HeartCuriosityMixin, HeartProcessin
         self.identity_aliases = set()   # store learned aliases for self-reference
         self.logic_inheritance = LogicInheritanceManager(
             config_manager=self.config_manager,
-            conscience_manager=self.conscience_manager
+            conscience_manager=self.conscience_manager,
+            code_generator=self.code_generator,
+            shadow_executor=self.shadow_executor,
+            generated_code_feedback=self.generated_code_feedback,
+            generated_plugin_manager=self.generated_plugin_manager,
+            engine=self,
         )
         # ---- Language model for fluent chat ----
         self.language_model = LSTMLanguageModel.create_default(self.config_manager)

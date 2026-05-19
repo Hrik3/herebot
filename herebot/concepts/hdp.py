@@ -1,5 +1,9 @@
 from importglobal import Optional,Dict,Counter,defaultdict,np,math,pickle,os,time
 from components.config_manager import ConfigManager
+from components.probabilistic_labeling import (
+    ensure_probabilistic_stats,
+    normalize_probability_field,
+)
 # ------------------------------------------------------------
 # Hierarchical Probabilistic Concept Model (Dirichlet Process)
 # ------------------------------------------------------------
@@ -28,6 +32,7 @@ class HierarchicalConceptModel:
         self.feature_vocab = set()
         # Store previous posterior for each word (to compute Bayesian surprise)
         self.prev_posterior = {}     # word -> dict(concept: probability)
+        self.word_concept_stats = defaultdict(dict)  # word -> concept -> probabilistic convention stats
         # New: meta-concept layer
         self.meta_concept_counts = Counter()           # meta-concept -> count
         self.concept_to_meta = {}                      # concept -> meta-concept
@@ -39,26 +44,86 @@ class HierarchicalConceptModel:
             self.alpha = self.config_manager.get('hierarchical_concept_model.alpha', 0.5)
             self.beta = self.config_manager.get('hierarchical_concept_model.beta', 1.0)
 
-    def add_word_observation(self, word: str, features: Dict[str, float]) -> int:
+    def _prob_config(self) -> dict:
+        if self.config_manager:
+            return self.config_manager.config.get('probabilistic_labeling', {})
+        return {}
+
+    def _ensure_word_concept_stats(self, word: str, interaction_index: int = 0):
+        stats = self.word_concept_stats[word]
+        counts = self.word_concept_counts.get(word, {})
+        total = float(sum(counts.values()) or 0.0)
+        for concept, count in counts.items():
+            initial_probability = (float(count) / total) if total > 0 else 0.0
+            stats[concept] = ensure_probabilistic_stats(
+                stats.get(concept, {}),
+                interaction_index=interaction_index,
+                initial_usage=float(count),
+                initial_probability=initial_probability,
+            )
+        return stats
+
+    def _normalize_word_concepts(self, word: str, interaction_index: int = 0, reward: float = 0.0, touched_concept=None, weight: float = 0.0):
+        stats = self._ensure_word_concept_stats(word, interaction_index)
+        normalize_probability_field(
+            stats,
+            interaction_index=interaction_index,
+            reward=reward,
+            touched_key=touched_concept,
+            touched_weight=weight,
+            config=self._prob_config(),
+            archive=True,
+        )
+        return stats
+
+    def get_concept_probabilities(self, word: str, interaction_index: int = 0, include_archived: bool = False) -> Dict[int, float]:
+        stats = self._normalize_word_concepts(word, interaction_index)
+        result = {}
+        for concept, meta in stats.items():
+            if include_archived or meta.get('phase', 'active') != 'archived':
+                result[concept] = float(meta.get('probability', 0.0))
+        return result
+
+    def record_concept_reward(self, word: str, concept: int, interaction_index: int = 0, reward: float = 0.0, weight: float = 0.25):
+        if word not in self.word_concept_counts or concept not in self.word_concept_counts[word]:
+            return
+        self._normalize_word_concepts(
+            word,
+            interaction_index=int(interaction_index or 0),
+            reward=reward,
+            touched_concept=concept,
+            weight=weight,
+        )
+
+    def add_word_observation(self, word: str, features: Dict[str, float], interaction_index: int = 0, reward: float = 0.0) -> int:
         """
         Given a word and its feature vector, assign it to a concept
         via CRP, update counts, and return the assigned concept ID.
         """
+        interaction_index = int(interaction_index or 0)
+        self._ensure_word_concept_stats(word, interaction_index)
         # Store previous posterior for Bayesian surprise calculation
         if word in self.word_concept_counts:
-            total = sum(self.word_concept_counts[word].values())
-            self.prev_posterior[word] = {
-                c: cnt / total for c, cnt in self.word_concept_counts[word].items()
-            }
+            self.prev_posterior[word] = self.get_concept_probabilities(word, interaction_index)
         else:
             self.prev_posterior[word] = {}
 
-        # Compute CRP probabilities
+        # Compute probability-weighted CRP probabilities.
         probs = []
         concepts = []
         total = sum(self.concept_counts.values())
+        word_probs = self.get_concept_probabilities(word, interaction_index)
         for c, cnt in self.concept_counts.items():
-            probs.append(cnt / (total + self.alpha))
+            stats = self.word_concept_stats[word].get(c, {})
+            if stats.get('phase') == 'archived':
+                continue
+            global_prior = cnt / (total + self.alpha)
+            local_prior = word_probs.get(c, 0.0)
+            if self.word_concept_counts.get(word):
+                score = max(local_prior, 1e-9) * max(global_prior, 1e-9)
+            else:
+                score = global_prior
+            probs.append(score)
             concepts.append(c)
         probs.append(self.alpha / (total + self.alpha))   # new concept
         concepts.append(max(self.concept_counts.keys(), default=-1) + 1)
@@ -71,6 +136,14 @@ class HierarchicalConceptModel:
         # Update counts
         self.concept_counts[concept] += 1
         self.word_concept_counts[word][concept] += 1
+        self._ensure_word_concept_stats(word, interaction_index)
+        self._normalize_word_concepts(
+            word,
+            interaction_index=interaction_index,
+            reward=reward,
+            touched_concept=concept,
+            weight=1.0,
+        )
 
         # For new concept, initialize its feature distribution
         if concept not in self.concept_features:
@@ -94,8 +167,7 @@ class HierarchicalConceptModel:
         """
         if word not in self.word_concept_counts:
             return {}
-        total = sum(self.word_concept_counts[word].values())
-        probs = {c: cnt / total for c, cnt in self.word_concept_counts[word].items()}
+        probs = self.get_concept_probabilities(word)
         features = defaultdict(float)
         for c, p in probs.items():
             concept_total = sum(self.concept_features[c].values())
@@ -109,9 +181,7 @@ class HierarchicalConceptModel:
         """Entropy of concept distribution for the word."""
         if word not in self.word_concept_counts:
             return 0.0
-        counts = list(self.word_concept_counts[word].values())
-        total = sum(counts)
-        probs = [c / total for c in counts]
+        probs = [p for p in self.get_concept_probabilities(word).values() if p > 0]
         return -sum(p * math.log(p + 1e-12) for p in probs)
 
     def bayesian_surprise(self, word: str) -> float:
@@ -122,8 +192,7 @@ class HierarchicalConceptModel:
         if word not in self.word_concept_counts or word not in self.prev_posterior:
             return 0.0
         prior = self.prev_posterior[word]
-        total = sum(self.word_concept_counts[word].values())
-        posterior = {c: cnt / total for c, cnt in self.word_concept_counts[word].items()}
+        posterior = self.get_concept_probabilities(word)
         # KL divergence
         kl = 0.0
         for c, p_post in posterior.items():
@@ -142,10 +211,13 @@ class HierarchicalConceptModel:
                 'concept_features': self.concept_features,
                 'feature_vocab': self.feature_vocab,
                 'prev_posterior': self.prev_posterior,
+                'word_concept_stats': self.word_concept_stats,
+                'stabilized_words': getattr(self, 'stabilized_words', set()),
+                'definition_events': getattr(self, 'definition_events', {}),
             }, f)
         os.replace(tmp, path)
 
-    def register_definition_event(self, word: str):
+    def register_definition_event(self, word: str, interaction_index: int = 0, reward: float = 1.0):
         """
         Called when a word receives an explicit definition.
         Performs semantic stabilization:
@@ -161,8 +233,16 @@ class HierarchicalConceptModel:
 
         # Reinforce dominant concept
         if isinstance(counts, dict) and len(counts) > 0:
-            dominant = max(counts, key=counts.get)
+            probabilities = self.get_concept_probabilities(word, interaction_index)
+            dominant = max(probabilities, key=probabilities.get) if probabilities else max(counts, key=counts.get)
             counts[dominant] += 10
+            self._normalize_word_concepts(
+                word,
+                interaction_index=int(interaction_index or 0),
+                reward=reward,
+                touched_concept=dominant,
+                weight=10.0,
+            )
 
         # Mark stabilized
         if not hasattr(self, "stabilized_words"):
@@ -246,4 +326,11 @@ class HierarchicalConceptModel:
         model.concept_features = data['concept_features']
         model.feature_vocab = data['feature_vocab']
         model.prev_posterior = data['prev_posterior']
+        model.word_concept_stats = data.get('word_concept_stats', defaultdict(dict))
+        if not isinstance(model.word_concept_stats, defaultdict):
+            model.word_concept_stats = defaultdict(dict, model.word_concept_stats)
+        model.stabilized_words = data.get('stabilized_words', set())
+        model.definition_events = data.get('definition_events', {})
+        for word in list(model.word_concept_counts.keys()):
+            model._ensure_word_concept_stats(word, interaction_index=0)
         return model

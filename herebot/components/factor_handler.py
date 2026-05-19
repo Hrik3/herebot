@@ -2,9 +2,14 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from concepts.concepts_global import AdaptiveControlSpace
+from collections import Counter
 from importglobal import List,Dict,np,dataclass,field,json,os,Optional,time,Tuple,psutil
 from components.config_manager import ConfigManager
 from components.directory_handler import STATE_DIR
+from components.probabilistic_labeling import (
+    ensure_probabilistic_stats,
+    normalize_probability_field,
+)
 
 # ------------------------------------------------------------
 # Multi-Factor Curiosity with Meta-Learned Weights (extended)
@@ -53,8 +58,14 @@ class StateManager:
             os.makedirs(STATE_DIR, exist_ok=True)
         except Exception as e:
             print(f"[WARN] Could not create STATE_DIR: {e}")
+        self.relation_file = os.path.join(STATE_DIR, "state_relations.json")
+        self.group_file = os.path.join(STATE_DIR, "state_groups.json")
         self.states = {}          # label -> factor_vector (np.array)
         self.aliases = {}  # old_label -> new_label
+        self.state_metadata: Dict[str, dict] = {}   # label -> probabilistic and metabolic metadata
+        self.state_relation_observations: Dict[str, dict] = {}
+        self.state_groups: Dict[str, dict] = {}
+        self.state_group_aliases: Dict[str, str] = {}
         self._load_all_states()
 
         # Conflict management
@@ -62,11 +73,14 @@ class StateManager:
         self.shadow_states = {}   # label -> factor_vector (temporary shadow states)
         self._load_conflicts()
         self._load_shadows()
-        self.state_metadata: Dict[str, dict] = {}   # label -> {energy_cost, recent_usage, predictive_gain, phase, last_used, confidence}
+        self._load_state_relations()
+        self._load_state_groups()
         # Dimensionality: all vectors are aligned to the current reference dimension.
         self.ref_dim = None
         self._update_ref_dim()
         self._load_state_metadata()
+        for label in self.states:
+            self._ensure_state_probability_metadata(label, interaction_index=0)
 
     def _load_state_metadata(self):
         meta_path = os.path.join(STATE_DIR, 'state_metadata.json')
@@ -83,6 +97,144 @@ class StateManager:
         with open(tmp, 'w') as f:
             json.dump(self.state_metadata, f, indent=2)
         os.replace(tmp, meta_path)
+
+    def _prob_config(self) -> dict:
+        if self.config_manager:
+            return self.config_manager.config.get('probabilistic_labeling', {})
+        return {}
+
+    def _state_config(self, key: str, default):
+        if self.config_manager:
+            return self.config_manager.get(f'state_manager.{key}', default)
+        return default
+
+    def _legacy_interactive_conflicts_enabled(self) -> bool:
+        return bool(self._state_config('legacy_interactive_conflicts', False))
+
+    def _ensure_state_probability_metadata(self, label: str, interaction_index: int = 0):
+        meta = self.state_metadata.setdefault(label, {})
+        initial_usage = meta.get('recent_usage', meta.get('usage', 0.0))
+        initial_probability = meta.get('probability', meta.get('confidence', 0.0))
+        ensure_probabilistic_stats(
+            meta,
+            interaction_index=interaction_index,
+            initial_usage=initial_usage,
+            initial_probability=initial_probability,
+        )
+        return meta
+
+    def _normalize_state_probabilities(self, labels=None, interaction_index: int = 0, reward: float = 0.0, touched_label: str = None, weight: float = 0.0):
+        if labels is None:
+            labels = list(self.states.keys())
+        stats_map = {}
+        for label in labels:
+            if label in self.state_metadata:
+                stats_map[label] = self._ensure_state_probability_metadata(label, interaction_index)
+        normalize_probability_field(
+            stats_map,
+            interaction_index=interaction_index,
+            reward=reward,
+            touched_key=touched_label,
+            touched_weight=weight,
+            config=self._prob_config(),
+            archive=True,
+        )
+        for label, meta in stats_map.items():
+            self.state_metadata[label] = meta
+        return stats_map
+
+    def get_state_probabilities(self, interaction_index: int = 0, include_archived: bool = False) -> Dict[str, float]:
+        labels = list(self.states.keys())
+        stats = self._normalize_state_probabilities(labels, interaction_index=interaction_index)
+        return {
+            label: float(meta.get('probability', 0.0))
+            for label, meta in stats.items()
+            if include_archived or meta.get('phase', 'active') != 'archived'
+        }
+
+    def _state_relation_key(self, labels: List[str]) -> str:
+        return "||".join(sorted(str(label) for label in labels))
+
+    def _align_pair(self, v1: np.ndarray, v2: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+        v1 = self._normalize_vector(v1)
+        v2 = self._normalize_vector(v2)
+        max_len = max(len(v1), len(v2))
+        if len(v1) < max_len:
+            v1 = np.pad(v1, (0, max_len - len(v1)), 'constant')
+        elif len(v1) > max_len:
+            v1 = v1[:max_len]
+        if len(v2) < max_len:
+            v2 = np.pad(v2, (0, max_len - len(v2)), 'constant')
+        elif len(v2) > max_len:
+            v2 = v2[:max_len]
+        return v1, v2
+
+    def _cosine_similarity(self, v1: np.ndarray, v2: np.ndarray) -> float:
+        v1, v2 = self._align_pair(v1, v2)
+        denom = float(np.linalg.norm(v1) * np.linalg.norm(v2))
+        if denom <= 1e-12:
+            return 0.0
+        return float(np.dot(v1, v2) / denom)
+
+    def _factor_delta(self, v1: np.ndarray, v2: np.ndarray) -> dict:
+        v1, v2 = self._align_pair(v1, v2)
+        delta = np.abs(v1 - v2)
+        return {
+            'mean': float(np.mean(delta)) if len(delta) else 0.0,
+            'max': float(np.max(delta)) if len(delta) else 0.0,
+            'vector': delta.tolist(),
+        }
+
+    def _load_state_relations(self):
+        if os.path.exists(self.relation_file):
+            try:
+                with open(self.relation_file, 'r') as f:
+                    data = json.load(f)
+                self.state_relation_observations = data if isinstance(data, dict) else {}
+            except Exception as e:
+                print(f"Could not load state relations: {e}")
+                self.state_relation_observations = {}
+
+    def _save_state_relations(self):
+        os.makedirs(os.path.dirname(self.relation_file) or ".", exist_ok=True)
+        tmp = self.relation_file + ".tmp"
+        with open(tmp, 'w') as f:
+            json.dump(self.state_relation_observations, f, indent=2)
+        os.replace(tmp, self.relation_file)
+
+    def _load_state_groups(self):
+        if os.path.exists(self.group_file):
+            try:
+                with open(self.group_file, 'r') as f:
+                    data = json.load(f)
+                self.state_groups = data if isinstance(data, dict) else {}
+            except Exception as e:
+                print(f"Could not load state groups: {e}")
+                self.state_groups = {}
+        self.state_group_aliases = {}
+        for group in self.state_groups.values():
+            if group.get('phase', 'active') == 'archived':
+                continue
+            head = group.get('head_label')
+            for child in group.get('child_labels', []):
+                if head:
+                    self.state_group_aliases[child] = head
+
+    def _save_state_groups(self):
+        os.makedirs(os.path.dirname(self.group_file) or ".", exist_ok=True)
+        tmp = self.group_file + ".tmp"
+        with open(tmp, 'w') as f:
+            json.dump(self.state_groups, f, indent=2)
+        os.replace(tmp, self.group_file)
+
+    def get_group_heads_for_labels(self, labels: List[str]) -> List[str]:
+        heads = []
+        for label in labels or []:
+            head = self.state_group_aliases.get(label)
+            if head and head not in heads:
+                heads.append(head)
+        return heads
+
     def resolve_label(self, label: str) -> str:
         """Follow alias chain to get the final canonical label."""
         visited = set()
@@ -195,7 +347,7 @@ class StateManager:
                     print(f"Could not load state {fname}: {e}")
         self._update_ref_dim()
 
-    def save_state(self, label: str, vector: np.ndarray, metadata: dict = None, is_shadow: bool = False, response: str = None):
+    def save_state(self, label: str, vector: np.ndarray, metadata: dict = None, is_shadow: bool = False, response: str = None, interaction_index: int = 0):
         """Save a factor vector under the given label."""
         os.makedirs(self.state_dir, exist_ok=True)
         safe_label = "".join(c for c in label if c.isalnum() or c in " _-").strip()
@@ -224,6 +376,12 @@ class StateManager:
             'phase': 'active',
             'last_used': time.time(),
             'confidence': 1.0,        # how well the state represents the underlying pattern
+            'usage': 1.0,
+            'reward_trace': 0.0,
+            'last_interaction': int(interaction_index or 0),
+            'last_decay_interaction': int(interaction_index or 0),
+            'probability': 1.0,
+            'tier': 4,
         }
         tmp = path + ".tmp"
         with open(tmp, "w") as f:
@@ -273,7 +431,7 @@ class StateManager:
             self._save_state_metadata()
         self._update_ref_dim()
 
-    def find_similar_state(self, vector: np.ndarray, threshold: float = None, include_shadows: bool = False) -> Optional[str]:
+    def find_similar_state(self, vector: np.ndarray, threshold: float = None, include_shadows: bool = False, interaction_index: int = 0, reward: float = 0.0) -> Optional[str]:
         """
         Return the label of the most similar known state if cosine similarity > threshold.
         """
@@ -287,35 +445,48 @@ class StateManager:
         all_states = dict(self.states)
         if include_shadows:
             all_states.update(self.shadow_states)
+        all_states = {
+            label: vec for label, vec in all_states.items()
+            if self.state_metadata.get(label, {}).get('phase', 'active') != 'archived'
+        }
+        probabilities = self.get_state_probabilities(interaction_index=interaction_index)
 
         if not all_states:
             return None
-        best_label = None
-        best_sim = -1.0
+        candidates = []
         for label, stored_vec in all_states.items():
             stored_norm = self._normalize_vector(stored_vec)
             if np.linalg.norm(query_vec) == 0 or np.linalg.norm(stored_norm) == 0:
                 sim = 0.0
             else:
                 sim = np.dot(query_vec, stored_norm) / (np.linalg.norm(query_vec) * np.linalg.norm(stored_norm))
-            if sim > best_sim:
-                best_sim = sim
-                best_label = label
-        if best_sim >= threshold and best_label:
-            # update usage
-            meta = self.state_metadata.get(best_label)
-            if meta:
-                now = time.time()
-                if meta.get('last_used'):
-                    dt = now - meta['last_used']
-                    meta['recent_usage'] *= 0.99 ** dt
-                meta['recent_usage'] += 0.1
-                meta['last_used'] = now
-                self._save_state_metadata()
+            if sim >= threshold:
+                prob = probabilities.get(label, 0.0)
+                candidates.append((label, float(sim), float(prob), float(sim) * max(prob, 1e-9)))
+        if candidates:
+            tie_tol = self.config_manager.get('state_manager.selection_tie_tolerance', 1e-9) if self.config_manager else 1e-9
+            best_score = max(c[-1] for c in candidates)
+            best = [c for c in candidates if abs(c[-1] - best_score) <= tie_tol]
+            if len(best) > 1:
+                best_sim = max(c[1] for c in best)
+                best_prob = max(c[2] for c in best)
+                exact = [c for c in best if abs(c[1] - best_sim) <= tie_tol and abs(c[2] - best_prob) <= tie_tol]
+                chosen = exact[int(np.random.choice(len(exact)))] if len(exact) > 1 else best[0]
+            else:
+                chosen = best[0]
+            best_label = chosen[0]
+            self._normalize_state_probabilities(
+                list(all_states.keys()),
+                interaction_index=interaction_index,
+                reward=reward,
+                touched_label=best_label,
+                weight=0.1,
+            )
+            self._save_state_metadata()
             return best_label
         return None
 
-    def find_similar_states(self, vector: np.ndarray, threshold: float = None, include_shadows: bool = False) -> List[Tuple[str, float]]:
+    def find_similar_states(self, vector: np.ndarray, threshold: float = None, include_shadows: bool = False, interaction_index: int = 0, reward: float = 0.0) -> List[Tuple[str, float]]:
         """
         Return a list of (label, similarity) for all states with similarity > threshold.
         """
@@ -329,6 +500,12 @@ class StateManager:
         all_states = dict(self.states)
         if include_shadows:
             all_states.update(self.shadow_states)
+        all_states = {
+            label: vec for label, vec in all_states.items()
+            if self.state_metadata.get(label, {}).get('phase', 'active') != 'archived'
+        }
+        probabilities = self.get_state_probabilities(interaction_index=interaction_index)
+        probability_threshold = self.config_manager.get('state_manager.active_probability_threshold', 0.01) if self.config_manager else 0.01
 
         results = []
         for label, stored_vec in all_states.items():
@@ -337,19 +514,408 @@ class StateManager:
                 sim = 0.0
             else:
                 sim = np.dot(query_vec, stored_norm) / (np.linalg.norm(query_vec) * np.linalg.norm(stored_norm))
-            if sim >= threshold:
+            if sim >= threshold and probabilities.get(label, 0.0) >= probability_threshold:
                 results.append((label, sim))
-                # update usage for this state
-                meta = self.state_metadata.get(label)
-                if meta:
-                    now = time.time()
-                    if meta.get('last_used'):
-                        dt = now - meta['last_used']
-                        meta['recent_usage'] *= 0.99 ** dt
-                    meta['recent_usage'] += 0.05   # lighter update
-                    meta['last_used'] = now
-                    self._save_state_metadata()
+                self._normalize_state_probabilities(
+                    list(all_states.keys()),
+                    interaction_index=interaction_index,
+                    reward=reward,
+                    touched_label=label,
+                    weight=0.05,
+                )
+        if results:
+            probabilities = self.get_state_probabilities(interaction_index=interaction_index)
+            tie_tol = self.config_manager.get('state_manager.selection_tie_tolerance', 1e-9) if self.config_manager else 1e-9
+            def sort_key(item):
+                label, sim = item
+                return (sim * max(probabilities.get(label, 0.0), 1e-9), sim, probabilities.get(label, 0.0))
+            results.sort(key=sort_key, reverse=True)
+            if len(results) > 1:
+                first = results[0]
+                tied = [
+                    item for item in results
+                    if abs(item[1] - first[1]) <= tie_tol and abs(probabilities.get(item[0], 0.0) - probabilities.get(first[0], 0.0)) <= tie_tol
+                ]
+                if len(tied) > 1:
+                    chosen = tied[int(np.random.choice(len(tied)))]
+                    rest = [item for item in results if item != chosen]
+                    results = [chosen] + rest
+            self._save_state_metadata()
         return results
+
+    def _active_state_labels(self, interaction_index: int = 0) -> List[str]:
+        self.get_state_probabilities(interaction_index=interaction_index)
+        labels = []
+        for label in self.states.keys():
+            meta = self.state_metadata.get(label, {})
+            if meta.get('phase', 'active') != 'archived':
+                labels.append(label)
+        return labels
+
+    def record_state_relation_observation(
+        self,
+        labels: List[str],
+        tokens: List[str] = None,
+        factor_vector: np.ndarray = None,
+        reward: float = 0.0,
+        interaction_index: int = 0,
+        reasoner=None,
+    ) -> List[Dict]:
+        """
+        Record high-similarity state pairs as relation observations.
+        This is the probabilistic replacement for automatic user-facing conflicts.
+        """
+        threshold = float(self._state_config('state_relation_similarity_threshold', 0.85))
+        clean_labels = []
+        for label in labels or []:
+            resolved = self.resolve_label(label)
+            if resolved in self.states and resolved not in clean_labels:
+                if self.state_metadata.get(resolved, {}).get('phase', 'active') != 'archived':
+                    clean_labels.append(resolved)
+        if len(clean_labels) < 2:
+            return []
+
+        probabilities = self.get_state_probabilities(interaction_index=interaction_index)
+        observations = []
+        for i, l1 in enumerate(clean_labels):
+            for l2 in clean_labels[i + 1:]:
+                sim = self._cosine_similarity(self.states[l1], self.states[l2])
+                if sim < threshold:
+                    continue
+                obs = self._record_state_relation_pair(
+                    l1, l2, sim, probabilities, tokens=tokens or [],
+                    reward=reward, interaction_index=interaction_index,
+                )
+                observations.append(obs)
+        if observations:
+            self._save_state_relations()
+            self.refresh_state_regrouping(
+                interaction_index=interaction_index,
+                reasoner=reasoner,
+                force=False,
+            )
+        return observations
+
+    def refresh_state_relations(
+        self,
+        interaction_index: int = 0,
+        tokens: List[str] = None,
+        reward: float = 0.0,
+        reasoner=None,
+    ) -> List[Dict]:
+        """Scan all active states and record high-similarity relation observations."""
+        labels = self._active_state_labels(interaction_index=interaction_index)
+        threshold = float(self._state_config('state_relation_similarity_threshold', 0.85))
+        probabilities = self.get_state_probabilities(interaction_index=interaction_index)
+        observations = []
+        for i, l1 in enumerate(labels):
+            for l2 in labels[i + 1:]:
+                sim = self._cosine_similarity(self.states[l1], self.states[l2])
+                if sim >= threshold:
+                    observations.append(self._record_state_relation_pair(
+                        l1, l2, sim, probabilities, tokens=tokens or [],
+                        reward=reward, interaction_index=interaction_index,
+                    ))
+        if observations:
+            self._save_state_relations()
+            self.refresh_state_regrouping(
+                interaction_index=interaction_index,
+                reasoner=reasoner,
+                force=True,
+            )
+        return observations
+
+    def _record_state_relation_pair(
+        self,
+        l1: str,
+        l2: str,
+        similarity: float,
+        probabilities: Dict[str, float],
+        tokens: List[str],
+        reward: float,
+        interaction_index: int,
+    ) -> Dict:
+        key = self._state_relation_key([l1, l2])
+        relation = self.state_relation_observations.get(key)
+        if not relation:
+            relation = {
+                'labels': sorted([l1, l2]),
+                'first_interaction': int(interaction_index or 0),
+                'last_interaction': int(interaction_index or 0),
+                'observation_count': 0,
+                'similarity_history': [],
+                'factor_delta_history': [],
+                'probability_delta_history': [],
+                'shared_tokens': {},
+                'reward_trace': 0.0,
+                'positive_reward_trace': 0.0,
+                'phase': 'observed',
+            }
+        p1 = float(probabilities.get(l1, 0.0))
+        p2 = float(probabilities.get(l2, 0.0))
+        delta = self._factor_delta(self.states[l1], self.states[l2])
+        relation['last_interaction'] = int(interaction_index or 0)
+        relation['observation_count'] = int(relation.get('observation_count', 0)) + 1
+        relation['similarity_history'].append({
+            'interaction': int(interaction_index or 0),
+            'value': float(similarity),
+        })
+        relation['factor_delta_history'].append({
+            'interaction': int(interaction_index or 0),
+            **delta,
+        })
+        relation['probability_delta_history'].append({
+            'interaction': int(interaction_index or 0),
+            'value': float(abs(p1 - p2)),
+        })
+        token_weight = 1.0 + max(0.0, float(reward or 0.0))
+        for token in tokens or []:
+            token = str(token).strip().lower()
+            if token:
+                relation['shared_tokens'][token] = float(relation['shared_tokens'].get(token, 0.0)) + token_weight
+        relation['reward_trace'] = float(relation.get('reward_trace', 0.0)) + float(reward or 0.0)
+        relation['positive_reward_trace'] = float(relation.get('positive_reward_trace', 0.0)) + max(0.0, float(reward or 0.0))
+        relation['regroup_score'] = self._relation_regroup_score(relation)
+        self.state_relation_observations[key] = relation
+        return relation
+
+    def _relation_regroup_score(self, relation: Dict) -> float:
+        sims = [float(x.get('value', 0.0)) for x in relation.get('similarity_history', [])]
+        prob_deltas = [float(x.get('value', 0.0)) for x in relation.get('probability_delta_history', [])]
+        if not sims:
+            return 0.0
+        recent_n = max(1, int(self._state_config('state_regroup_min_observations', 3)))
+        avg_sim = float(np.mean(sims[-recent_n:]))
+        avg_prob_delta = float(np.mean(prob_deltas[-recent_n:])) if prob_deltas else 0.0
+        reward_evidence = max(0.0, float(np.tanh(float(relation.get('positive_reward_trace', 0.0)))))
+        return float(avg_sim * max(0.0, 1.0 - avg_prob_delta) * reward_evidence)
+
+    def refresh_state_regrouping(self, interaction_index: int = 0, reasoner=None, force: bool = False) -> Dict[str, Dict]:
+        """Create/update head-label groups from repeated state relation observations."""
+        interval = int(self._state_config('state_regroup_interval_interactions', 10))
+        if not force and interval > 0 and int(interaction_index or 0) % interval != 0:
+            return self.state_groups
+
+        min_obs = int(self._state_config('state_regroup_min_observations', 3))
+        sim_threshold = float(self._state_config('state_regroup_similarity_threshold', 0.92))
+        eligible_pairs = []
+        for relation in self.state_relation_observations.values():
+            if relation.get('phase') == 'archived':
+                continue
+            if int(relation.get('observation_count', 0)) < min_obs:
+                continue
+            sims = [float(x.get('value', 0.0)) for x in relation.get('similarity_history', [])]
+            if not sims:
+                continue
+            recent = sims[-min_obs:]
+            if float(np.mean(recent)) < sim_threshold:
+                continue
+            score = self._relation_regroup_score(relation)
+            if score <= 0.0:
+                continue
+            labels = [label for label in relation.get('labels', []) if label in self.states]
+            if len(labels) == 2 and all(self.state_metadata.get(label, {}).get('phase', 'active') != 'archived' for label in labels):
+                eligible_pairs.append((labels[0], labels[1], score))
+
+        if not eligible_pairs:
+            return self.state_groups
+
+        parent = {}
+
+        def find(x):
+            parent.setdefault(x, x)
+            while parent[x] != x:
+                parent[x] = parent[parent[x]]
+                x = parent[x]
+            return x
+
+        def union(a, b):
+            ra, rb = find(a), find(b)
+            if ra != rb:
+                parent[rb] = ra
+
+        for l1, l2, _score in eligible_pairs:
+            union(l1, l2)
+
+        components = {}
+        for l1, l2, _score in eligible_pairs:
+            root = find(l1)
+            components.setdefault(root, set()).update([l1, l2])
+
+        for labels in components.values():
+            self._upsert_state_group(sorted(labels), interaction_index=interaction_index, reasoner=reasoner)
+
+        self._save_state_groups()
+        return self.state_groups
+
+    def _upsert_state_group(self, labels: List[str], interaction_index: int = 0, reasoner=None) -> Dict:
+        key = "group::" + self._state_relation_key(labels)
+        relation_keys = [
+            self._state_relation_key([l1, l2])
+            for i, l1 in enumerate(labels)
+            for l2 in labels[i + 1:]
+        ]
+        token_scores = Counter()
+        for rel_key in relation_keys:
+            relation = self.state_relation_observations.get(rel_key, {})
+            for token, score in relation.get('shared_tokens', {}).items():
+                token_scores[token] += float(score)
+
+        dominant_tokens = [token for token, _ in token_scores.most_common()]
+        head_label = self._select_group_head_label(labels, token_scores, reasoner=reasoner)
+        centroid = self._compute_group_centroid(labels, interaction_index=interaction_index)
+        factor_signature = self._group_factor_signature(relation_keys)
+        probabilities = self.get_state_probabilities(interaction_index=interaction_index, include_archived=True)
+        metas = [self.state_metadata.get(label, {}) for label in labels]
+        probability = float(sum(probabilities.get(label, 0.0) for label in labels))
+        reward_trace = float(sum(float(meta.get('reward_trace', 0.0)) for meta in metas))
+        label_set = set(labels)
+        for existing_key, existing_group in self.state_groups.items():
+            if existing_key == key or existing_group.get('phase') == 'archived':
+                continue
+            existing_children = set(existing_group.get('child_labels', []))
+            if existing_children and existing_children.issubset(label_set):
+                existing_group['phase'] = 'archived'
+                existing_group['archived_interaction'] = int(interaction_index or 0)
+        group = self.state_groups.get(key, {})
+        group.update({
+            'head_label': head_label,
+            'child_labels': labels,
+            'centroid_vector': centroid.tolist(),
+            'dominant_tokens': dominant_tokens[:10],
+            'dominant_phrases': self._dominant_phrases_for_tokens(dominant_tokens, reasoner=reasoner),
+            'factor_signature': factor_signature,
+            'probability': probability,
+            'reward_trace': reward_trace,
+            'last_interaction': int(interaction_index or 0),
+            'phase': 'active',
+        })
+        group.setdefault('first_interaction', int(interaction_index or 0))
+        self.state_groups[key] = group
+        for child in labels:
+            self.state_group_aliases[child] = head_label
+            meta = self.state_metadata.setdefault(child, {})
+            groups = meta.setdefault('state_groups', [])
+            if head_label not in groups:
+                groups.append(head_label)
+        self._save_state_metadata()
+        return group
+
+    def _select_group_head_label(self, labels: List[str], token_scores: Counter, reasoner=None) -> str:
+        floor = int(self._state_config('state_group_token_evidence_floor', 2))
+        max_words = int(self._state_config('state_group_head_label_max_words', 3))
+        all_tokens = [token for token, _score in token_scores.most_common()]
+        dominant_tokens = [token for token, score in token_scores.most_common() if float(score) >= floor]
+        if dominant_tokens:
+            usable = dominant_tokens[:max_words]
+            if len(usable) >= 1:
+                return " ".join(usable)
+
+        if reasoner is not None:
+            phrase_defs = getattr(reasoner, 'phrase_definitions', {}) or {}
+            for phrase in phrase_defs.keys():
+                phrase_tokens = str(phrase).lower().split()
+                if len(phrase_tokens) >= floor and any(token in all_tokens for token in phrase_tokens):
+                    return " ".join(phrase_tokens[:max_words])
+            definitions = getattr(reasoner, 'definitions', {}) or {}
+            for word in definitions.keys():
+                if str(word).lower() in all_tokens:
+                    return str(word).lower()
+            kg = getattr(reasoner, 'knowledge_graph', None)
+            if kg is not None:
+                best_label = None
+                best_degree = -1
+                for node_id, node in getattr(kg, 'nodes', {}).items():
+                    label = str(node.get('label', '')).lower()
+                    if label and label in all_tokens:
+                        degree = len(getattr(kg, 'edges', {}).get(node_id, []))
+                        if degree > best_degree:
+                            best_label = label
+                            best_degree = degree
+                if best_label:
+                    return best_label
+
+        top_child = labels[0] if labels else "state"
+        return f"group_{top_child}"
+
+    def _dominant_phrases_for_tokens(self, dominant_tokens: List[str], reasoner=None) -> List[str]:
+        if reasoner is None or not dominant_tokens:
+            return []
+        token_set = set(dominant_tokens)
+        phrases = []
+        for phrase in (getattr(reasoner, 'phrase_definitions', {}) or {}).keys():
+            phrase_token_set = set(str(phrase).lower().split())
+            if phrase_token_set & token_set:
+                phrases.append(str(phrase))
+        return phrases[:5]
+
+    def _compute_group_centroid(self, labels: List[str], interaction_index: int = 0) -> np.ndarray:
+        probabilities = self.get_state_probabilities(interaction_index=interaction_index, include_archived=True)
+        vectors = []
+        weights = []
+        for label in labels:
+            if label not in self.states:
+                continue
+            meta = self._ensure_state_probability_metadata(label, interaction_index)
+            q = float(meta.get('reward_trace', 0.0))
+            p = float(probabilities.get(label, 0.0))
+            weight = p * (1.0 + max(0.0, float(np.tanh(q))))
+            vectors.append(self._normalize_vector(self.states[label]))
+            weights.append(weight)
+        if not vectors:
+            return np.array([])
+        max_len = max(len(v) for v in vectors)
+        aligned = []
+        for vec in vectors:
+            if len(vec) < max_len:
+                vec = np.pad(vec, (0, max_len - len(vec)), 'constant')
+            elif len(vec) > max_len:
+                vec = vec[:max_len]
+            aligned.append(vec)
+        total = float(sum(weights))
+        if total <= 1e-12:
+            weights = [1.0 for _ in aligned]
+            total = float(len(aligned))
+        centroid = sum(weight * vec for weight, vec in zip(weights, aligned)) / total
+        return self._normalize_vector(centroid)
+
+    def _group_factor_signature(self, relation_keys: List[str]) -> List[Dict]:
+        deltas = []
+        for key in relation_keys:
+            relation = self.state_relation_observations.get(key, {})
+            for entry in relation.get('factor_delta_history', []):
+                vector = entry.get('vector', [])
+                if vector:
+                    deltas.append(np.array(vector, dtype=float))
+        if not deltas:
+            return []
+        max_len = max(len(v) for v in deltas)
+        aligned = []
+        for vec in deltas:
+            if len(vec) < max_len:
+                vec = np.pad(vec, (0, max_len - len(vec)), 'constant')
+            aligned.append(vec[:max_len])
+        avg_delta = np.mean(aligned, axis=0)
+        top_indices = np.argsort(avg_delta)[::-1][:5]
+        return [
+            {'factor_index': int(idx), 'mean_delta': float(avg_delta[idx])}
+            for idx in top_indices
+            if float(avg_delta[idx]) > 0.0
+        ]
+
+    def archive_legacy_conflicts(self, interaction_index: int = 0):
+        """Preserve old conflict records as historical data when automatic grouping is active."""
+        changed = False
+        for conflict in self.conflicts:
+            if not conflict.get('resolved', False):
+                conflict['resolved'] = True
+                conflict['phase'] = 'archived'
+                conflict['resolution_type'] = 'legacy_archived'
+                conflict['archived_interaction'] = int(interaction_index or 0)
+                changed = True
+        if changed:
+            self._save_conflicts()
+
     # ------------------------------------------------------------------
     # Conflict detection & resolution (adapt to handle different lengths)
     # ------------------------------------------------------------------
@@ -359,13 +925,15 @@ class StateManager:
         Both vectors are normalised to the reference dimension.
         Returns conflicts including associated words if available in metadata.
         """
+        if not self._legacy_interactive_conflicts_enabled():
+            return []
         if threshold is None:
             if self.config_manager:
                 threshold = self.config_manager.get('state_manager.conflict_threshold', 0.85)
             else:
                 threshold = 0.85
 
-        labels = list(self.states.keys())
+        labels = self._active_state_labels()
         conflicts = []
         processed_pairs = set()
         for i, l1 in enumerate(labels):
@@ -377,10 +945,9 @@ class StateManager:
                 pair = tuple(sorted([l1, l2]))
                 if pair in processed_pairs:
                     continue
-                v2 = self._normalize_vector(self.states[l2])
                 meta2 = self.state_metadata.get(l2, {})
                 words2 = meta2.get('tokens', [])
-                sim = np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2) + 1e-12)
+                sim = self._cosine_similarity(v1, self.states[l2])
                 if sim >= threshold:
                     conflict = {
                         "labels": [l1, l2],
@@ -397,6 +964,9 @@ class StateManager:
 
     def refresh_conflicts(self, threshold: float = None):
         """Re-detect conflicts and update self.conflicts, keeping existing resolution status if possible."""
+        if not self._legacy_interactive_conflicts_enabled():
+            self.archive_legacy_conflicts()
+            return []
         new_conflicts = self.detect_conflicts(threshold)
 
         existing_map = {}
@@ -418,6 +988,7 @@ class StateManager:
 
         self.conflicts = merged
         self._save_conflicts()
+        return self.conflicts
 
     def _save_conflicts(self):
         """Persist conflicts to JSON."""
@@ -454,21 +1025,16 @@ class StateManager:
                     print(f"Could not load shadow state {fname}: {e}")
 
     def create_shadow_resolution(self, conflict: Dict) -> str:
-        """Merge the two conflicting vectors (average) and create a temporary shadow state."""
+        """Create a temporary shadow state from the probability-weighted group centroid."""
         try:
             l1, l2 = conflict["labels"][0], conflict["labels"][1]
-            v1 = self.states[l1]
-            v2 = self.states[l2]
-            # Align to the longer length before averaging
-            max_len = max(len(v1), len(v2))
-            v1_aligned = np.pad(v1, (0, max_len - len(v1)), 'constant') if len(v1) < max_len else v1[:max_len]
-            v2_aligned = np.pad(v2, (0, max_len - len(v2)), 'constant') if len(v2) < max_len else v2[:max_len]
-            merged_vector = self._normalize_vector((v1_aligned + v2_aligned) / 2.0)
+            merged_vector = self._compute_group_centroid([l1, l2], interaction_index=int(conflict.get('interaction_index', 0) or 0))
 
             shadow_label = f"shadow_{l1}_{l2}_{int(time.time())}"
             metadata = {
                 "merged_from": [l1, l2],
                 "similarity": conflict["similarity"],
+                "merge_type": "probability_reward_centroid",
                 "timestamp": time.time(),
             }
             self.save_state(shadow_label, merged_vector, metadata, is_shadow=True)
@@ -506,6 +1072,8 @@ class StateManager:
 
     def get_unresolved_conflicts(self) -> List[Dict]:
         """Return conflicts that are not yet resolved."""
+        if not self._legacy_interactive_conflicts_enabled():
+            return []
         return [c for c in self.conflicts if not c.get("resolved", False)]
 # ------------------------------------------------------------
 # Factor Engine – computes the base control signals

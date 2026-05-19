@@ -8,6 +8,10 @@ from importglobal import Optional,Dict,time,Set,np,List,json,os,Tuple,defaultdic
 from traits.traits_global import Expression, Variable, SyntaxTree
 from components.config_manager import ConfigManager
 from components.directory_handler import STATE_DIR
+from components.probabilistic_labeling import (
+    ensure_probabilistic_stats,
+    normalize_probability_field,
+)
 
 # =============================================================================
 # UNIFICATION ENGINE – Bidirectional constraint solving
@@ -270,25 +274,94 @@ class WordStateAssociator:
     def __init__(self):
         self.word_to_labels: Dict[str, Dict[str, float]] = defaultdict(dict)  # word -> {label: confidence}
         self.label_to_words: Dict[str, Set[str]] = defaultdict(set)           # label -> set of words
+        self.word_label_stats: Dict[str, Dict[str, dict]] = defaultdict(dict)
         self.conflict_resolution_threshold = 0.3   # minimum confidence difference to auto-resolve
         self.conflict_history = []                  # list of resolved conflicts
 
-    def add_association(self, word: str, label: str, confidence: float = 1.0, source: str = "explicit"):
+    def _ensure_word_stats(self, word: str, interaction_index: int = 0):
+        stats = self.word_label_stats[word]
+        labels = self.word_to_labels.get(word, {})
+        total = float(sum(max(0.0, float(v)) for v in labels.values()) or 0.0)
+        for label, confidence in labels.items():
+            initial_probability = (float(confidence) / total) if total > 0 else 0.0
+            stats[label] = ensure_probabilistic_stats(
+                stats.get(label, {}),
+                interaction_index=interaction_index,
+                initial_usage=float(confidence),
+                initial_probability=initial_probability,
+            )
+        return stats
+
+    def _normalize_word_labels(self, word: str, interaction_index: int = 0, reward: float = 0.0, touched_label: str = None, weight: float = 0.0):
+        stats = self._ensure_word_stats(word, interaction_index)
+        normalize_probability_field(
+            stats,
+            interaction_index=interaction_index,
+            reward=reward,
+            touched_key=touched_label,
+            touched_weight=weight,
+            archive=True,
+        )
+        self.word_to_labels[word] = {
+            label: float(meta.get('probability', 0.0))
+            for label, meta in stats.items()
+            if meta.get('phase', 'active') != 'archived'
+        }
+        for label in list(self.label_to_words.keys()):
+            if word in self.label_to_words[label] and label not in self.word_to_labels[word]:
+                self.label_to_words[label].discard(word)
+        for label in self.word_to_labels[word]:
+            self.label_to_words[label].add(word)
+        return stats
+
+    def get_label_probabilities(self, word: str, interaction_index: int = 0, include_archived: bool = False) -> Dict[str, float]:
+        stats = self._normalize_word_labels(word, interaction_index)
+        return {
+            label: float(meta.get('probability', 0.0))
+            for label, meta in stats.items()
+            if include_archived or meta.get('phase', 'active') != 'archived'
+        }
+
+    def add_association(
+        self,
+        word: str,
+        label: str,
+        confidence: float = 1.0,
+        source: str = "explicit",
+        interaction_index: int = 0,
+        reward: float = 0.0,
+    ):
         """
         Add a word-label association. If the word already has the label, update confidence.
         If the word has other labels with similar confidence, we may need to ask later.
         """
-        current = self.word_to_labels[word].get(label, 0.0)
-        self.word_to_labels[word][label] = max(current, confidence)
+        self._ensure_word_stats(word, interaction_index)
+        if label not in self.word_label_stats[word]:
+            self.word_to_labels[word][label] = max(0.0, float(confidence or 0.0))
+            self._ensure_word_stats(word, interaction_index)
+        weight = max(0.0, float(confidence or 0.0))
+        self._normalize_word_labels(
+            word,
+            interaction_index=interaction_index,
+            reward=reward,
+            touched_label=label,
+            weight=weight,
+        )
         self.label_to_words[label].add(word)
 
     def get_labels(self, word: str, threshold: float = 0.5) -> List[str]:
         """Return labels for word with confidence > threshold."""
-        return [lab for lab, conf in self.word_to_labels.get(word, {}).items() if conf > threshold]
+        probs = self.get_label_probabilities(word)
+        return [lab for lab, conf in sorted(probs.items(), key=lambda item: item[1], reverse=True) if conf > threshold]
 
     def get_words(self, label: str, threshold: float = 0.5) -> List[str]:
         """Return words associated with a label (with any confidence)."""
-        return list(self.label_to_words.get(label, set()))
+        words = []
+        for word in list(self.label_to_words.get(label, set())):
+            probs = self.get_label_probabilities(word)
+            if probs.get(label, 0.0) > threshold:
+                words.append(word)
+        return words
 
     def find_similar_words_by_label(self, word: str) -> List[str]:
         """Find other words that share at least one label with the given word."""
@@ -306,7 +379,7 @@ class WordStateAssociator:
         """
         if word not in self.word_to_labels:
             return []
-        labels = list(self.word_to_labels[word].items())
+        labels = list(self.get_label_probabilities(word).items())
         conflicts = []
         for i, (l1, c1) in enumerate(labels):
             for l2, c2 in labels[i+1:]:
@@ -314,20 +387,31 @@ class WordStateAssociator:
                     conflicts.append((l1, l2))
         return conflicts
 
-    def break_bridge(self, word: str, label1: str, label2: str, keep_label: str):
+    def break_bridge(self, word: str, label1: str, label2: str, keep_label: str, interaction_index: int = 0, reward: float = -1.0):
         """
         User clarified that `word` is associated with `keep_label`, not the other.
         Reduce confidence of the other label.
         """
         if word in self.word_to_labels:
-            if keep_label == label1:
-                self.word_to_labels[word][label2] = max(0, self.word_to_labels[word].get(label2, 0) - 0.5)
-            else:
-                self.word_to_labels[word][label1] = max(0, self.word_to_labels[word].get(label1, 0) - 0.5)
+            reject_label = label2 if keep_label == label1 else label1
+            self.add_association(word, keep_label, confidence=1.0, source="conflict_keep", interaction_index=interaction_index, reward=abs(reward))
+            self._ensure_word_stats(word, interaction_index)
+            rejected = self.word_label_stats[word].get(reject_label)
+            if rejected:
+                rejected['usage'] = max(0.0, float(rejected.get('usage', 0.0)) * 0.5)
+                rejected['reward_trace'] = float(rejected.get('reward_trace', 0.0)) - abs(float(reward or 0.0))
+                self._normalize_word_labels(
+                    word,
+                    interaction_index=interaction_index,
+                    reward=-abs(float(reward or 0.0)),
+                    touched_label=reject_label,
+                    weight=0.0,
+                )
         self.conflict_history.append({
             'word': word,
             'labels': [label1, label2],
             'kept': keep_label,
+            'interaction_index': int(interaction_index or 0),
             'timestamp': time.time()
         })
 
@@ -336,6 +420,7 @@ class WordStateAssociator:
         data = {
             'word_to_labels': {w: dict(labs) for w, labs in self.word_to_labels.items()},
             'label_to_words': {lab: list(words) for lab, words in self.label_to_words.items()},
+            'word_label_stats': {w: labs for w, labs in self.word_label_stats.items()},
             'conflict_history': self.conflict_history,
         }
         with open(path, 'w') as f:
@@ -347,6 +432,9 @@ class WordStateAssociator:
                 data = json.load(f)
             self.word_to_labels = defaultdict(dict, {w: defaultdict(float, labs) for w, labs in data['word_to_labels'].items()})
             self.label_to_words = defaultdict(set, {lab: set(words) for lab, words in data['label_to_words'].items()})
+            self.word_label_stats = defaultdict(dict, data.get('word_label_stats', {}))
+            for word in list(self.word_to_labels.keys()):
+                self._ensure_word_stats(word, interaction_index=0)
             self.conflict_history = data.get('conflict_history', [])
 # ------------------------------------------------------------
 # Knowledge Graph – maps relationships between words, phrases, states

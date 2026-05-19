@@ -184,11 +184,14 @@ class HeartLanguageMixin:
             filepath = self.logic_inheritance.generate_logic_file(rule)
             if not filepath:
                 continue
+            logic_id = rule['logic_id']
 
             code = self.code_generator.generate(rule)
             if not code:
                 continue
             code_path = self.code_generator.save_code_file(logic_id, code)
+            self.logic_inheritance.generated_code_paths[logic_id] = code_path
+            self.logic_inheritance.save()
 
             # Dynamically import
             spec = importlib.util.spec_from_file_location(f"lm_cand_{logic_id}", code_path)

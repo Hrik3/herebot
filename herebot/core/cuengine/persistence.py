@@ -226,6 +226,8 @@ class HeartPersistenceMixin:
             self.conscience_manager.guilt_tracker = self.guilt_tracker
         # Load generated code feedback
         self.generated_code_feedback._load()
+        if hasattr(self, 'generated_plugin_manager'):
+            self.generated_plugin_manager._load()
         # ---- Load language model ----
         lm_path = os.path.join(STATE_DIR, 'language_model.pkl')
         if os.path.exists(lm_path):
@@ -348,6 +350,8 @@ class HeartPersistenceMixin:
             self.logic_inheritance.save()
             self.guilt_tracker.save(os.path.join(STATE_DIR, 'guilt_tracker.pkl'))
             self.generated_code_feedback.save()
+            if hasattr(self, 'generated_plugin_manager'):
+                self.generated_plugin_manager.save()
             # ---- Save language model ----
             self.language_model.save(os.path.join(STATE_DIR, 'language_model.pkl'))
             # ---- Save current latent state concept (multi‑state) ----

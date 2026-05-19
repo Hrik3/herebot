@@ -266,7 +266,12 @@ class HeartCuriosityMixin:
             print("   [State Learning] Empty factor vector – skipping.")
             return
 
-        if time.time() - self._last_state_learning_time < 30:
+        if getattr(self, 'interaction_counter', 0) <= 0 and time.time() - self._last_state_learning_time < 30:
+            return
+
+        last_state_turn = getattr(self, '_last_state_learning_interaction', 0)
+        cooldown_turns = self.config_manager.get('engine.state_learning_cooldown_interactions', 30)
+        if self.interaction_counter - last_state_turn < cooldown_turns:
             return
 
         sim_threshold = self.config_manager.get('engine.state_similarity_threshold', 0.97)
@@ -275,7 +280,12 @@ class HeartCuriosityMixin:
         novelty_dist_threshold = 0.35 * (1.2 - maturity)
 
         # Find all states above similarity threshold
-        similar = self.state_manager.find_similar_states(factor_vector, threshold=sim_threshold)
+        similar = self.state_manager.find_similar_states(
+            factor_vector,
+            threshold=sim_threshold,
+            interaction_index=self.interaction_counter,
+            reward=float(getattr(self.reward_tracker, 'episode_reward', 0.0) or 0.0),
+        )
 
         # Apply meta novelty gate per candidate – keep only those within distance threshold
         active_labels = []
@@ -300,6 +310,14 @@ class HeartCuriosityMixin:
             # Combine embeddings (average)
             combined = np.mean(active_embeddings, axis=0) if active_embeddings else None
             self._update_state_embedding(active_labels, combined)
+            self.state_manager.record_state_relation_observation(
+                active_labels,
+                tokens=metadata.get('tokens', []) or self._tokenize(metadata.get('input_text', '')),
+                factor_vector=factor_vector,
+                reward=float(getattr(self.reward_tracker, 'episode_reward', 0.0) or 0.0),
+                interaction_index=self.interaction_counter,
+                reasoner=getattr(self, 'reasoner', None),
+            )
             return
 
         # No close match – create new state
@@ -316,9 +334,10 @@ class HeartCuriosityMixin:
             label = "unnamed_state"
 
         metadata['tokens'] = self._tokenize(metadata.get('input_text', ''))
-        self.state_manager.save_state(label, factor_vector, metadata)
+        self.state_manager.save_state(label, factor_vector, metadata, interaction_index=self.interaction_counter)
         print(f"    ✅ State saved as '{label}'.")
         self._last_state_learning_time = time.time()
+        self._last_state_learning_interaction = self.interaction_counter
         self._reinforce_identity(factor_vector, reward_signal=0.2)
         self._update_state_embedding([label], self._align_vector_to_emb_dim(factor_vector))
 
@@ -443,6 +462,8 @@ class HeartCuriosityMixin:
                     self.semantic_learner.word_embeddings[lbl] = self._align_vector_to_emb_dim(vec)
 
         self.current_state_labels = labels
+        if hasattr(self.state_manager, 'get_group_heads_for_labels'):
+            self.current_state_group_labels = self.state_manager.get_group_heads_for_labels(labels)
         self.current_state_embedding = self._align_vector_to_emb_dim(combined)
 
     def _process_sentence_reasoning(self, sentence: str, tokens: List[str],
@@ -513,24 +534,48 @@ class HeartCuriosityMixin:
             # Word-state association
             if rel_type in ('means', 'is_a'):
                 self.reasoner.word_state.add_association(
-                    subject, object, confidence=1.0, source="explicit")
+                    subject,
+                    object,
+                    confidence=1.0,
+                    source="explicit",
+                    interaction_index=self.interaction_counter,
+                    reward=float(getattr(self.reward_tracker, 'episode_reward', 0.0) or 0.0),
+                )
                 print(f"📝 [Word-State] Associated '{subject}' with label '{object}'"
                       f" (via learned connector '{connector}')")
                 object_labels = self.reasoner.word_state.get_labels(object, threshold=0.3)
                 for lab in object_labels:
                     if lab != object:
                         self.reasoner.word_state.add_association(
-                            subject, lab, confidence=0.9, source="inheritance")
+                            subject,
+                            lab,
+                            confidence=0.9,
+                            source="inheritance",
+                            interaction_index=self.interaction_counter,
+                            reward=float(getattr(self.reward_tracker, 'episode_reward', 0.0) or 0.0),
+                        )
                         print(f"   ↪ Propagated label '{lab}' from '{object}' to '{subject}'")
             elif rel_type == 'similar':
                 subj_labels = self.reasoner.word_state.get_labels(subject)
                 obj_labels  = self.reasoner.word_state.get_labels(object)
                 for lab in obj_labels:
                     self.reasoner.word_state.add_association(
-                        subject, lab, confidence=0.7, source="similarity")
+                        subject,
+                        lab,
+                        confidence=0.7,
+                        source="similarity",
+                        interaction_index=self.interaction_counter,
+                        reward=float(getattr(self.reward_tracker, 'episode_reward', 0.0) or 0.0),
+                    )
                 for lab in subj_labels:
                     self.reasoner.word_state.add_association(
-                        object, lab, confidence=0.7, source="similarity")
+                        object,
+                        lab,
+                        confidence=0.7,
+                        source="similarity",
+                        interaction_index=self.interaction_counter,
+                        reward=float(getattr(self.reward_tracker, 'episode_reward', 0.0) or 0.0),
+                    )
                 print(f"📝 [Word-State] Propagated labels between '{subject}' and '{object}'")
 
             # Add to knowledge graph
