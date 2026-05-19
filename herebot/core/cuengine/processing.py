@@ -83,6 +83,44 @@ class HeartProcessingMixin:
         self._ask_shadow_differentiation_link(proposal)
         return proposal
 
+    def _run_generated_plugin_trials(
+        self,
+        text: str,
+        tokens: List[str],
+        token_analyses: List[Dict[str, Any]],
+        factor_dict: Dict[str, Any],
+        ci_report: Dict[str, Any],
+        phon_score: float,
+        diagnostic: Dict[str, Any],
+    ) -> List[Dict[str, Any]]:
+        manager = getattr(self, "generated_plugin_manager", None)
+        if manager is None:
+            return []
+        try:
+            context = manager.build_runtime_context(
+                self,
+                user_input=text,
+                tokens=tokens,
+                token_analyses=token_analyses,
+                factor_dict=factor_dict,
+                ci_report=ci_report,
+                phon_score=phon_score,
+                diagnostic=diagnostic,
+            )
+            return manager.run_matching_plugins(context)
+        except Exception as e:
+            print(f"[Generated Plugin] trial skipped: {e}")
+            return []
+
+    def _record_generated_plugin_feedback(self, influence, rating: str, reward: float, factor_dict: Dict[str, Any]):
+        manager = getattr(self, "generated_plugin_manager", None)
+        if manager is None or not influence:
+            return
+        try:
+            manager.record_feedback(influence, rating, reward=reward, factor_dict=factor_dict)
+        except Exception as e:
+            print(f"[Generated Plugin] feedback tracking skipped: {e}")
+
     def build_world_model_transitions(self):
         """Scan episodic memory to build transition counts for the structured world model."""
         episodes = self.episodic_memory.episodes[-500:]
@@ -92,8 +130,18 @@ class HeartProcessingMixin:
             if 'factor_vector' in ep and 'factor_vector' in next_ep:
                 vec = self._align_factor_vector(np.array(list(ep['factor_vector'].values())))
                 next_vec = self._align_factor_vector(np.array(list(next_ep['factor_vector'].values())))
-                state_label = self.state_manager.find_similar_state(vec, threshold=0.7)
-                next_state_label = self.state_manager.find_similar_state(next_vec, threshold=0.7)
+                state_label = self.state_manager.find_similar_state(
+                    vec,
+                    threshold=0.7,
+                    interaction_index=self.interaction_counter,
+                    reward=float(getattr(self.reward_tracker, 'episode_reward', 0.0) or 0.0),
+                )
+                next_state_label = self.state_manager.find_similar_state(
+                    next_vec,
+                    threshold=0.7,
+                    interaction_index=self.interaction_counter,
+                    reward=float(getattr(self.reward_tracker, 'episode_reward', 0.0) or 0.0),
+                )
                 if state_label and next_state_label:
                     action = ep.get('system_response', '')   # crude action representation
                     self.structured_world_model.observe_episode(state_label, action, next_state_label)
@@ -225,6 +273,12 @@ class HeartProcessingMixin:
                     entry.metadata['feedback_reward'] = feedback_reward
                     entry.metadata['reward_magnitude'] = magnitude
                     self.reasoner.add_feedback(entry)
+                    self._record_generated_plugin_feedback(
+                        entry.metadata.get('generated_plugin_influence'),
+                        rating,
+                        feedback_reward,
+                        entry.factor_dict,
+                    )
                     print(f"📊 [Feedback Recorded] User rated response as: {rating}")
 
                     if 'positive' in rating and hasattr(self, '_last_factor_vector'):
@@ -428,7 +482,14 @@ class HeartProcessingMixin:
                     word, label1, label2 = self._pending_conflict
                     if label1.lower() in feedback_lower or label2.lower() in feedback_lower:
                         keep = label1 if label1.lower() in feedback_lower else label2
-                        self.reasoner.word_state.break_bridge(word, label1, label2, keep)
+                        self.reasoner.word_state.break_bridge(
+                            word,
+                            label1,
+                            label2,
+                            keep,
+                            interaction_index=self.interaction_counter,
+                            reward=-abs(float(getattr(self.reward_tracker, 'episode_reward', 0.0) or 0.0)),
+                        )
                         print(f"✅ [Conflict Resolved] '{word}' is now primarily '{keep}'.")
                     else:
                         print(f"🌑 No clear label chosen for '{word}'. Conflict remains.")
@@ -474,7 +535,11 @@ class HeartProcessingMixin:
                         def_emb = self.semantic_learner.text_to_embedding(text)
                         if def_emb is not None:
                             self.reasoner.store_definition(word, text, def_emb)
-                            self.concept_model.register_definition_event(word)
+                            self.concept_model.register_definition_event(
+                                word,
+                                interaction_index=self.interaction_counter,
+                                reward=max(1.0, float(getattr(self.reward_tracker, 'episode_reward', 0.0) or 0.0)),
+                            )
                         if word in self.word_history:
                             for rec in self.word_history[word][-3:]:
                                 rec['curiosity_factors'].gp_uncertainty *= 0.3
@@ -564,7 +629,12 @@ class HeartProcessingMixin:
 
                 features = self._extract_features(token, token_ci, token_phon, diag_explanation)
                 features_array = self._features_to_array(features)
-                concept = self.concept_model.add_word_observation(token, features)
+                concept = self.concept_model.add_word_observation(
+                    token,
+                    features,
+                    interaction_index=self.interaction_counter,
+                    reward=0.0,
+                )
 
                 factors = self._compute_curiosity_factors(
                     token, token_ci, token_phon, diag_explanation, features_array,
@@ -580,6 +650,13 @@ class HeartProcessingMixin:
                 self.gp_model.update(features_array, token_ci['confidence'])
 
                 reward = self.reward_tracker.compute_reward(token_ci, igain, factors.bayesian_surprise)
+                if hasattr(self.concept_model, 'record_concept_reward'):
+                    self.concept_model.record_concept_reward(
+                        token,
+                        concept,
+                        interaction_index=self.interaction_counter,
+                        reward=reward,
+                    )
 
                 self.word_history[token].append({
                     'ci_confidence': token_ci['confidence'],
@@ -785,8 +862,11 @@ class HeartProcessingMixin:
                             "factor_vector": {},
                         }
 
-            # 7. Conflict resolution (interactive – not a waiting state)
-            if not self.chat_mode_active:
+            # 7. Legacy conflict resolution (debug only; probabilistic regrouping is automatic)
+            if (
+                not self.chat_mode_active
+                and self.config_manager.get('state_manager.legacy_interactive_conflicts', False)
+            ):
                 unresolved = self.state_manager.get_unresolved_conflicts()
                 if unresolved:
                     print("\n [Conflict Resolution] TPL.STATE.CONFLICT.PENDING")
@@ -995,6 +1075,13 @@ class HeartProcessingMixin:
             # State learning gate
             if not self.chat_mode_active and len(self.semantic_learner.word_embeddings) > 20:
                 self._handle_state_learning(factor_vector, metadata)
+            if not self.config_manager.get('state_manager.legacy_interactive_conflicts', False):
+                self.state_manager.archive_legacy_conflicts(interaction_index=self.interaction_counter)
+                self.state_manager.refresh_state_regrouping(
+                    interaction_index=self.interaction_counter,
+                    reasoner=getattr(self, 'reasoner', None),
+                    force=False,
+                )
 
             # Semantic relation discovery
             self._detect_semantic_relations(tokens, token_analyses)
@@ -1004,10 +1091,19 @@ class HeartProcessingMixin:
                 tokens, token_analyses, ci_report, phon_score, diag_explanation,
                 factor_dict
             )
+            generated_plugin_proposals = self._run_generated_plugin_trials(
+                text, tokens, token_analyses, factor_dict, ci_report, phon_score, diag_explanation
+            )
+            if generated_plugin_proposals:
+                artifacts.append(
+                    f"Generated plugin proposals: {len(generated_plugin_proposals)}"
+                )
             # Generate system reply
+            self._last_generated_plugin_influence = None
             system_reply = self.action_generator.generate_reply(text, {
                 'token_analyses': token_analyses,
                 'factor_vector': factor_dict,
+                'generated_plugin_proposals': generated_plugin_proposals,
             })
             if self.pending_solution is not None:
                 system_reply = f"TPL.MATH.SOLUTION value='{self.pending_solution}' | " + system_reply
@@ -1050,6 +1146,7 @@ class HeartProcessingMixin:
                             'reward_magnitude': abs(float(getattr(self.reward_tracker, 'episode_reward', 0.0))),
                             'current_state_labels': list(self.current_state_labels),
                             'triplets': getattr(self.reasoner, 'last_observed_triplets', []),
+                            'generated_plugin_influence': getattr(self, '_last_generated_plugin_influence', None),
                         }
                     )
                     self.pending_feedback_context = entry
@@ -1104,8 +1201,20 @@ class HeartProcessingMixin:
                 system_response=system_reply,
                 factor_vector=safe_factor_dict,
                 intrinsic_reward=float(self.reward_tracker.episode_reward),
-                metadata={'ci_confidence': ci_report.get('confidence')}
+                metadata={
+                    'ci_confidence': ci_report.get('confidence'),
+                    'generated_plugin_influence': getattr(self, '_last_generated_plugin_influence', None),
+                }
             )
+            if getattr(self, '_last_generated_plugin_influence', None):
+                try:
+                    self.generated_plugin_manager.record_trial_health(
+                        self._last_generated_plugin_influence,
+                        factor_dict=safe_factor_dict,
+                        reward=float(self.reward_tracker.episode_reward),
+                    )
+                except Exception as e:
+                    print(f"[Generated Plugin] health tracking skipped: {e}")
             self._verify_backend_alignment()
 
             if self.chat_mode_active:
@@ -1130,6 +1239,7 @@ class HeartProcessingMixin:
                 'total_intrinsic_reward': self.reward_tracker.total_reward,
                 'episode_reward': self.reward_tracker.episode_reward,
                 'factor_vector': factor_dict,
+                'generated_plugin_proposals': generated_plugin_proposals,
             }
 
 
@@ -1228,7 +1338,12 @@ class HeartProcessingMixin:
         # Check if this state is already known
         vec = np.array([factor_dict[k] for k in self.control_space.all_factors if k in factor_dict])
         threshold = self.config_manager.get('engine.state_similarity_threshold', 0.85)
-        similar_label = self.state_manager.find_similar_state(vec, threshold=threshold)
+        similar_label = self.state_manager.find_similar_state(
+            vec,
+            threshold=threshold,
+            interaction_index=self.interaction_counter,
+            reward=float(getattr(self.reward_tracker, 'episode_reward', 0.0) or 0.0),
+        )
         if similar_label:
             artifacts.append(f"   • State recognized as: '{similar_label}'")
         # ------------------------------------

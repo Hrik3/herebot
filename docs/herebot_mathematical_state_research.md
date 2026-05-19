@@ -7,8 +7,11 @@ This document describes the mathematical state used by Herebot and the path an i
 - `herebot/core/cuengine/curiosity.py`
 - `herebot/core/cuengine/idle.py`
 - `herebot/core/cuengine/language.py`
+- `herebot/backend/herebot_memory.py`
+- `herebot/backend/incremental_csr_lib.py`
 - `herebot/components/reward.py`
 - `herebot/components/factor_handler.py`
+- `herebot/components/probabilistic_labeling.py`
 - `herebot/components/resoning.py`
 - `herebot/components/learner.py`
 - `herebot/components/feedback_process.py`
@@ -20,6 +23,7 @@ This document describes the mathematical state used by Herebot and the path an i
 - `herebot/concepts/controlspace.py`
 - `herebot/traits/semlearn.py`
 - `herebot/traits/identity_manager.py`
+- `herebot/traits/code_generator.py`
 - `herebot/backend/ci.py`
 
 ## 1. Scope And Assumptions
@@ -34,7 +38,8 @@ Assumptions used in this document:
 4. Random choices in concept assignment, perturbation, dreaming, reply generation, and model sampling make execution nondeterministic.
 5. Some components are named after stronger models, such as HDP or GP, but are implemented as practical approximations.
 6. KaTeX formulas use implementation notation, not necessarily textbook notation.
-7. Generated code files and saved runtime artifacts are treated as persistent state, but their generated internals are not re-derived here.
+7. Generated code files are derived through the `HerebotGeneratedPlugin` contract and are included as part of the mathematical runtime architecture.
+8. Saved runtime artifacts are persistent state; this document describes their mathematical effect, not a fixed snapshot of their current serialized values.
 
 ## 2. Top-Level Engine Composition
 
@@ -56,6 +61,7 @@ $$
 \mathcal{E}
 =
 (
+\text{MemoryBridge},
 \text{CI},
 \text{Phon},
 \text{Diag},
@@ -70,11 +76,13 @@ $$
 \text{Control},
 \text{State},
 \text{Identity},
+\text{CodeGen},
+\text{PluginManager},
 \text{Memory}
 ).
 $$
 
-Important persistent stores include concept counts, GP posterior, reward history, reasoning graph, word history, semantic embeddings, syntax learner, identity vector, feedback corpus, episodes, state files, hypotheses, and language model weights.
+Important persistent stores include CSR text memory, concept counts, probabilistic label stats, GP posterior, reward history, reasoning graph, word history, semantic embeddings, syntax learner, identity vector, feedback corpus, episodes, state files, state relation observations, state groups, generated plugin registry, hypotheses, and language model weights.
 
 ## 3. One Input Turn: Control Flow
 

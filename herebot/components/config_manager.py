@@ -16,6 +16,7 @@ class ConfigManager:
         "hierarchical_concept_model": {
             "alpha": 0.5,
             "beta": 1.0,
+            "active_probability_threshold": 0.01,
         },
         "gaussian_process": {
             "input_dim": 5,
@@ -55,6 +56,24 @@ class ConfigManager:
         "state_manager": {
             "state_dir": "states",
             "conflict_threshold": 0.85,
+            "active_probability_threshold": 0.01,
+            "selection_tie_tolerance": 1e-9,
+            "state_relation_similarity_threshold": 0.85,
+            "state_regroup_similarity_threshold": 0.92,
+            "state_regroup_min_observations": 3,
+            "state_regroup_interval_interactions": 10,
+            "state_group_token_evidence_floor": 2,
+            "state_group_head_label_max_words": 3,
+            "legacy_interactive_conflicts": False,
+        },
+        "probabilistic_labeling": {
+            "horizon_base": 80.0,
+            "horizon_log_scale": 0.25,
+            "min_decay_scale": 0.25,
+            "max_decay_scale": 2.0,
+            "archive_pressure_threshold": 0.98,
+            "epsilon": 1e-9,
+            "tier_count": 5,
         },
         "episodic_memory": {
             "capacity": 10000,
@@ -97,6 +116,7 @@ class ConfigManager:
         "engine": {
             "reconfigure_interval": 20,
             "state_similarity_threshold": 0.85,
+            "state_learning_cooldown_interactions": 30,
         },
         "adaptive_control_space": {
             "variance_threshold": 0.05,
