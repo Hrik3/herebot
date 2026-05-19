@@ -32,6 +32,7 @@ import shutil
 import tempfile
 import time
 import psutil
+import hashlib
 from datetime import datetime
 from typing import List, Dict, Any, Optional
 
@@ -50,6 +51,7 @@ DEFAULT_CONFIG = {
     "vectorizer_pkl": "vectorizer.pkl",
     "shard_dir": "shards",
     "archive_dir": "shards_processed",
+    "document_index_json": "document_index.json",
 
     # Batching & flushing
     "batch_size": 50_000,           # rows per shard
@@ -82,11 +84,16 @@ class IncrementalCSR:
         Initialise the system. If config_path does not exist, a default
         configuration is written there.
         """
-        self.base_dir = os.path.dirname(os.path.abspath(__file__))
-        self.config_path = os.path.join(self.base_dir, config_path)
+        if os.path.isabs(config_path):
+            self.base_dir = os.path.dirname(config_path)
+            self.config_path = config_path
+        else:
+            self.base_dir = os.path.dirname(os.path.abspath(__file__))
+            self.config_path = os.path.join(self.base_dir, config_path)
         config_path = self.config_path
         self.lock = threading.RLock()
         self._pending_sentences = []
+        self._pending_doc_refs = []
 
         # ------------------------------------------------------------------
         #  Load or create configuration
@@ -101,6 +108,7 @@ class IncrementalCSR:
 
         # Apply configuration (sets self.n_features, self.shard_dir, etc.)
         self._update_config(config, initial=True)
+        self._document_index = self._load_document_index()
 
         # ------------------------------------------------------------------
         #  HashingVectorizer – no vocabulary stored, fixed output space
@@ -147,6 +155,7 @@ class IncrementalCSR:
             "rows_pending": 0,
             "nnz_pending": 0,
             "shard_count": 0,
+            "document_count": 0,
             "pending_batch_size": 0,
             "last_rebuild_time": None,
             "last_stats_update": None,
@@ -187,6 +196,64 @@ class IncrementalCSR:
         if hasattr(self, 'dtype') and isinstance(self.dtype, str):
             self.dtype = np.dtype(self.dtype)
 
+        if not hasattr(self, 'document_index_json'):
+            self.document_index_json = "document_index.json"
+        if not os.path.isabs(self.document_index_json):
+            self.document_index_json = os.path.join(self.base_dir, self.document_index_json)
+
+    # ------------------------------------------------------------------
+    #  Document index / dedupe
+    # ------------------------------------------------------------------
+    def _empty_document_index(self) -> Dict[str, Any]:
+        return {
+            "version": 1,
+            "documents": {},
+            "source_content_keys": {},
+        }
+
+    def _load_document_index(self) -> Dict[str, Any]:
+        if not hasattr(self, "document_index_json"):
+            return self._empty_document_index()
+        if not os.path.exists(self.document_index_json):
+            return self._empty_document_index()
+        try:
+            with open(self.document_index_json, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            if not isinstance(data, dict):
+                return self._empty_document_index()
+            data.setdefault("version", 1)
+            data.setdefault("documents", {})
+            data.setdefault("source_content_keys", {})
+            return data
+        except Exception as e:
+            print(f"Warning: could not load document index {self.document_index_json}: {e}")
+            return self._empty_document_index()
+
+    def _save_document_index(self):
+        if not hasattr(self, "document_index_json"):
+            return
+        os.makedirs(os.path.dirname(self.document_index_json), exist_ok=True)
+        tmp = self.document_index_json + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(self._document_index, f, indent=2)
+        os.replace(tmp, self.document_index_json)
+
+    def _normalize_document_text(self, text: str) -> str:
+        if text is None:
+            return ""
+        return " ".join(str(text).split())
+
+    def _hash_text(self, text: str) -> str:
+        return hashlib.sha256(text.encode("utf-8", errors="ignore")).hexdigest()
+
+    def _doc_key(self, doc_id: str, source: str) -> str:
+        raw = f"{source}\0{doc_id}"
+        return hashlib.sha256(raw.encode("utf-8", errors="ignore")).hexdigest()
+
+    def _source_content_key(self, source: str, text_hash: str) -> str:
+        raw = f"{source}\0{text_hash}"
+        return hashlib.sha256(raw.encode("utf-8", errors="ignore")).hexdigest()
+
     # ------------------------------------------------------------------
     #  Public API: add sentences, flush, rebuild, stats
     # ------------------------------------------------------------------
@@ -194,36 +261,104 @@ class IncrementalCSR:
         """Add a single sentence – will be batched with others."""
         return self.add_batch([sentence])[0]
 
-    def add_batch(self, sentences: List[str]) -> List[Dict[str, Any]]:
+    def _queue_sentences(self, sentences: List[str], doc_refs: Optional[List[str]] = None) -> List[Dict[str, Any]]:
         """
-        Add multiple sentences. They are accumulated until `batch_size`
-        rows are reached, then flushed to a multi-row shard.
+        Add multiple sentences to the pending shard queue.
         Returns a list of metadata dicts (one per sentence).
         """
         if not sentences:
             return []
 
         results = []
+        doc_refs = doc_refs or [None] * len(sentences)
+        if len(doc_refs) != len(sentences):
+            doc_refs = [None] * len(sentences)
 
         with self.lock:
             # store raw sentences instead of CSR rows
             if not hasattr(self, "_pending_sentences"):
                 self._pending_sentences = []
+            if not hasattr(self, "_pending_doc_refs"):
+                self._pending_doc_refs = []
 
             self._pending_sentences.extend(sentences)
+            self._pending_doc_refs.extend(doc_refs)
             self._pending_rows += len(sentences)
 
-            for s in sentences:
+            for ref in doc_refs:
                 results.append({
                     "shard": None,
                     "row_index": None,
                     "nnz": None,   # unknown until vectorized at flush
+                    "doc_key": ref,
                 })
 
             # flush if needed
             if self.auto_flush and self._pending_rows >= self.batch_size:
                 self._flush_batch()
 
+        return results
+
+    def add_batch(self, sentences: List[str]) -> List[Dict[str, Any]]:
+        """
+        Add multiple sentences. They are accumulated until `batch_size`
+        rows are reached, then flushed to a multi-row shard.
+        """
+        return self._queue_sentences(sentences)
+
+    def add_document(self, text: str, doc_id: str, source: str, metadata: dict = None) -> Dict[str, Any]:
+        """Add one stable document with source-aware dedupe."""
+        clean = self._normalize_document_text(text)
+        if not clean:
+            return {"added": False, "skipped": True, "reason": "empty", "doc_key": None}
+        source = str(source or "unknown")
+        doc_id = str(doc_id or self._hash_text(clean))
+        doc_key = self._doc_key(doc_id, source)
+        text_hash = self._hash_text(clean)
+        source_content = self._source_content_key(source, text_hash)
+
+        with self.lock:
+            docs = self._document_index.setdefault("documents", {})
+            source_keys = self._document_index.setdefault("source_content_keys", {})
+            if doc_key in docs:
+                docs[doc_key]["metadata"] = metadata or docs[doc_key].get("metadata", {})
+                docs[doc_key]["updated_at"] = time.time()
+                self._save_document_index()
+                return {"added": False, "skipped": True, "reason": "doc_exists", "doc_key": doc_key}
+            if source_content in source_keys:
+                existing = source_keys[source_content]
+                return {"added": False, "skipped": True, "reason": "content_exists", "doc_key": existing}
+
+            docs[doc_key] = {
+                "doc_id": doc_id,
+                "source": source,
+                "text": clean,
+                "content_hash": text_hash,
+                "source_content_key": source_content,
+                "metadata": metadata or {},
+                "created_at": time.time(),
+                "updated_at": time.time(),
+            }
+            source_keys[source_content] = doc_key
+            self._save_document_index()
+
+        queued = self._queue_sentences([clean], [doc_key])[0]
+        queued.update({"added": True, "skipped": False, "reason": "added", "doc_key": doc_key})
+        return queued
+
+    def add_documents(self, docs: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Add a batch of document dictionaries with text/doc_id/source keys."""
+        results = []
+        for doc in docs or []:
+            try:
+                results.append(self.add_document(
+                    doc.get("text", ""),
+                    doc.get("doc_id"),
+                    doc.get("source", "unknown"),
+                    metadata=doc.get("metadata") or {},
+                ))
+            except Exception as e:
+                results.append({"added": False, "skipped": False, "reason": f"error:{e}", "doc_key": None})
         return results
 
     def flush(self):
@@ -251,13 +386,15 @@ class IncrementalCSR:
             "nnz": int(X.nnz),
             "timestamp": timestamp,
             "batch_counter": self._batch_counter,
-            "texts": self._pending_sentences
+            "texts": self._pending_sentences,
+            "document_refs": getattr(self, "_pending_doc_refs", [None] * len(self._pending_sentences)),
         }
         with open(shard_path.replace('.npz', '.meta.json'), 'w') as f:
             json.dump(meta, f)
 
         # Clear pending buffers
         self._pending_sentences = []
+        self._pending_doc_refs = []
         self._pending_rows = 0
         self._pending_nnz = 0
         self._batch_counter += 1
@@ -407,7 +544,7 @@ class IncrementalCSR:
 
                 X_final = sp.csr_matrix((final_data, final_indices, final_indptr),
                                         shape=(rows_used, self.n_features))
-                tmp_npz = self.main_npz + ".tmp"
+                tmp_npz = self.main_npz + ".tmp.npz"
                 sp.save_npz(tmp_npz, X_final)
                 os.replace(tmp_npz, self.main_npz)
 
@@ -502,6 +639,10 @@ class IncrementalCSR:
         # Totals
         stats["total_rows"] = rows_main + rows_in_shards + stats["rows_pending"]
         stats["total_nnz"] = nnz_main + nnz_in_shards + stats["nnz_pending"]
+        try:
+            stats["document_count"] = len(self._document_index.get("documents", {}))
+        except Exception:
+            stats["document_count"] = 0
 
         # Timestamps
         stats["last_stats_update"] = datetime.now().isoformat()
@@ -576,6 +717,71 @@ class IncrementalCSR:
         """Number of unprocessed shard files (without loading them)."""
         pattern = os.path.join(self.shard_dir, "shard_*.npz")
         return len(glob.glob(pattern))
+
+    def get_document_texts(self, limit: int = None) -> List[str]:
+        """Return indexed document text, preserving insertion order."""
+        docs = list(self._document_index.get("documents", {}).values())
+        docs.sort(key=lambda d: d.get("created_at", 0))
+        texts = [d.get("text", "") for d in docs if d.get("text")]
+        if limit is not None and limit > 0:
+            return texts[-limit:]
+        return texts
+
+    def get_source_counts(self) -> Dict[str, int]:
+        counts = {}
+        for doc in self._document_index.get("documents", {}).values():
+            src = doc.get("source", "unknown")
+            counts[src] = counts.get(src, 0) + 1
+        return counts
+
+    def _read_texts_from_meta_files(self, pattern: str) -> List[str]:
+        texts = []
+        for mf in glob.glob(pattern, recursive=True):
+            try:
+                with open(mf, "r", encoding="utf-8") as f:
+                    meta = json.load(f)
+                for text in meta.get("texts", []) or []:
+                    clean = self._normalize_document_text(text)
+                    if clean:
+                        texts.append(clean)
+            except Exception as e:
+                print(f"Warning: skipping corrupt shard metadata {mf}: {e}")
+        return texts
+
+    def get_shard_texts(self, limit: int = None, include_archive: bool = True) -> List[str]:
+        """Read text payloads from active shard metadata and archived metadata."""
+        active = self._read_texts_from_meta_files(os.path.join(self.shard_dir, "shard_*.meta.json"))
+        if not include_archive:
+            return active[-limit:] if limit is not None and limit > 0 else active
+        archived = self._read_texts_from_meta_files(os.path.join(self.archive_dir, "**", "shard_*.meta.json"))
+        texts = active + archived
+        if limit is not None and limit > 0:
+            return texts[-limit:]
+        return texts
+
+    def get_all_texts(self, limit: int = None, include_archive: bool = True) -> List[str]:
+        """Return deduped indexed + shard + pending texts for corpus use."""
+        seen = set()
+        texts = []
+        for text in self.get_document_texts():
+            key = self._hash_text(text)
+            if key not in seen:
+                seen.add(key)
+                texts.append(text)
+        for text in self.get_shard_texts(include_archive=include_archive):
+            key = self._hash_text(text)
+            if key not in seen:
+                seen.add(key)
+                texts.append(text)
+        for text in getattr(self, "_pending_sentences", []):
+            clean = self._normalize_document_text(text)
+            key = self._hash_text(clean)
+            if clean and key not in seen:
+                seen.add(key)
+                texts.append(clean)
+        if limit is not None and limit > 0:
+            return texts[-limit:]
+        return texts
 
     def load_full(self) -> sp.csr_matrix:
         """
