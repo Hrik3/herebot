@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1700" height="1000" viewBox="0 0 1700 1000" role="img" aria-labelledby="title desc">
+  <title id="title">Herebot Automatic State Relation and Regrouping</title>
+  <desc id="desc">Diagram of how similar probabilistic states create relation observations and state groups with head labels.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0 0 L10 5 L0 10 z" fill="#2f4057"/>
+    </marker>
+    <style>
+      .bg { fill: #f9fbfc; }
+      .title { font: 700 34px Arial, sans-serif; fill: #122434; }
+      .subtitle { font: 400 16px Arial, sans-serif; fill: #536779; }
+      .box { fill: #fff; stroke: #9fb1c1; stroke-width: 1.5; rx: 12; }
+      .state { fill: #efeafa; stroke: #9276c9; }
+      .obs { fill: #eaf6ef; stroke: #6ea67b; }
+      .math { fill: #fff3df; stroke: #d49b43; }
+      .head { fill: #fbe9ee; stroke: #c66d82; }
+      .label { font: 700 16px Arial, sans-serif; fill: #132638; }
+      .small { font: 400 13px Arial, sans-serif; fill: #33495c; }
+      .formula { font: 400 14px "DejaVu Sans Mono", Consolas, monospace; fill: #183045; }
+      .edge { fill: none; stroke: #2f4057; stroke-width: 2.2; marker-end: url(#arrow); }
+      .soft { fill: none; stroke: #7b8fa2; stroke-width: 1.5; stroke-dasharray: 6 5; marker-end: url(#arrow); }
+    </style>
+  </defs>
+  <rect class="bg" width="1700" height="1000"/>
+  <text class="title" x="70" y="70">Automatic State Relation And Regrouping</text>
+  <text class="subtitle" x="70" y="100">Old conflicts become legacy/debug. Normal runtime observes similarity over interaction history and builds head labels without deleting child states.</text>
+
+  <rect class="box state" x="80" y="170" width="340" height="240"/>
+  <text class="label" x="110" y="210">Active child states</text>
+  <text class="small" x="110" y="242">labels above probability threshold</text>
+  <text class="small" x="110" y="266">phase != archived</text>
+  <text class="formula" x="110" y="304">A_t = {s_i : sim(v_t,s_i)>=tau_s}</text>
+  <text class="formula" x="110" y="334">p_i >= tau_p</text>
+  <text class="small" x="110" y="370">multiple states can stay active at once</text>
+
+  <rect class="box math" x="520" y="150" width="420" height="280"/>
+  <text class="label" x="550" y="190">Pair relation metrics</text>
+  <text class="formula" x="550" y="228">s_ij(t) = cos(v_i(t), v_j(t))</text>
+  <text class="formula" x="550" y="262">Delta v_ij(t) = |v_i(t) - v_j(t)|</text>
+  <text class="formula" x="550" y="296">Delta p_ij(t) = |p_i(t) - p_j(t)|</text>
+  <text class="small" x="550" y="334">record only when s_ij >= relation threshold</text>
+  <text class="small" x="550" y="358">tokens add weight 1 + max(0, reward)</text>
+  <text class="small" x="550" y="382">positive reward trace accumulates per pair</text>
+
+  <rect class="box obs" x="1040" y="170" width="360" height="240"/>
+  <text class="label" x="1070" y="210">state_relation_observations</text>
+  <text class="small" x="1070" y="242">labels</text>
+  <text class="small" x="1070" y="266">first_interaction / last_interaction</text>
+  <text class="small" x="1070" y="290">similarity_history</text>
+  <text class="small" x="1070" y="314">factor_delta_history</text>
+  <text class="small" x="1070" y="338">probability_delta_history</text>
+  <text class="small" x="1070" y="362">shared_tokens + reward_trace + phase</text>
+
+  <rect class="box math" x="270" y="530" width="470" height="230"/>
+  <text class="label" x="300" y="570">Regroup eligibility</text>
+  <text class="formula" x="300" y="608">G_ij = s_ij (1 - |Delta p_ij|) R^+_ij</text>
+  <text class="formula" x="300" y="642">count(O_ij) >= N_group</text>
+  <text class="formula" x="300" y="676">mean_recent(s_ij) >= tau_group</text>
+  <text class="formula" x="300" y="710">G_ij > 0</text>
+  <text class="small" x="300" y="738">eligible pairs are unioned into components</text>
+
+  <rect class="box head" x="880" y="520" width="520" height="300"/>
+  <text class="label" x="910" y="560">state_groups</text>
+  <text class="formula" x="910" y="598">v_h = sum_i p_i(1+max(0,tanh(q_i)))v_i / denominator</text>
+  <text class="small" x="910" y="636">head_label selected by evidence priority:</text>
+  <text class="small" x="930" y="666">1. repeated rewarded user tokens</text>
+  <text class="small" x="930" y="690">2. phrase definitions</text>
+  <text class="small" x="930" y="714">3. word definitions</text>
+  <text class="small" x="930" y="738">4. connected graph node</text>
+  <text class="small" x="930" y="762">5. group_&lt;top_child_label&gt;</text>
+  <text class="small" x="910" y="794">child labels remain active and recoverable</text>
+
+  <rect class="box" x="80" y="825" width="360" height="90"/>
+  <text class="label" x="110" y="858">Legacy conflict behavior</text>
+  <text class="small" x="110" y="884">disabled by default; old records are archived</text>
+
+  <rect class="box" x="1245" y="850" width="300" height="80"/>
+  <text class="label" x="1275" y="882">Response use</text>
+  <text class="small" x="1275" y="906">head labels summarize state context</text>
+
+  <path class="edge" d="M420 290 L520 290"/>
+  <path class="edge" d="M940 290 L1040 290"/>
+  <path class="edge" d="M1220 410 C1170 475, 930 520, 740 590"/>
+  <path class="edge" d="M740 640 L880 640"/>
+  <path class="soft" d="M1140 820 C1185 850, 1210 870, 1245 890"/>
+  <path class="soft" d="M250 410 C210 530, 205 700, 260 825"/>
+  <text class="small" x="70" y="960">Decision clock: interaction_counter. Wall-clock time is not used for grouping decisions.</text>
+</svg>

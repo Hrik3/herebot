@@ -1,0 +1,24 @@
+{
+  "timestamp": 1781029955.0826206,
+  "user_input": "car is travel",
+  "system_response": "TPL.DEF.KNOWN word='is' value='is means means'",
+  "factor_vector": {
+    "curiosity": 0.7091237469096476,
+    "threat": 0.11320642794268475,
+    "trust": 0.6074457794154384,
+    "confidence": 0.8143608650966179,
+    "uncertainty": 0.012211964969763527,
+    "energy": 0.2829999999999999,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.95755,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 1.2403483838196816,
+  "metadata": {
+    "ci_confidence": 0.8143608650966179,
+    "generated_plugin_influence": null
+  }
+}

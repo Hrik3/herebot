@@ -1,0 +1,18 @@
+{
+  "greetings": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.0,
+    "predictive_gain": 1.0,
+    "phase": "active",
+    "last_used": 1781029568.019288,
+    "confidence": 1.0,
+    "usage": 1.5699488679998839,
+    "reward_trace": 0.4307162059506321,
+    "last_interaction": 47,
+    "last_decay_interaction": 47,
+    "probability": 1.0,
+    "tier": 4,
+    "activation": 1.1036110040212632,
+    "archive_pressure": 0.0
+  }
+}

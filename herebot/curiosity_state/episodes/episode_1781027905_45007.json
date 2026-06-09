@@ -1,0 +1,24 @@
+{
+  "timestamp": 1781027905.554152,
+  "user_input": "flower means living",
+  "system_response": "TPL.HYP.REL word='flower' candidate='means'",
+  "factor_vector": {
+    "curiosity": 1.9518487122514208,
+    "threat": 0.08922724670986565,
+    "trust": 0.6298560322353524,
+    "confidence": 0.8520380482937927,
+    "uncertainty": 0.008319980137459462,
+    "energy": 0.33599999999999997,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9496,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 2.612983043234123,
+  "metadata": {
+    "ci_confidence": 0.8520380482937927,
+    "generated_plugin_influence": null
+  }
+}

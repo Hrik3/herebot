@@ -26,6 +26,14 @@ This document describes the mathematical state used by Herebot and the path an i
 - `herebot/traits/code_generator.py`
 - `herebot/backend/ci.py`
 
+Related architecture visuals saved in `docs/`:
+
+- [Architecture Overview](herebot_architecture_overview.svg)
+- [Input Turn Pipeline](herebot_turn_pipeline.svg)
+- [Probabilistic Labeling](herebot_probabilistic_labeling.svg)
+- [Automatic State Regrouping](herebot_state_regrouping.svg)
+- [Unified Memory And Generated Plugins](herebot_memory_and_plugins.svg)
+
 ## 1. Scope And Assumptions
 
 The implementation is not one pure mathematical model. It is a coupled system of probabilistic approximations, online counters, graph heuristics, symbolic inference, feedback tracking, state vectors, and persistent memory. The formulas below describe the actual code behavior where possible.
@@ -106,7 +114,9 @@ The main path can be summarized as:
 $$
 u
 \rightarrow
-\text{memory ingest}
+\text{backend memory turn sync}
+\rightarrow
+\text{backend alignment verification}
 \rightarrow
 \text{whole sentence CI/phon/diag}
 \rightarrow
@@ -120,7 +130,11 @@ u
 \rightarrow
 \text{control factor vector}
 \rightarrow
-\text{state recognition/learning}
+\text{probabilistic state recognition}
+\rightarrow
+\text{state relation observation/regrouping}
+\rightarrow
+\text{generated plugin trials}
 \rightarrow
 \text{action generation}
 \rightarrow
@@ -132,7 +146,8 @@ $$
 In pseudocode:
 
 ```text
-add_sentence_to_memory(u)
+backend_memory_bridge.sync_turn(u, engine)
+backend_memory_bridge.verify_engine_alignment(engine)
 ci_report = CI.evaluate(u)
 phon_score = Phon.score_text(u)
 diag = Diagnostic.explain(ci_report, phon_score)
@@ -145,7 +160,7 @@ for token in tokens:
     token_phon = Phon.score_text(token)
     features = extract_features(token_ci, token_phon, diag)
     x = features_to_array(features)
-    concept = concept_model.add_word_observation(token, features)
+    concept = concept_model.add_word_observation(token, features, interaction_counter)
     factors = compute_curiosity_factors(token, token_ci, token_phon, diag, x)
     entropy = concept_model.entropy_word(token)
     igain = information_gain(token, entropy)
@@ -153,6 +168,7 @@ for token in tokens:
         igain = 0.25 * bayesian_surprise + 0.25 * gp_uncertainty
     gp.update(x, token_ci.confidence)
     reward = reward_tracker.compute_reward(token_ci, igain, bayesian_surprise)
+    concept_model.record_concept_reward(token, concept, interaction_counter, reward)
     update word_history
     structural = structural_score(token)
     meta_learner.update(factors, igain * (1 - structural))
@@ -165,7 +181,10 @@ parse syntax / equations
 maybe ask questions
 factor_dict = factor_engine.compute(...)
 factor_vector = ordered control factors
-maybe state learn
+recognize multiple probabilistic states
+record high-similarity state relations
+refresh state regrouping periodically
+run generated plugin trials
 generate reply
 maybe ask feedback
 store episode and save state
@@ -196,7 +215,21 @@ If no known semantic tokens are found but unknown tokens exist, the tokenizer re
 
 ## 5. Whole-Text CI Evaluation
 
-The CI engine perturbs the input many times, scores each perturbed form, and returns a stability-weighted confidence.
+The CI engine reads its corpus from the unified backend memory bridge when available. If the corpus is empty, it does not seed hidden example text; it returns a neutral insufficient-corpus report:
+
+$$
+c=0.5,
+\qquad
+\mu=0.5,
+\qquad
+\sigma=0,
+\qquad
+\text{stability}=0.5,
+\qquad
+\text{matched\_text}="".
+$$
+
+When a real corpus exists, the CI engine perturbs the input many times, scores each perturbed form, and returns a stability-weighted confidence.
 
 For one text $t$, base features are:
 
@@ -287,9 +320,44 @@ $$
 \operatorname{clip}_{[0,1]}(\mu \cdot \text{stability}).
 $$
 
+The reported matched text is the mode of the best TF-IDF match over perturbation samples:
+
+$$
+\operatorname{match}(t)
+=
+\operatorname{mode}
+\left(
+\arg\max_{c\in\mathcal{C}}\cos(\operatorname{tfidf}(t_i),\operatorname{tfidf}(c))
+\right).
+$$
+
 ## 6. Phonotactic Score
 
-For each word $w$, the phonotactic engine computes five sub-scores:
+The phonotactic engine first tries to build a data-adaptive profile from unified memory. A profile becomes active when the corpus yields at least 10 cleaned words:
+
+$$
+|\mathcal{W}_{profile}|\ge 10.
+$$
+
+From the profile it learns:
+
+$$
+\mathcal{N}_{2,3}=\text{observed character bigrams and trigrams},
+$$
+
+$$
+\mu_v=\operatorname{mean}\left(\frac{\#\text{vowels}(w)}{|w|}\right),
+\qquad
+\sigma_v=\max(\operatorname{std}(r_v),0.05),
+$$
+
+and a consonant-cluster norm:
+
+$$
+k_{90}=\operatorname{percentile}_{90}(\text{max consonant cluster length}).
+$$
+
+For each word $w$, the fallback heuristic computes five sub-scores:
 
 $$
 \text{phon}(w)
@@ -332,6 +400,27 @@ $$
 =
 \frac{1}{m}\sum_{j=1}^{m}\text{phon}(w_j).
 $$
+
+When the adaptive profile is active, the adaptive score is:
+
+$$
+s_{adapt}(w)
+=
+0.35s_{ngram}
++0.25s_{ratio}
++0.20s_{pattern}
++0.20s_{cluster\_norm}.
+$$
+
+The production word score is:
+
+$$
+\text{phon}(w)
+=
+0.65s_{adapt}(w)+0.35s_{fallback}(w).
+$$
+
+If the profile is inactive and fallback mode is enabled, the engine returns the fallback score with diagnostic mode `fallback_heuristic`. If fallback mode is disabled, the score is $0$ with mode `insufficient_corpus`.
 
 ## 7. Diagnostic Explanation
 
@@ -411,68 +500,191 @@ This vector is used by the concept model and the GP uncertainty model.
 
 ## 9. Concept Model And Entropy
 
-The concept model behaves like a simple Chinese Restaurant Process over latent concepts.
-
-Let $n_c$ be count for concept $c$, $N=\sum_c n_c$, and $\alpha$ be concentration. Existing concept probability:
+The concept model still keeps CRP-style global counts, but active word-concept selection is now probability-maintained in interaction space. For each word $w$ and concept $c$, Herebot stores:
 
 $$
-P(z=c)
+S_{w,c}
 =
-\frac{n_c}{N+\alpha}.
+(u_{w,c},q_{w,c},t_{w,c},p_{w,c},\text{tier}_{w,c},\text{phase}_{w,c}),
 $$
 
-New concept probability:
+where $u$ is usage, $q$ is reward trace, $t$ is last evidence interaction, $p$ is field probability, and `phase` can archive a stale label without deleting its stored counts.
+
+The global CRP base mass is still:
 
 $$
-P(z=\text{new})
+\pi_c^{base}
+=
+\frac{n_c}{N+\alpha},
+\qquad
+\pi_{new}^{base}
 =
 \frac{\alpha}{N+\alpha}.
 $$
 
-After sampling a concept $z_w$, Herebot increments:
+For a word that already has concept history, the existing-concept mass is multiplied by the current active probability:
 
 $$
-n_{z_w} \leftarrow n_{z_w}+1,
-\qquad
-n_{w,z_w} \leftarrow n_{w,z_w}+1.
-$$
-
-The posterior concept distribution for a word is:
-
-$$
-P(c \mid w)
+\pi_{w,c}
 =
-\frac{n_{w,c}}{\sum_{c'}n_{w,c'}}.
+\pi_c^{base}\max(p_{w,c},10^{-9}).
 $$
 
-Word entropy:
+Archived concepts are excluded from active sampling. The sampled concept is drawn from normalized masses:
+
+$$
+P(z_w=c)
+=
+\frac{\pi_{w,c}}{\sum_k \pi_{w,k}+\pi_{new}^{base}}.
+$$
+
+After sampling:
+
+$$
+n_{z_w}\leftarrow n_{z_w}+1,
+\qquad
+n_{w,z_w}\leftarrow n_{w,z_w}+1.
+$$
+
+The selected concept also receives probabilistic usage/reward evidence through the shared label convention in Section 9.1.
+
+The current posterior concept distribution for a word is no longer plain count normalization. It is:
+
+$$
+P(c\mid w)=p_{w,c}
+$$
+
+over active concepts. Word entropy is therefore:
 
 $$
 H(w)
 =
--\sum_c P(c \mid w)\log(P(c \mid w)+10^{-12}).
+-\sum_c p_{w,c}\log(p_{w,c}+10^{-12}).
 $$
 
-Feature prediction for a word marginalizes over concepts:
+Feature prediction marginalizes with these active probabilities:
 
 $$
 \hat{x}_{w,f}
 =
-\sum_c P(c \mid w)
+\sum_c p_{w,c}
 \frac{n_{c,f}}{\sum_{f'}n_{c,f'}}.
 $$
 
-Bayesian surprise is a clipped KL divergence between the previous and current word-concept posteriors:
+Bayesian surprise is the clipped KL divergence between the previous and current active probability fields:
 
 $$
 B(w)
 =
 \operatorname{clip}_{[0,10]}
 \left(
-\sum_c P_{new}(c \mid w)
-\log\frac{P_{new}(c \mid w)}
-{P_{old}(c \mid w)+10^{-10}}
+\sum_c p^{new}_{w,c}
+\log\frac{p^{new}_{w,c}}
+{p^{old}_{w,c}+10^{-10}}
 \right).
+$$
+
+### 9.1 Probabilistic Label Convention
+
+Concept labels, word-state labels, and state labels share the same interaction-clock convention. Let the interaction counter be $t$. The dynamic horizon is:
+
+$$
+H(t)=80(1+0.25\log(1+t)).
+$$
+
+Explicit or intrinsic reward $R_t$ is normalized by:
+
+$$
+r_t=\tanh(R_t).
+$$
+
+For candidate label $i$, reward-aware decay rate is:
+
+$$
+\lambda_i(t)
+=
+\frac{\ln 2}{H(t)}
+\operatorname{clip}(1-0.5\tanh(q_i),0.25,2.0).
+$$
+
+If $\Delta t=t-t_i$, usage and reward trace update as:
+
+$$
+u_i
+\leftarrow
+u_i e^{-\lambda_i\Delta t}+w_i,
+$$
+
+$$
+q_i
+\leftarrow
+q_i e^{-\lambda_i\Delta t}+w_i r_t.
+$$
+
+The activation of a label is:
+
+$$
+a_i
+=
+\max\left(10^{-9},u_i\frac{1+\tanh(q_i)}{2}\right).
+$$
+
+Within one field of competing labels:
+
+$$
+p_i
+=
+\frac{a_i}{\sum_{j\in field}a_j}.
+$$
+
+The stored probability tier is:
+
+$$
+\text{tier}_i
+=
+\min(4,\lfloor 5p_i\rfloor).
+$$
+
+Archive pressure is:
+
+$$
+D_i
+=
+\tanh(\Delta t/H(t))(1-p_i)(1-\max(0,\tanh(q_i))).
+$$
+
+A label is archived when:
+
+$$
+D_i\ge 0.98
+\quad
+\land
+\quad
+\Delta t\ge H(t).
+$$
+
+Archiving is soft deletion. The label remains persisted and recoverable, but active selection filters it out.
+
+### 9.2 Word-State Labels
+
+`WordStateAssociator` stores a probability field per word:
+
+$$
+\mathcal{L}_w=\{(\ell,p_{w,\ell},q_{w,\ell},u_{w,\ell},\text{phase}_{w,\ell})\}.
+$$
+
+Multiple labels can coexist for the same word. `get_labels` returns active labels whose probability exceeds the caller threshold. Conflict detection for word labels compares active probabilities, not only the older confidence score:
+
+$$
+|\ p_{w,\ell_1}-p_{w,\ell_2}\ | < \tau_{word}.
+$$
+
+When `break_bridge` keeps label $\ell_k$ and rejects $\ell_r$, the kept label receives positive usage/reward evidence and the rejected label is demoted:
+
+$$
+u_{w,\ell_r}\leftarrow 0.5u_{w,\ell_r},
+\qquad
+q_{w,\ell_r}\leftarrow q_{w,\ell_r}-|R|.
 $$
 
 ## 10. Gaussian Process Uncertainty Approximation
@@ -851,7 +1063,7 @@ This means Bayesian surprise and GP uncertainty can substitute for entropy reduc
 
 ## 16. Intrinsic Reward
 
-The current reward implementation is feedback-signed and no longer a weighted average.
+The current reward implementation is a feedback-signed sum of clipped nonnegative components.
 
 For a token:
 
@@ -1415,37 +1627,170 @@ $$
 
 the engine asks the user for a human label and saves the state.
 
-## 24. State Conflict Handling
-
-State conflicts are pairs of labels whose cosine similarity exceeds the conflict threshold:
+The state manager now returns multiple active labels, not one exclusive winner. Candidate states are first filtered by archive phase and active probability:
 
 $$
-\operatorname{sim}(s_i,s_j)\ge \tau_{conflict}.
+\text{phase}_i\ne \text{archived},
+\qquad
+p_i\ge \tau_p.
 $$
 
-A shadow merge vector is:
+Single-label selection uses a probability-weighted score:
 
 $$
-s_{shadow}
+\operatorname{score}(s_i\mid v_t)
 =
-\operatorname{normalize}
-\left(
-\frac{s_i+s_j}{2}
-\right),
+\operatorname{sim}(v_t,s_i)\max(p_i,10^{-9}).
 $$
 
-after padding or truncating to aligned dimensions.
+For exact ties in both similarity and probability within $10^{-9}$, the implementation uses random choice. This is the only intended random state-label tie break.
 
-Conflict option 5 edits vectors manually. The current safe lookup checks canonical label, original label, aliases, reverse aliases, and shadow states:
+When multiple active states match, each touched label receives small usage/reward evidence under the probabilistic convention:
 
 $$
-\operatorname{lookup}(\ell)
+u_i\leftarrow u_i+w_i,
+\qquad
+q_i\leftarrow q_i+w_i\tanh(R_t).
+$$
+
+The current state embedding is the mean of active state embeddings or aligned vectors:
+
+$$
+e_{state}
 =
-\text{first vector found in }
-\{\ell,\operatorname{resolve}(\ell),\operatorname{alias}(\ell),\operatorname{reverse aliases}\}.
+\frac{1}{|A_t|}
+\sum_{\ell\in A_t} e_\ell.
 $$
 
-If either vector is missing, the conflict is marked stale and processing continues without raising a `KeyError`.
+## 24. Automatic State Relation And Regrouping
+
+The old state conflict system is now legacy/debug behavior. In normal processing, high-similarity state pairs are stored in `state_relation_observations` instead of prompting the user. Repeated relation evidence creates entries in `state_groups`.
+
+For active labels $i,j$:
+
+$$
+s_{ij}(t)
+=
+\cos(v_i(t),v_j(t)).
+$$
+
+The factor-wise absolute difference is:
+
+$$
+\Delta v_{ij}(t)
+=
+|v_i(t)-v_j(t)|.
+$$
+
+If:
+
+$$
+s_{ij}(t)\ge \tau_{relation},
+$$
+
+the relation store records:
+
+$$
+O_{ij}
+=
+(
+\ell_i,\ell_j,
+t_{first},t_{last},
+\{s_{ij}\},
+\{\Delta v_{ij}\},
+\{|\Delta p_{ij}|\},
+\text{shared tokens},
+q_{ij}^{reward},
+\text{phase}
+).
+$$
+
+The probability delta term is:
+
+$$
+|\Delta p_{ij}(t)|
+=
+|p_i(t)-p_j(t)|.
+$$
+
+Positive shared reward evidence is accumulated as:
+
+$$
+R^+_{ij}
+=
+\tanh\left(
+\sum_{\tau\le t}\max(0,R_\tau)
+\right).
+$$
+
+The regroup score is:
+
+$$
+G_{ij}(t)
+=
+s_{ij}(t)(1-|\Delta p_{ij}(t)|)R^+_{ij}(t).
+$$
+
+A pair can join a group only after repeated observations:
+
+$$
+\operatorname{count}(O_{ij})\ge N_{group},
+\qquad
+\operatorname{mean}_{recent}(s_{ij})\ge \tau_{group},
+\qquad
+G_{ij}>0.
+$$
+
+Eligible pairs are unioned into connected components. For a component $C$, the head vector is a probability and reward weighted centroid:
+
+$$
+v_h
+=
+\frac{
+\sum_{i\in C}p_i(1+\max(0,\tanh(q_i)))v_i
+}{
+\sum_{i\in C}p_i(1+\max(0,\tanh(q_i)))
+}.
+$$
+
+The state group record stores:
+
+$$
+g
+=
+(
+\text{head label},
+\text{child labels},
+v_h,
+\text{dominant tokens},
+\text{dominant phrases},
+\text{factor signature},
+p_g,
+q_g,
+t_{last},
+\text{phase}
+).
+$$
+
+Group probability and reward trace are sums over children:
+
+$$
+p_g=\sum_{i\in C}p_i,
+\qquad
+q_g=\sum_{i\in C}q_i.
+$$
+
+The head label is selected by priority:
+
+1. highest-scoring repeated rewarded user tokens,
+2. phrase definitions that contain observed tokens,
+3. word definitions that match observed tokens,
+4. connected knowledge graph node labels,
+5. deterministic fallback `group_<top_child_label>`.
+
+Child labels remain active and recoverable. The group alias map is used for summaries and response references; vector matching can still return child labels.
+
+Legacy conflict methods still exist behind `state_manager.legacy_interactive_conflicts`. When automatic regrouping is active, unresolved legacy conflicts are archived as historical records rather than presented to the user.
 
 ## 25. Feedback Corpus
 
@@ -2019,9 +2364,27 @@ $$
 State update:
 
 $$
-s_t
+A_t
 =
-\operatorname{StateManager}(v_t).
+\operatorname{StateManager}_{active}(v_t,t,R_t),
+$$
+
+where $A_t$ can contain multiple active child labels. Automatic relation tracking then updates:
+
+$$
+\mathcal{O}_{state,t+1}
+=
+\mathcal{O}_{state,t}
+\cup
+\{O_{ij}: i,j\in A_t,\ s_{ij}\ge\tau_{relation}\}.
+$$
+
+Periodic regrouping produces or updates head labels:
+
+$$
+\mathcal{G}_{state,t+1}
+=
+\operatorname{Regroup}(\mathcal{O}_{state,t+1}).
 $$
 
 Action:
@@ -2073,6 +2436,20 @@ This section gives the derivation style that was missing from the first draft: e
 ### 34.1 CI Confidence Derivation
 
 The implementation starts in `CIEngine.evaluate(text, samples=60)`.
+
+Before scoring, the engine refreshes corpus from `HerebotMemoryBridge` or CSR text. If no real corpus exists:
+
+```text
+return _neutral_report(mode="insufficient_corpus")
+```
+
+This fixes the report at:
+
+$$
+(\operatorname{confidence},\mu,\sigma,\operatorname{stability})
+=
+(0.5,0.5,0,0.5).
+$$
 
 Code-level steps:
 
@@ -2172,6 +2549,42 @@ $$
 +0.15s_{morph}.
 $$
 
+When `DataAdaptivePhonProfile` is active, the code computes:
+
+```text
+combined = clip01(
+    0.35 * ngram_score
+  + 0.25 * ratio_score
+  + 0.20 * pattern_score
+  + 0.20 * cluster_score
+)
+word_score = clip01(0.65 * combined + 0.35 * base_score)
+mode = "data_adaptive"
+```
+
+Therefore production phon scoring with enough memory corpus is:
+
+$$
+\operatorname{phon}_{prod}(w)
+=
+0.65
+\left(
+0.35s_{ngram}
++0.25s_{ratio}
++0.20s_{pattern}
++0.20s_{cluster\_norm}
+\right)
++0.35\operatorname{phon}_{fallback}(w).
+$$
+
+If the profile is inactive, the diagnostic mode is `fallback_heuristic` and:
+
+$$
+\operatorname{phon}_{prod}(w)
+=
+\operatorname{phon}_{fallback}(w).
+$$
+
 For a text with words $w_1,\ldots,w_m$, the code returns `float(np.mean(word_scores))`, so:
 
 $$
@@ -2240,19 +2653,21 @@ $$
 
 ### 34.4 Concept Entropy And Surprise Derivation
 
-`add_word_observation(word, features)` first saves the previous posterior:
+`add_word_observation(word, features, interaction_index, reward)` first saves the previous active probability field:
 
 ```text
-prev_posterior[word] = {
-    c: cnt / total for c, cnt in word_concept_counts[word].items()
-}
+prev_posterior[word] = get_concept_probabilities(word, interaction_index)
 ```
 
-Then it constructs CRP probabilities:
+Then it constructs CRP-like masses. Existing concepts use both global counts and the word's active concept probability:
 
 ```text
 for existing concept c:
-    prob = concept_count[c] / (total + alpha)
+    base = concept_count[c] / (total + alpha)
+    if word has history:
+        prob = base * max(word_prob[c], 1e-9)
+    else:
+        prob = base
 new concept:
     prob = alpha / (total + alpha)
 ```
@@ -2262,11 +2677,13 @@ So:
 $$
 P(z=c)
 =
-\frac{n_c}{N+\alpha},
+\frac{\frac{n_c}{N+\alpha}\max(p_{w,c},10^{-9})}
+{\sum_k\frac{n_k}{N+\alpha}\max(p_{w,k},10^{-9})+\frac{\alpha}{N+\alpha}},
 \qquad
 P(z=new)
 =
-\frac{\alpha}{N+\alpha}.
+\frac{\frac{\alpha}{N+\alpha}}
+{\sum_k\frac{n_k}{N+\alpha}\max(p_{w,k},10^{-9})+\frac{\alpha}{N+\alpha}}.
 $$
 
 After sampling:
@@ -2274,14 +2691,15 @@ After sampling:
 ```text
 concept_counts[concept] += 1
 word_concept_counts[word][concept] += 1
+normalize_probability_field(... touched_concept=concept ...)
 ```
 
-This directly yields:
+The active posterior is the normalized probability field:
 
 $$
 P(c\mid w)
 =
-\frac{n_{w,c}}{\sum_{c'}n_{w,c'}}.
+p_{w,c}.
 $$
 
 `entropy_word` is:
@@ -2537,7 +2955,7 @@ $$
 
 with default $0.5$ for missing factors.
 
-### 34.9 State Matching Derivation
+### 34.9 Probabilistic State Matching And Regrouping Derivation
 
 The state manager normalizes vectors:
 
@@ -2571,24 +2989,104 @@ $$
 \frac{q^\top s}{\|q\|\|s\|}.
 $$
 
-In `_handle_state_learning`, a state must pass both similarity and novelty distance:
+The state manager filters archived labels before matching:
 
 ```text
-similar = find_similar_states(factor_vector, threshold=sim_threshold)
+if state_metadata[label].phase != "archived":
+    candidate is active
+```
+
+For single-label selection, each candidate score is:
+
+$$
+\operatorname{score}(q,s_i)
+=
+\operatorname{sim}(q,s_i)\max(p_i,10^{-9}).
+$$
+
+For multi-state recognition, `find_similar_states` returns every active label satisfying:
+
+$$
+\operatorname{sim}(q,s_i)\ge\tau_s
+\quad
+\land
+\quad
+p_i\ge\tau_p.
+$$
+
+In `_handle_state_learning`, each candidate also passes the novelty distance gate:
+
+```text
 dist = np.linalg.norm(v1 - v2)
 if dist <= novelty_dist_threshold:
     active_labels.append(label)
 ```
 
-So recognition is:
+Therefore active recognition is:
 
 $$
-\operatorname{sim}(v,s)\ge \tau_s
-\quad
+\operatorname{sim}(v,s_i)\ge \tau_s
 \land
-\quad
-\|\tilde{v}-\tilde{s}\|_2\le \tau_d.
+\|\tilde{v}-\tilde{s_i}\|_2\le \tau_d
+\land
+p_i\ge\tau_p.
 $$
+
+When more than one active label remains, Herebot records relation observations between the active labels. For each pair:
+
+$$
+s_{ij}=\cos(v_i,v_j),
+\qquad
+\delta p_{ij}=|p_i-p_j|,
+\qquad
+\delta v_{ij}=|v_i-v_j|.
+$$
+
+The implementation appends histories:
+
+```text
+similarity_history.append(s_ij)
+factor_delta_history.append(delta_v_ij)
+probability_delta_history.append(delta_p_ij)
+shared_tokens[token] += 1 + max(0, reward)
+```
+
+The relation regroup score is:
+
+$$
+G_{ij}
+=
+\bar{s}_{ij}
+\left(1-\overline{\delta p}_{ij}\right)
+\tanh(R^+_{ij}),
+$$
+
+where the bars denote recent means over the configured minimum observation window. A pair is group-eligible when:
+
+$$
+\operatorname{count}_{ij}\ge N_{min},
+\qquad
+\bar{s}_{ij}\ge\tau_{group},
+\qquad
+G_{ij}>0.
+$$
+
+Eligible pairs are unioned into connected components. For one component $C$, the head vector is:
+
+$$
+v_h
+=
+\operatorname{normalize}
+\left(
+\frac{
+\sum_{i\in C}p_i(1+\max(0,\tanh(q_i)))v_i
+}{
+\sum_{i\in C}p_i(1+\max(0,\tanh(q_i)))
+}
+\right).
+$$
+
+This derivation explains why regrouping does not delete state children: $v_h$ is an additional summary vector, while $v_i$ remains available for precise matching.
 
 ### 34.10 Shadow Link Derivation
 
@@ -2633,17 +3131,46 @@ Only `commit_shadow_differentiation_link` calls `knowledge_graph.add_edge`, and 
 
 These parts were not detailed enough in the first version. They matter for a "whole repo" mathematical reading.
 
-### 35.1 Incremental CSR Text Memory
+### 35.1 Unified Backend Memory
 
-`add_sentence_to_memory(text)` sends text into an `IncrementalCSR` backend. The vectorizer is a fixed-size `HashingVectorizer`:
+`HerebotMemoryBridge` is the runtime source of backend corpus text. It syncs the current input inline and periodically syncs a larger snapshot from engine state.
+
+The unified corpus is:
 
 $$
-\phi_{csr}(u)
-\in
-\{0,1\}^{2^{20}}.
+\mathcal{C}_{backend}
+=
+\mathcal{C}_{turn}
+\cup
+\mathcal{C}_{episodes}
+\cup
+\mathcal{C}_{definitions}
+\cup
+\mathcal{C}_{phrases}
+\cup
+\mathcal{C}_{graph}
+\cup
+\mathcal{C}_{csr}.
 $$
 
-Because `binary=True`, entries are presence indicators, not counts:
+Source-aware document identity is a stable SHA-256 hash:
+
+$$
+h(d)
+=
+\operatorname{sha256}
+(\operatorname{clean}(\text{source})\Vert 0 \Vert \operatorname{clean}(\text{text})).
+$$
+
+The bridge sends each document to `IncrementalCSR.add_document(text, doc_id, source, metadata)`. Duplicate `(source,text)` documents are skipped, so unstable runtime state does not repeatedly expand the corpus with the same content.
+
+The vectorizer remains a fixed-size hashing vectorizer:
+
+$$
+\phi_{csr}(u)\in\{0,1\}^{2^{20}}.
+$$
+
+Because `binary=True`, entries are presence indicators:
 
 $$
 \phi_j(u)
@@ -2654,13 +3181,13 @@ $$
 \end{cases}
 $$
 
-The n-gram range is `(1,2)`, so both unigrams and bigrams contribute. Sentences accumulate in memory until:
+The n-gram range is `(1,2)`. Pending documents flush to shards when:
 
 $$
 \text{pending rows}\ge \text{batch size}.
 $$
 
-Then a shard is written. A rebuild streams main matrix plus shards into a new CSR matrix:
+A rebuild stacks the main matrix and shard matrices:
 
 $$
 X_{final}
@@ -2673,7 +3200,18 @@ X_{shard,k}
 \end{bmatrix}.
 $$
 
-This memory backend supports the CI corpus used by TF-IDF matching.
+Backend verification checks that the latest user input appears in the bridge corpus, that the corpus is nonempty, that the CI engine has a corpus size, and whether the phon profile is active:
+
+$$
+\operatorname{verify}
+=
+[
+u_t\in\mathcal{C}_{backend},
+|\mathcal{C}_{backend}|>0,
+|\mathcal{C}_{CI}|,
+\text{phon profile active}
+].
+$$
 
 ### 35.2 Behavioral Rule Mining
 
@@ -2791,27 +3329,112 @@ $$
 
 If roots or tree structures differ, anti-unification returns no schema.
 
-### 35.4 Generated Code And Shadow Execution
+### 35.4 Herebot-Aware Generated Plugins
 
-Confirmed logic can be converted into Python code. For generated state definitions, matching is:
+Generated code now uses a plugin contract:
+
+```text
+HerebotGeneratedPlugin.inspect(context) -> dict
+HerebotGeneratedPlugin.propose(context) -> dict
+HerebotGeneratedPlugin.run(context) -> dict
+```
+
+Legacy generated files with only `run(context)` remain executable through a compatibility wrapper.
+
+The generator builds a bounded snapshot:
 
 $$
-\operatorname{match}(v,p)
+\Sigma_{gen}
 =
-\left[
-\frac{v^\top p}{\|v\|\|p\|+10^{-12}}
->
-\tau
-\right].
+(
+\mathcal{C}_{backend},
+\mathcal{D}_{reasoner},
+G_{summary},
+S_{states},
+H_{hypotheses},
+F_{feedback},
+\text{CI/phon diagnostics},
+\text{trigger rule}
+).
 $$
 
-Shadow execution imports the generated module, runs `run(...)`, captures stdout and stderr, and returns:
+Snapshot hashes are stored with the generated code for traceability:
+
+$$
+h_\Sigma=\operatorname{sha256}(\operatorname{json}(\Sigma_{gen})).
+$$
+
+At runtime, plugins receive a safe facade rather than raw engine mutation access. The facade exposes read-oriented summaries and scoring helpers:
+
+$$
+\mathcal{A}_{facade}
+=
+(
+\text{memory},
+\text{reasoner},
+\text{graph},
+\text{states},
+\text{semantic similarity},
+\text{CI},
+\text{phon},
+\text{factor snapshot},
+\text{feedback/reward summaries}
+).
+$$
+
+Plugins return proposals, not direct state mutations:
+
+$$
+\rho
+=
+(
+\text{type},
+\text{text/action/graph/state candidate},
+\text{confidence},
+\text{source},
+\text{logic id}
+).
+$$
+
+Shadow execution imports the generated module, validates the plugin methods, runs `run(context)`, captures stdout and stderr, and returns:
 
 $$
 (\text{success},\text{error message},\text{output}).
 $$
 
-If execution raises, the exception is appended to the generated file as comments and the shadow test is logged.
+After shadow success, the plugin enters trial phase. Trial activation requires similar context. The similarity signal combines token overlap, state overlap, and factor compatibility:
+
+$$
+\operatorname{sim}_{trial}
+=
+w_T J(T_{now},T_{trigger})
++w_S J(S_{now},S_{trigger})
++w_F(1-\|F_{now}-F_{trigger}\|_1/k),
+$$
+
+where $J$ is Jaccard similarity.
+
+Trial health records reward and factor safety:
+
+$$
+\operatorname{healthy}
+=
+[R\ge0]
+\land[T\le0.75]
+\land[\operatorname{trust}\ge0.25]
+\land[\operatorname{confidence}\ge0.2]
+\land[\operatorname{guilt}\le0.45].
+$$
+
+Healthy trials increase predictive gain:
+
+$$
+g
+\leftarrow
+0.9g+0.1\operatorname{clip}_{[0,1]}(R).
+$$
+
+Negative feedback or unhealthy factor shifts demote or disable the plugin. Trial proposals influence response candidates indirectly; normal response generation and feedback tracking still decide whether the behavior persists.
 
 ### 35.5 Tracker Metrics
 
@@ -2911,7 +3534,7 @@ $$
 \text{long\_idle\_done}=\text{false}.
 $$
 
-Short idle records tracker snapshots with trigger `idle_short`. Long idle runs deep state introspection and all idle tasks, saves state, records `idle_long`, then blocks repeat long-idle execution until the next user interaction resets the flag.
+Short idle records tracker snapshots with trigger `idle_short`. Long idle refreshes probabilistic state relation observations and state groups, runs the remaining idle tasks, saves state, records `idle_long`, then blocks repeat long-idle execution until the next user interaction resets the flag.
 
 ### 35.8 Visualization Utilities
 
@@ -2933,7 +3556,7 @@ The HTML files render Markdown/KaTeX or dependency graphs. They do not change He
 
 ## 36. Important Limitations
 
-1. The concept model is CRP-like, but not a full hierarchical Bayesian nonparametric model with complete posterior inference.
+1. The concept model is CRP-like with probabilistic label maintenance, but not a full hierarchical Bayesian nonparametric model with complete posterior inference.
 2. The GP is an online Bayesian linear model over random Fourier features, not an exact Gaussian process.
 3. Meta-curiosity update is a custom online rule, not full Bayesian linear regression despite class comments.
 4. Structural scoring and pattern detection are usage heuristics and can be biased by repeated sessions.
@@ -2941,8 +3564,10 @@ The HTML files render Markdown/KaTeX or dependency graphs. They do not change He
 6. State vectors depend on dynamic factor ordering. Persisted vectors may need padding or truncation as factors evolve.
 7. Some decisions are priority-ordered symbolic control flow, not optimized by a single objective function.
 8. Text generation mostly emits technical templates (`TPL.*`) unless the LSTM is trained enough or chat-mode heuristics select learned text.
-9. State learning may ask for interactive labels, so mathematical processing can pause for human naming.
-10. Saved runtime state strongly affects behavior; two identical inputs may produce different outputs after different histories.
+9. New state creation may ask for an initial human label; state conflict/regrouping is automatic by default.
+10. Backend CI and phon scoring depend on live unified memory; empty or corrupt memory intentionally produces neutral or fallback diagnostics.
+11. Generated plugins can propose behavior, but promotion depends on later trial health and feedback, not on shadow success alone.
+12. Saved runtime state strongly affects behavior; two identical inputs may produce different outputs after different histories.
 
 ## 37. Practical Reading Map
 
@@ -2951,20 +3576,22 @@ To understand one behavior, follow these files in order:
 1. `core/heart.py` for engine construction.
 2. `core/cuengine/processing.py` for turn-level control flow.
 3. `backend/ci.py` for text confidence and phonotactics.
-4. `core/cuengine/curiosity.py` for token factors and structural gating.
-5. `concepts/hdp.py` for concept entropy and Bayesian surprise.
-6. `concepts/gaussian_uncertainity.py` for uncertainty.
-7. `concepts/meta_learner.py` for curiosity factor weights.
-8. `components/reward.py` for intrinsic and feedback reward.
-9. `components/factor_handler.py` for control vectors and states.
-10. `components/resoning.py` and `components/learner.py` for graph, syntax, symbolic inference, and shadow links.
-11. `core/mind.py` for response selection.
-12. `core/cuengine/persistence.py` for what becomes long-term state.
-13. `components/rules.py` for behavioral rule mining.
-14. `traits/symbol_tracer.py` and `traits/tree_formation.py` for schemas, variables, operators, and expression conversion.
-15. `traits/code_generator.py` for generated logic and shadow execution.
-16. `backend/incremental_csr_lib.py` for the text-memory matrix used by the CI corpus.
-17. `core/tracker.py` for persisted metrics and plots.
-18. `backend/backendSearch.py` and `backend/SystemStats.py` for search and resource telemetry.
-19. `main.py` for CLI flow and idle-thread scheduling.
-20. `visualisation/` for graph/Markdown viewing utilities.
+4. `backend/herebot_memory.py` for unified backend corpus sync.
+5. `core/cuengine/curiosity.py` for token factors and structural gating.
+6. `components/probabilistic_labeling.py` for interaction-clock label probability and archive math.
+7. `concepts/hdp.py` for concept entropy and Bayesian surprise.
+8. `concepts/gaussian_uncertainity.py` for uncertainty.
+9. `concepts/meta_learner.py` for curiosity factor weights.
+10. `components/reward.py` for intrinsic and feedback reward.
+11. `components/factor_handler.py` for control vectors, probabilistic states, relation observations, and state groups.
+12. `components/resoning.py` and `components/learner.py` for graph, syntax, symbolic inference, word-state labels, and shadow links.
+13. `core/mind.py` for response selection and group-label state references.
+14. `core/cuengine/persistence.py` for what becomes long-term state.
+15. `components/rules.py` for behavioral rule mining.
+16. `traits/symbol_tracer.py` and `traits/tree_formation.py` for schemas, variables, operators, and expression conversion.
+17. `traits/code_generator.py` for Herebot-aware generated plugins, shadow execution, trials, and promotion/decay.
+18. `backend/incremental_csr_lib.py` for the text-memory matrix used by the backend corpus.
+19. `core/tracker.py` for persisted metrics and plots.
+20. `backend/backendSearch.py` and `backend/SystemStats.py` for search and resource telemetry.
+21. `main.py` for CLI flow and idle-thread scheduling.
+22. `visualisation/` for graph/Markdown viewing utilities.

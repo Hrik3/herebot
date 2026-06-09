@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1040" viewBox="0 0 1600 1040" role="img" aria-labelledby="title desc">
+  <title id="title">Herebot Probabilistic Label Convention</title>
+  <desc id="desc">Diagram showing interaction-clock probability maintenance for concepts, word-state labels, and state labels.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0 0 L10 5 L0 10 z" fill="#30475e"/>
+    </marker>
+    <style>
+      .bg { fill: #fbfcfd; }
+      .title { font: 700 34px Arial, sans-serif; fill: #132433; }
+      .subtitle { font: 400 16px Arial, sans-serif; fill: #526678; }
+      .box { fill: #fff; stroke: #a3b4c4; stroke-width: 1.5; rx: 12; }
+      .source { fill: #e8f2fb; stroke: #5c85a7; }
+      .math { fill: #fff3df; stroke: #d69b42; }
+      .field { fill: #edf7ef; stroke: #6da77b; }
+      .archive { fill: #f8e9ed; stroke: #c56d82; }
+      .label { font: 700 16px Arial, sans-serif; fill: #132638; }
+      .small { font: 400 13px Arial, sans-serif; fill: #33495c; }
+      .formula { font: 400 15px "DejaVu Sans Mono", Consolas, monospace; fill: #1b3144; }
+      .edge { fill: none; stroke: #30475e; stroke-width: 2.1; marker-end: url(#arrow); }
+      .soft { fill: none; stroke: #8194a5; stroke-width: 1.4; stroke-dasharray: 6 5; marker-end: url(#arrow); }
+    </style>
+  </defs>
+  <rect class="bg" width="1600" height="1040"/>
+  <text class="title" x="70" y="70">Probabilistic Label Convention</text>
+  <text class="subtitle" x="70" y="100">One interaction-clock rule maintains concepts, word-state labels, and state labels without hard deletion.</text>
+
+  <rect class="box source" x="70" y="160" width="300" height="180"/>
+  <text class="label" x="100" y="200">Input evidence</text>
+  <text class="small" x="100" y="232">interaction_counter = t</text>
+  <text class="small" x="100" y="256">reward R_t</text>
+  <text class="small" x="100" y="280">touched label i</text>
+  <text class="small" x="100" y="304">weight w_i</text>
+
+  <rect class="box math" x="470" y="140" width="420" height="220"/>
+  <text class="label" x="500" y="180">Interaction horizon and decay</text>
+  <text class="formula" x="500" y="218">H(t) = 80(1 + 0.25 log(1+t))</text>
+  <text class="formula" x="500" y="252">r_t = tanh(R_t)</text>
+  <text class="formula" x="500" y="286">lambda_i = ln2/H(t) * clip(1 - 0.5 tanh(q_i), 0.25, 2)</text>
+  <text class="small" x="500" y="326">positive reward slows decay; negative trace accelerates pressure</text>
+
+  <rect class="box math" x="990" y="140" width="470" height="220"/>
+  <text class="label" x="1020" y="180">Usage and reward trace update</text>
+  <text class="formula" x="1020" y="218">u_i &lt;- u_i exp(-lambda_i * dt) + w_i</text>
+  <text class="formula" x="1020" y="252">q_i &lt;- q_i exp(-lambda_i * dt) + w_i r_t</text>
+  <text class="formula" x="1020" y="286">a_i = max(1e-9, u_i(1 + tanh(q_i))/2)</text>
+  <text class="small" x="1020" y="326">activation combines survival usage and reward agreement</text>
+
+  <rect class="box field" x="170" y="460" width="360" height="250"/>
+  <text class="label" x="200" y="500">Concept field</text>
+  <text class="small" x="200" y="532">word -> concept probabilities</text>
+  <text class="small" x="200" y="556">CRP mass multiplied by active p</text>
+  <text class="formula" x="200" y="592">P(c|w) = p_wc</text>
+  <text class="small" x="200" y="628">entropy and surprise use p_wc</text>
+  <text class="small" x="200" y="652">archived concepts stay persisted</text>
+
+  <rect class="box field" x="620" y="460" width="360" height="250"/>
+  <text class="label" x="650" y="500">Word-state field</text>
+  <text class="small" x="650" y="532">word -> multiple labels</text>
+  <text class="small" x="650" y="556">break_bridge promotes kept label</text>
+  <text class="small" x="650" y="580">rejected label usage halves</text>
+  <text class="formula" x="650" y="616">q_reject &lt;- q_reject - |R|</text>
+  <text class="small" x="650" y="652">low-probability labels are hidden from active results</text>
+
+  <rect class="box field" x="1070" y="460" width="360" height="250"/>
+  <text class="label" x="1100" y="500">State label field</text>
+  <text class="small" x="1100" y="532">multiple active state labels</text>
+  <text class="small" x="1100" y="556">matching weighted by probability</text>
+  <text class="formula" x="1100" y="592">score_i = sim(v, s_i) max(p_i, 1e-9)</text>
+  <text class="small" x="1100" y="628">exact tie uses random choice</text>
+  <text class="small" x="1100" y="652">state groups summarize related children</text>
+
+  <rect class="box archive" x="420" y="790" width="760" height="150"/>
+  <text class="label" x="450" y="830">Field normalization and archive pressure</text>
+  <text class="formula" x="450" y="865">p_i = a_i / sum_j a_j</text>
+  <text class="formula" x="450" y="900">tier_i = min(4, floor(5 p_i))</text>
+  <text class="formula" x="450" y="935">D_i = tanh(dt/H(t))(1-p_i)(1-max(0,tanh(q_i)))</text>
+  <text class="small" x="450" y="963">archive when D_i >= 0.98 and dt >= H(t); stored data remains recoverable</text>
+
+  <path class="edge" d="M370 250 L470 250"/>
+  <path class="edge" d="M890 250 L990 250"/>
+  <path class="edge" d="M1225 360 C1210 410, 1190 430, 1160 460"/>
+  <path class="edge" d="M710 360 C650 405, 580 430, 485 460"/>
+  <path class="edge" d="M790 360 L790 460"/>
+  <path class="soft" d="M350 710 C430 770, 490 790, 570 790"/>
+  <path class="soft" d="M800 710 L800 790"/>
+  <path class="soft" d="M1250 710 C1160 770, 1080 790, 1000 790"/>
+</svg>

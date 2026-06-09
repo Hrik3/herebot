@@ -1,0 +1,24 @@
+{
+  "timestamp": 1781027935.4262307,
+  "user_input": "is means means",
+  "system_response": "TPL.HYP.REL word='is' candidate='means'",
+  "factor_vector": {
+    "curiosity": 0.5946784150971499,
+    "threat": 0.08206243960740947,
+    "trust": 0.6343803149208682,
+    "confidence": 0.8684768106148391,
+    "uncertainty": 0.0071054927853137105,
+    "energy": 0.33299999999999996,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9500500000000001,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.655224291193595,
+  "metadata": {
+    "ci_confidence": 0.8684768106148391,
+    "generated_plugin_influence": null
+  }
+}

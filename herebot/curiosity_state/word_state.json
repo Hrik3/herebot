@@ -1,0 +1,32 @@
+{
+  "word_to_labels": {
+    "hi": {},
+    "am": {},
+    "hrishi": {},
+    "car": {},
+    "is": {},
+    "travel": {},
+    "you": {},
+    "are": {},
+    "herebot": {},
+    "hello": {},
+    "ccar": {},
+    "means": {}
+  },
+  "label_to_words": {},
+  "word_label_stats": {
+    "hi": {},
+    "am": {},
+    "hrishi": {},
+    "car": {},
+    "is": {},
+    "travel": {},
+    "you": {},
+    "are": {},
+    "herebot": {},
+    "hello": {},
+    "ccar": {},
+    "means": {}
+  },
+  "conflict_history": []
+}

@@ -1,0 +1,131 @@
+{
+  "hierarchical_concept_model": {
+    "alpha": 1.181386727698181,
+    "beta": 1.0,
+    "active_probability_threshold": 0.01
+  },
+  "gaussian_process": {
+    "input_dim": 5,
+    "n_features": 100,
+    "length_scale": 1.0,
+    "sigma_noise": 0.10227998866538195
+  },
+  "meta_curiosity_learner": {
+    "n_factors": 0.1351949871239231
+  },
+  "intrinsic_reward_tracker": {},
+  "semantic_learner": {
+    "emb_dim": 64,
+    "alpha": 0.1
+  },
+  "syntax_learner": {},
+  "consciousness_model": {},
+  "action_generator": {},
+  "reasoning_engine": {
+    "enable_type_hierarchy": true,
+    "enable_operators": true,
+    "enable_rule_engine": true,
+    "enable_constraint_propagation": true,
+    "enable_schema_learning": true
+  },
+  "factor_engine": {},
+  "state_manager": {
+    "state_dir": "states",
+    "conflict_threshold": 0.85,
+    "active_probability_threshold": 0.01,
+    "selection_tie_tolerance": 1e-09,
+    "state_relation_similarity_threshold": 0.85,
+    "state_regroup_similarity_threshold": 0.92,
+    "state_regroup_min_observations": 3,
+    "state_regroup_interval_interactions": 10,
+    "state_group_token_evidence_floor": 2,
+    "state_group_head_label_max_words": 3,
+    "legacy_interactive_conflicts": false
+  },
+  "probabilistic_labeling": {
+    "horizon_base": 80.0,
+    "horizon_log_scale": 0.25,
+    "min_decay_scale": 0.25,
+    "max_decay_scale": 2.0,
+    "archive_pressure_threshold": 0.98,
+    "epsilon": 1e-09,
+    "tier_count": 5
+  },
+  "episodic_memory": {
+    "capacity": 10000
+  },
+  "idle_reasoner": {
+    "short_idle_threshold": 60.0,
+    "long_idle_threshold": 400.0,
+    "enable_world_model_dreaming": true,
+    "enable_active_memory_rehearsal": true,
+    "enable_curiosity_landscape_optimization": true,
+    "enable_concept_graph_compression": true,
+    "enable_autonomous_hypothesis_planning": true,
+    "enable_identity_stabilization": true,
+    "enable_cross_modal_alignment": true,
+    "enable_exploration_policy_distillation": true,
+    "enable_cognitive_drive_evolution": true,
+    "enable_counterfactual_reasoning": true,
+    "enable_semantic_self_talk": true,
+    "enable_state_space_topology_learning": true,
+    "enable_knowledge_gap_frontier": true,
+    "enable_social_cognition_simulation": true,
+    "enable_long_horizon_planning": true,
+    "world_model_num_synthetic": 5,
+    "dreaming_ngram_order": 3,
+    "rehearsal_batch_size": 20,
+    "enable_behavioral_rule_discovery": true,
+    "enable_logic_inheritance": true,
+    "enable_contextual_sentiment_analysis": true,
+    "curiosity_correlation_threshold": 0.9,
+    "identity_cluster_k": 3,
+    "topology_n_clusters": 5
+  },
+  "conscience_manager": {
+    "trust_threshold_for_addition": 0.85,
+    "min_evidence": 5,
+    "decay_rate": 0.99,
+    "max_beliefs": 50,
+    "evolution_trigger": 10
+  },
+  "engine": {
+    "reconfigure_interval": 20,
+    "state_similarity_threshold": 0.85,
+    "state_learning_cooldown_interactions": 30
+  },
+  "adaptive_control_space": {
+    "variance_threshold": 0.05,
+    "utility_threshold": 0.01,
+    "max_factors": 50,
+    "expansion_cooldown": 100
+  },
+  "modulation_rules": {
+    "curiosity": {
+      "target": "hierarchical_concept_model.alpha",
+      "transform": "linear",
+      "scale": 0.5,
+      "offset": 0.5,
+      "min": 0.1,
+      "max": 2.0
+    },
+    "uncertainty": {
+      "target": "gaussian_process.sigma_noise",
+      "transform": "linear",
+      "scale": 0.2,
+      "offset": 0.1,
+      "min": 0.01,
+      "max": 0.5
+    },
+    "threat": {
+      "target": "meta_curiosity_learner.n_factors",
+      "transform": "identity"
+    }
+  },
+  "language_model": {
+    "enabled": true,
+    "min_steps_for_use": 100,
+    "train_batch_size": 20,
+    "improvement_interval": 5000
+  }
+}

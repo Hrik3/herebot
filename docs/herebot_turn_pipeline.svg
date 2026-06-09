@@ -1,0 +1,147 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1700" height="1040" viewBox="0 0 1700 1040" role="img" aria-labelledby="title desc">
+  <title id="title">Herebot Input Turn Pipeline</title>
+  <desc id="desc">A flowchart of one CuriosityEngine process_input turn from input through memory sync, evaluation, learning, state regrouping, plugins, reply, and persistence.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#29445c"/>
+    </marker>
+    <style>
+      .bg { fill: #fbfcfd; }
+      .title { font: 700 34px Arial, sans-serif; fill: #122434; }
+      .subtitle { font: 400 16px Arial, sans-serif; fill: #516476; }
+      .box { fill: #fff; stroke: #9aaec0; stroke-width: 1.4; rx: 12; }
+      .input { fill: #e8f0fa; stroke: #5c85a7; }
+      .memory { fill: #eaf7ef; stroke: #6ea67b; }
+      .eval { fill: #fff5df; stroke: #d6a24a; }
+      .learn { fill: #f3ecfb; stroke: #9276c9; }
+      .plugin { fill: #fbe9ee; stroke: #c66d82; }
+      .persist { fill: #eef2f4; stroke: #8496a5; }
+      .label { font: 700 15px Arial, sans-serif; fill: #132638; }
+      .small { font: 400 12.5px Arial, sans-serif; fill: #344b5e; }
+      .step { font: 700 13px Arial, sans-serif; fill: #fff; }
+      .num { fill: #29445c; }
+      .edge { fill: none; stroke: #29445c; stroke-width: 2; marker-end: url(#arrow); }
+      .loop { fill: none; stroke: #73899a; stroke-width: 1.5; stroke-dasharray: 6 5; marker-end: url(#arrow); }
+    </style>
+  </defs>
+  <rect class="bg" width="1700" height="1040"/>
+  <text class="title" x="70" y="70">One Input Turn: process_input(text)</text>
+  <text class="subtitle" x="70" y="100">The current architecture evaluates text against unified memory, updates probabilistic labels, regroups states, tests plugins, and persists evidence.</text>
+
+  <g transform="translate(70 160)">
+    <rect class="box input" x="0" y="0" width="245" height="110"/>
+    <circle class="num" cx="28" cy="30" r="17"/><text class="step" x="23" y="35">1</text>
+    <text class="label" x="55" y="32">User input</text>
+    <text class="small" x="24" y="62">text appended to interaction history</text>
+    <text class="small" x="24" y="84">waiting-state handlers run first</text>
+  </g>
+  <g transform="translate(365 160)">
+    <rect class="box memory" x="0" y="0" width="270" height="110"/>
+    <circle class="num" cx="28" cy="30" r="17"/><text class="step" x="23" y="35">2</text>
+    <text class="label" x="55" y="32">Backend sync</text>
+    <text class="small" x="24" y="62">sync_turn(text)</text>
+    <text class="small" x="24" y="84">verify_engine_alignment()</text>
+  </g>
+  <g transform="translate(690 160)">
+    <rect class="box eval" x="0" y="0" width="280" height="110"/>
+    <circle class="num" cx="28" cy="30" r="17"/><text class="step" x="23" y="35">3</text>
+    <text class="label" x="55" y="32">Whole-text evaluation</text>
+    <text class="small" x="24" y="62">CI confidence from real corpus</text>
+    <text class="small" x="24" y="84">phon score + diagnostics</text>
+  </g>
+  <g transform="translate(1030 160)">
+    <rect class="box eval" x="0" y="0" width="260" height="110"/>
+    <circle class="num" cx="28" cy="30" r="17"/><text class="step" x="23" y="35">4</text>
+    <text class="label" x="55" y="32">Token loop</text>
+    <text class="small" x="24" y="62">CI/phon per token</text>
+    <text class="small" x="24" y="84">feature vector x_w</text>
+  </g>
+  <g transform="translate(1360 160)">
+    <rect class="box learn" x="0" y="0" width="270" height="110"/>
+    <circle class="num" cx="28" cy="30" r="17"/><text class="step" x="23" y="35">5</text>
+    <text class="label" x="55" y="32">Concept + reward</text>
+    <text class="small" x="24" y="62">probabilistic concept field</text>
+    <text class="small" x="24" y="84">intrinsic reward + meta update</text>
+  </g>
+
+  <g transform="translate(1360 375)">
+    <rect class="box learn" x="0" y="0" width="270" height="125"/>
+    <circle class="num" cx="28" cy="30" r="17"/><text class="step" x="23" y="35">6</text>
+    <text class="label" x="55" y="32">Reasoning</text>
+    <text class="small" x="24" y="62">patterns + triplets</text>
+    <text class="small" x="24" y="84">definitions + graph edges</text>
+    <text class="small" x="24" y="106">shadow diff proposals</text>
+  </g>
+  <g transform="translate(1030 375)">
+    <rect class="box learn" x="0" y="0" width="260" height="125"/>
+    <circle class="num" cx="28" cy="30" r="17"/><text class="step" x="23" y="35">7</text>
+    <text class="label" x="55" y="32">Factor vector</text>
+    <text class="small" x="24" y="62">FactorEngine.compute()</text>
+    <text class="small" x="24" y="84">conscience influence</text>
+    <text class="small" x="24" y="106">ordered by control space</text>
+  </g>
+  <g transform="translate(690 375)">
+    <rect class="box learn" x="0" y="0" width="280" height="125"/>
+    <circle class="num" cx="28" cy="30" r="17"/><text class="step" x="23" y="35">8</text>
+    <text class="label" x="55" y="32">State recognition</text>
+    <text class="small" x="24" y="62">multiple active labels</text>
+    <text class="small" x="24" y="84">probability-weighted matching</text>
+    <text class="small" x="24" y="106">new state label if no match</text>
+  </g>
+  <g transform="translate(365 375)">
+    <rect class="box learn" x="0" y="0" width="270" height="125"/>
+    <circle class="num" cx="28" cy="30" r="17"/><text class="step" x="23" y="35">9</text>
+    <text class="label" x="55" y="32">Relation grouping</text>
+    <text class="small" x="24" y="62">state_relation_observations</text>
+    <text class="small" x="24" y="84">periodic state_groups refresh</text>
+    <text class="small" x="24" y="106">head label + child labels</text>
+  </g>
+  <g transform="translate(70 375)">
+    <rect class="box plugin" x="0" y="0" width="245" height="125"/>
+    <circle class="num" cx="28" cy="30" r="17"/><text class="step" x="23" y="35">10</text>
+    <text class="label" x="55" y="32">Plugin trials</text>
+    <text class="small" x="24" y="62">similar-context activation</text>
+    <text class="small" x="24" y="84">proposal-only output</text>
+    <text class="small" x="24" y="106">health tracked later</text>
+  </g>
+
+  <g transform="translate(70 610)">
+    <rect class="box input" x="0" y="0" width="350" height="130"/>
+    <circle class="num" cx="28" cy="30" r="17"/><text class="step" x="19" y="35">11</text>
+    <text class="label" x="60" y="32">Action generation</text>
+    <text class="small" x="24" y="62">templates, questions, generated proposals</text>
+    <text class="small" x="24" y="84">may mention state group head labels</text>
+    <text class="small" x="24" y="106">normal response path remains owner</text>
+  </g>
+  <g transform="translate(510 610)">
+    <rect class="box persist" x="0" y="0" width="350" height="130"/>
+    <circle class="num" cx="28" cy="30" r="17"/><text class="step" x="19" y="35">12</text>
+    <text class="label" x="60" y="32">Feedback request</text>
+    <text class="small" x="24" y="62">positive: +magnitude</text>
+    <text class="small" x="24" y="84">neutral: 0</text>
+    <text class="small" x="24" y="106">negative: -magnitude + shadow diff</text>
+  </g>
+  <g transform="translate(950 610)">
+    <rect class="box persist" x="0" y="0" width="350" height="130"/>
+    <circle class="num" cx="28" cy="30" r="17"/><text class="step" x="19" y="35">13</text>
+    <text class="label" x="60" y="32">Episode persistence</text>
+    <text class="small" x="24" y="62">user input, reply, factor vector</text>
+    <text class="small" x="24" y="84">reward, artifacts, diagnostics</text>
+    <text class="small" x="24" y="106">state and memory saved</text>
+  </g>
+
+  <path class="edge" d="M315 215 L365 215"/>
+  <path class="edge" d="M635 215 L690 215"/>
+  <path class="edge" d="M970 215 L1030 215"/>
+  <path class="edge" d="M1290 215 L1360 215"/>
+  <path class="edge" d="M1495 270 L1495 375"/>
+  <path class="edge" d="M1360 438 L1290 438"/>
+  <path class="edge" d="M1030 438 L970 438"/>
+  <path class="edge" d="M690 438 L635 438"/>
+  <path class="edge" d="M365 438 L315 438"/>
+  <path class="edge" d="M192 500 L192 610"/>
+  <path class="edge" d="M420 675 L510 675"/>
+  <path class="edge" d="M860 675 L950 675"/>
+  <path class="loop" d="M1125 740 C1125 835, 760 910, 340 875 C200 860, 140 810, 130 740"/>
+  <text class="small" x="1080" y="820">runtime artifacts update future turns</text>
+</svg>

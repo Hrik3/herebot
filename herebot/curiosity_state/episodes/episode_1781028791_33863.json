@@ -1,0 +1,24 @@
+{
+  "timestamp": 1781028791.164919,
+  "user_input": "human is living",
+  "system_response": "TPL.HYP.REL word='human' candidate='is'",
+  "factor_vector": {
+    "curiosity": 1.8011116357262151,
+    "threat": 0.09651746152649157,
+    "trust": 0.6223591248124658,
+    "confidence": 0.841960455958653,
+    "uncertainty": 0.006574941315624227,
+    "energy": 0.33099999999999996,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.95035,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 2.8256174298529033,
+  "metadata": {
+    "ci_confidence": 0.841960455958653,
+    "generated_plugin_influence": null
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "timestamp": 1781028627.0104687,
+  "user_input": "car",
+  "system_response": "TPL.HYP.REL word='car' candidate='is'",
+  "factor_vector": {
+    "curiosity": 1.8481286266306924,
+    "threat": 0.15245011952273982,
+    "trust": 0.7005865703206832,
+    "confidence": 0.7082373997044434,
+    "uncertainty": 0.009987699970631182,
+    "energy": 0.33299999999999996,
+    "attention": 0.05,
+    "comprehension": 0.5,
+    "fluency": 0.7,
+    "cognitive_load": 0.98335,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.2830757611974291,
+  "metadata": {
+    "ci_confidence": 0.7082373997044434,
+    "generated_plugin_influence": null
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "timestamp": 1781028749.953485,
+  "user_input": "chat means greetings",
+  "system_response": "TPL.HYP.REL word='chat' candidate='means'",
+  "factor_vector": {
+    "curiosity": 1.0454502081901957,
+    "threat": 0.10929312487314627,
+    "trust": 0.627639613699549,
+    "confidence": 0.8450033588135254,
+    "uncertainty": 0.006961702569496242,
+    "energy": 0.33299999999999996,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9500500000000001,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.775342647805501,
+  "metadata": {
+    "ci_confidence": 0.8450033588135254,
+    "generated_plugin_influence": null
+  }
+}

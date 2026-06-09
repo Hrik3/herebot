@@ -1,0 +1,24 @@
+{
+  "timestamp": 1781028779.057489,
+  "user_input": "living",
+  "system_response": "TPL.HYP.REL word='living' candidate='flower'",
+  "factor_vector": {
+    "curiosity": 1.6892081643655934,
+    "threat": 0.12421946227765826,
+    "trust": 0.7281667441456868,
+    "confidence": 0.7678406436902836,
+    "uncertainty": 0.006961702569496242,
+    "energy": 0.31099999999999994,
+    "attention": 0.05,
+    "comprehension": 0.5,
+    "fluency": 0.7,
+    "cognitive_load": 0.98445,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.22857715838163628,
+  "metadata": {
+    "ci_confidence": 0.7678406436902836,
+    "generated_plugin_influence": null
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "timestamp": 1781029532.2714314,
+  "user_input": "flower means living",
+  "system_response": "[synthetic]",
+  "factor_vector": {},
+  "factor_dim": 0,
+  "intrinsic_reward": 0.0,
+  "metadata": {
+    "synthetic": true
+  }
+}
