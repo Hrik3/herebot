@@ -1,0 +1,11 @@
+{
+  "timestamp": 1781028499.7367208,
+  "user_input": "rose means flower",
+  "system_response": "[synthetic]",
+  "factor_vector": {},
+  "factor_dim": 0,
+  "intrinsic_reward": 0.0,
+  "metadata": {
+    "synthetic": true
+  }
+}

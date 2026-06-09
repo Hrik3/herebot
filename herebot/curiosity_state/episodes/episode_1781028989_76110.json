@@ -1,0 +1,24 @@
+{
+  "timestamp": 1781028989.5498745,
+  "user_input": "ccar means car",
+  "system_response": "TPL.HYP.REL word='ccar' candidate='is'",
+  "factor_vector": {
+    "curiosity": 1.6879765896678194,
+    "threat": 0.12602559817327955,
+    "trust": 0.5958449449431809,
+    "confidence": 0.7843191602222324,
+    "uncertainty": 0.011399943326909722,
+    "energy": 0.358,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9463,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.8420541604187011,
+  "metadata": {
+    "ci_confidence": 0.7843191602222324,
+    "generated_plugin_influence": null
+  }
+}

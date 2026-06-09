@@ -1,0 +1,24 @@
+{
+  "timestamp": 1781030021.0240078,
+  "user_input": "you are herebot",
+  "system_response": "TPL.STATE.CURIOUS word='yellow' | TPL.CHAT.MORE?",
+  "factor_vector": {
+    "curiosity": 1.5601577287811028,
+    "threat": 0.0929082460551678,
+    "trust": 0.788788578622431,
+    "confidence": 0.8867687612058066,
+    "uncertainty": 0.01085507997310091,
+    "energy": 0.30799999999999994,
+    "attention": 0.15,
+    "comprehension": 0.5,
+    "fluency": 0.7,
+    "cognitive_load": 0.9538,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 13.940449881267128,
+  "metadata": {
+    "ci_confidence": 0.8867687612058066,
+    "generated_plugin_influence": null
+  }
+}

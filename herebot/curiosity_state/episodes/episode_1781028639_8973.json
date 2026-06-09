@@ -1,0 +1,24 @@
+{
+  "timestamp": 1781028639.474943,
+  "user_input": "car red",
+  "system_response": "TPL.HYP.REL word='car' candidate='red'",
+  "factor_vector": {
+    "curiosity": 1.6204140901672681,
+    "threat": 0.12083521292854418,
+    "trust": 0.5906344939499923,
+    "confidence": 0.787189296288721,
+    "uncertainty": 0.009987699970631182,
+    "energy": 0.2859999999999999,
+    "attention": 0.1,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9714,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.5877814949039701,
+  "metadata": {
+    "ci_confidence": 0.787189296288721,
+    "generated_plugin_influence": null
+  }
+}

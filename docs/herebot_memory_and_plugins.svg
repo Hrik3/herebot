@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1700" height="980" viewBox="0 0 1700 980" role="img" aria-labelledby="title desc">
+  <title id="title">Herebot Unified Memory and Generated Plugin Architecture</title>
+  <desc id="desc">Diagram showing backend memory bridge, real corpus evaluation, generated plugin facade, shadow execution, trial, health, and promotion flow.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0 0 L10 5 L0 10 z" fill="#2d4358"/>
+    </marker>
+    <style>
+      .bg { fill: #fbfcfd; }
+      .title { font: 700 34px Arial, sans-serif; fill: #122434; }
+      .subtitle { font: 400 16px Arial, sans-serif; fill: #536779; }
+      .box { fill: #fff; stroke: #9fb2c2; stroke-width: 1.5; rx: 12; }
+      .memory { fill: #eaf7ef; stroke: #6ea67b; }
+      .eval { fill: #fff3df; stroke: #d69b42; }
+      .plugin { fill: #fbe9ee; stroke: #c66d82; }
+      .safe { fill: #e8f0fa; stroke: #5c85a7; }
+      .label { font: 700 16px Arial, sans-serif; fill: #132638; }
+      .small { font: 400 13px Arial, sans-serif; fill: #344b5e; }
+      .formula { font: 400 14px "DejaVu Sans Mono", Consolas, monospace; fill: #183045; }
+      .edge { fill: none; stroke: #2d4358; stroke-width: 2.2; marker-end: url(#arrow); }
+      .soft { fill: none; stroke: #7f92a4; stroke-width: 1.5; stroke-dasharray: 6 5; marker-end: url(#arrow); }
+    </style>
+  </defs>
+  <rect class="bg" width="1700" height="980"/>
+  <text class="title" x="70" y="70">Unified Memory And Generated Plugin Architecture</text>
+  <text class="subtitle" x="70" y="100">Backend engines consume live Herebot memory; generated plugins read through a safe facade and influence behavior through proposals.</text>
+
+  <rect class="box memory" x="70" y="155" width="330" height="250"/>
+  <text class="label" x="100" y="195">Memory sources</text>
+  <text class="small" x="100" y="228">current user input</text>
+  <text class="small" x="100" y="252">episodes</text>
+  <text class="small" x="100" y="276">definitions + phrase relations</text>
+  <text class="small" x="100" y="300">knowledge graph labels/edges</text>
+  <text class="small" x="100" y="324">existing CSR documents</text>
+  <text class="formula" x="100" y="362">h = sha256(source || text)</text>
+
+  <rect class="box memory" x="495" y="155" width="345" height="250"/>
+  <text class="label" x="525" y="195">HerebotMemoryBridge</text>
+  <text class="small" x="525" y="228">sync_turn(text)</text>
+  <text class="small" x="525" y="252">sync_snapshot(engine)</text>
+  <text class="small" x="525" y="276">get_corpus(limit)</text>
+  <text class="small" x="525" y="300">verify_engine_alignment(engine)</text>
+  <text class="small" x="525" y="340">deduped document stream into CSR index</text>
+
+  <rect class="box eval" x="945" y="155" width="300" height="250"/>
+  <text class="label" x="975" y="195">Real backend engines</text>
+  <text class="small" x="975" y="228">CIEngine(memory_bridge)</text>
+  <text class="small" x="975" y="252">neutral insufficient_corpus mode</text>
+  <text class="small" x="975" y="276">PhonotacticEngine(memory_bridge)</text>
+  <text class="small" x="975" y="300">data_adaptive mode</text>
+  <text class="small" x="975" y="324">explicit fallback_heuristic mode</text>
+
+  <rect class="box safe" x="1340" y="155" width="280" height="250"/>
+  <text class="label" x="1370" y="195">Verification report</text>
+  <text class="small" x="1370" y="228">current_input_aligned</text>
+  <text class="small" x="1370" y="252">corpus_size</text>
+  <text class="small" x="1370" y="276">source_counts</text>
+  <text class="small" x="1370" y="300">ci_corpus_size</text>
+  <text class="small" x="1370" y="324">phon_profile_active</text>
+
+  <rect class="box plugin" x="70" y="535" width="330" height="250"/>
+  <text class="label" x="100" y="575">CodeGenerator</text>
+  <text class="small" x="100" y="608">bounded whole-memory snapshot</text>
+  <text class="small" x="100" y="632">snapshot hashes for traceability</text>
+  <text class="small" x="100" y="656">plugin class contract generated</text>
+  <text class="formula" x="100" y="694">inspect / propose / run</text>
+
+  <rect class="box safe" x="495" y="535" width="345" height="250"/>
+  <text class="label" x="525" y="575">Safe capability facade</text>
+  <text class="small" x="525" y="608">read memory corpus</text>
+  <text class="small" x="525" y="632">reasoner + graph summaries</text>
+  <text class="small" x="525" y="656">state summaries + semantic similarity</text>
+  <text class="small" x="525" y="680">CI + phon scoring</text>
+  <text class="small" x="525" y="704">no raw engine writes</text>
+
+  <rect class="box plugin" x="945" y="535" width="300" height="250"/>
+  <text class="label" x="975" y="575">Shadow to trial</text>
+  <text class="small" x="975" y="608">shadow execution imports plugin</text>
+  <text class="small" x="975" y="632">trial phase after success</text>
+  <text class="small" x="975" y="656">activates on similar context</text>
+  <text class="small" x="975" y="680">output is proposal only</text>
+  <text class="formula" x="975" y="718">rho = response/action/state candidate</text>
+
+  <rect class="box plugin" x="1340" y="535" width="280" height="250"/>
+  <text class="label" x="1370" y="575">Health and lifecycle</text>
+  <text class="small" x="1370" y="608">reward >= 0</text>
+  <text class="small" x="1370" y="632">threat stable</text>
+  <text class="small" x="1370" y="656">trust/confidence preserved</text>
+  <text class="small" x="1370" y="680">guilt not spiking</text>
+  <text class="small" x="1370" y="704">trial -> active / disabled / archived</text>
+
+  <path class="edge" d="M400 280 L495 280"/>
+  <path class="edge" d="M840 280 L945 280"/>
+  <path class="edge" d="M1245 280 L1340 280"/>
+  <path class="soft" d="M665 405 C640 455, 520 500, 370 535"/>
+  <path class="edge" d="M400 660 L495 660"/>
+  <path class="edge" d="M840 660 L945 660"/>
+  <path class="edge" d="M1245 660 L1340 660"/>
+  <path class="soft" d="M1480 535 C1450 455, 1230 420, 1095 405"/>
+  <text class="small" x="70" y="895">Production rule: backend scoring and plugin trials must consume live Herebot data; fake hidden corpora and direct generated-code mutation are avoided.</text>
+</svg>

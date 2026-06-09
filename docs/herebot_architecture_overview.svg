@@ -1,0 +1,117 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="980" viewBox="0 0 1600 980" role="img" aria-labelledby="title desc">
+  <title id="title">Herebot Architecture Overview</title>
+  <desc id="desc">High-level map of Herebot runtime subsystems, memory, learning, state, and generated plugin layers.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#2b4a67"/>
+    </marker>
+    <style>
+      .bg { fill: #f7f9fb; }
+      .title { font: 700 34px Arial, sans-serif; fill: #142536; }
+      .subtitle { font: 400 17px Arial, sans-serif; fill: #526679; }
+      .section { font: 700 19px Arial, sans-serif; fill: #183247; }
+      .label { font: 700 16px Arial, sans-serif; fill: #10202f; }
+      .small { font: 400 13px Arial, sans-serif; fill: #354b60; }
+      .tiny { font: 400 12px Arial, sans-serif; fill: #526679; }
+      .box { fill: #ffffff; stroke: #9db2c3; stroke-width: 1.5; rx: 10; }
+      .engine { fill: #e7f0f8; stroke: #5c85a7; }
+      .memory { fill: #eaf6ee; stroke: #6ea67b; }
+      .learn { fill: #fff3df; stroke: #d69b42; }
+      .state { fill: #efeafa; stroke: #9175c9; }
+      .plugin { fill: #f8e9ed; stroke: #c56d82; }
+      .edge { fill: none; stroke: #2b4a67; stroke-width: 2.2; marker-end: url(#arrow); }
+      .softedge { fill: none; stroke: #7f94a6; stroke-width: 1.5; stroke-dasharray: 6 6; marker-end: url(#arrow); }
+    </style>
+  </defs>
+  <rect class="bg" x="0" y="0" width="1600" height="980"/>
+  <text class="title" x="70" y="70">Herebot Architecture Overview</text>
+  <text class="subtitle" x="70" y="102">Runtime engine, unified memory, probabilistic learning, state grouping, and generated-plugin trial loop.</text>
+
+  <rect class="box engine" x="60" y="150" width="300" height="660"/>
+  <text class="section" x="90" y="190">Surface Engine</text>
+  <rect class="box" x="90" y="225" width="240" height="72"/>
+  <text class="label" x="112" y="255">CuriosityEngine</text>
+  <text class="small" x="112" y="278">heart.py facade</text>
+  <rect class="box" x="90" y="325" width="240" height="112"/>
+  <text class="label" x="112" y="355">cuengine mixins</text>
+  <text class="small" x="112" y="380">processing.py</text>
+  <text class="small" x="112" y="402">curiosity.py / idle.py</text>
+  <text class="small" x="112" y="424">language.py / persistence.py</text>
+  <rect class="box" x="90" y="470" width="240" height="88"/>
+  <text class="label" x="112" y="500">Control loop</text>
+  <text class="small" x="112" y="524">process_input(text)</text>
+  <text class="small" x="112" y="546">feedback + episodes</text>
+  <rect class="box" x="90" y="590" width="240" height="105"/>
+  <text class="label" x="112" y="620">Idle loop</text>
+  <text class="small" x="112" y="644">memory rehearsal</text>
+  <text class="small" x="112" y="666">state relation refresh</text>
+  <text class="small" x="112" y="688">generated logic trials</text>
+
+  <rect class="box memory" x="460" y="140" width="330" height="275"/>
+  <text class="section" x="490" y="180">Unified Backend Memory</text>
+  <rect class="box" x="490" y="215" width="270" height="150"/>
+  <text class="label" x="512" y="245">HerebotMemoryBridge</text>
+  <text class="small" x="512" y="270">turn input + episodes</text>
+  <text class="small" x="512" y="292">definitions + phrases</text>
+  <text class="small" x="512" y="314">graph labels + CSR text</text>
+  <text class="small" x="512" y="336">dedupe by stable hash</text>
+  <text class="tiny" x="512" y="358">source-aware document index</text>
+
+  <rect class="box learn" x="460" y="465" width="330" height="335"/>
+  <text class="section" x="490" y="505">Evaluation + Learning</text>
+  <rect class="box" x="490" y="535" width="270" height="96"/>
+  <text class="label" x="512" y="565">CI / Phon / Diagnostic</text>
+  <text class="small" x="512" y="590">real corpus scoring</text>
+  <text class="small" x="512" y="612">fallback diagnostics explicit</text>
+  <rect class="box" x="490" y="655" width="270" height="105"/>
+  <text class="label" x="512" y="685">Concept + Reward</text>
+  <text class="small" x="512" y="710">probabilistic concept fields</text>
+  <text class="small" x="512" y="732">signed feedback reward</text>
+  <text class="small" x="512" y="754">shadow differentiation proposals</text>
+
+  <rect class="box state" x="890" y="140" width="330" height="330"/>
+  <text class="section" x="920" y="180">Probabilistic State Layer</text>
+  <rect class="box" x="920" y="215" width="270" height="115"/>
+  <text class="label" x="942" y="245">StateManager</text>
+  <text class="small" x="942" y="270">multiple active labels</text>
+  <text class="small" x="942" y="292">usage + reward trace</text>
+  <text class="small" x="942" y="314">archive by interaction count</text>
+  <rect class="box" x="920" y="355" width="270" height="72"/>
+  <text class="label" x="942" y="385">State groups</text>
+  <text class="small" x="942" y="410">head label + child labels</text>
+
+  <rect class="box plugin" x="890" y="520" width="330" height="280"/>
+  <text class="section" x="920" y="560">Generated Plugin Lane</text>
+  <rect class="box" x="920" y="595" width="270" height="86"/>
+  <text class="label" x="942" y="625">CodeGenerator</text>
+  <text class="small" x="942" y="650">whole-memory snapshot</text>
+  <text class="small" x="942" y="672">HerebotGeneratedPlugin</text>
+  <rect class="box" x="920" y="705" width="270" height="62"/>
+  <text class="label" x="942" y="735">Trial manager</text>
+  <text class="small" x="942" y="758">promote, demote, archive</text>
+
+  <rect class="box" x="1320" y="230" width="220" height="170"/>
+  <text class="section" x="1350" y="270">Outputs</text>
+  <text class="label" x="1350" y="310">Reply templates</text>
+  <text class="small" x="1350" y="335">TPL.* response</text>
+  <text class="small" x="1350" y="358">questions / proposals</text>
+  <text class="small" x="1350" y="381">episode persistence</text>
+
+  <rect class="box" x="1320" y="515" width="220" height="170"/>
+  <text class="section" x="1350" y="555">Persistent State</text>
+  <text class="small" x="1350" y="586">curiosity_state/</text>
+  <text class="small" x="1350" y="610">states + groups</text>
+  <text class="small" x="1350" y="634">reward + feedback</text>
+  <text class="small" x="1350" y="658">plugin registry</text>
+
+  <path class="edge" d="M 360 280 C 410 255, 420 255, 460 255"/>
+  <path class="edge" d="M 360 515 C 410 560, 420 600, 460 620"/>
+  <path class="edge" d="M 790 280 C 835 270, 850 260, 890 260"/>
+  <path class="edge" d="M 790 645 C 835 610, 850 590, 890 585"/>
+  <path class="edge" d="M 1220 300 C 1260 300, 1280 300, 1320 310"/>
+  <path class="edge" d="M 1220 655 C 1260 645, 1280 625, 1320 610"/>
+  <path class="softedge" d="M 1055 470 C 1055 490, 1055 500, 1055 520"/>
+  <path class="softedge" d="M 1320 600 C 1280 725, 1050 845, 520 835 C 300 830, 200 780, 200 695"/>
+
+  <text class="tiny" x="70" y="910">Main invariant: child labels, corpus rows, graph hypotheses, and generated plugin proposals are preserved; promotion/archiving is evidence-driven.</text>
+</svg>

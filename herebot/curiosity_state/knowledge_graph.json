@@ -1,0 +1,1058 @@
+{
+  "nodes": {
+    "n1": {
+      "type": "word",
+      "label": "greetings",
+      "embedding": null,
+      "metadata": {}
+    },
+    "n2": {
+      "type": "word",
+      "label": "means",
+      "embedding": null,
+      "metadata": {}
+    },
+    "n3": {
+      "type": "word",
+      "label": "hi",
+      "embedding": null,
+      "metadata": {}
+    },
+    "n4": {
+      "type": "word",
+      "label": "mean",
+      "embedding": null,
+      "metadata": {}
+    },
+    "n5": {
+      "type": "word",
+      "label": "yellow",
+      "embedding": null,
+      "metadata": {}
+    },
+    "n6": {
+      "type": "word",
+      "label": "colors",
+      "embedding": null,
+      "metadata": {}
+    },
+    "n7": {
+      "type": "phrase",
+      "label": "colors",
+      "embedding": null,
+      "metadata": {}
+    },
+    "n8": {
+      "type": "phrase",
+      "label": "yellow",
+      "embedding": null,
+      "metadata": {}
+    },
+    "n9": {
+      "type": "state",
+      "label": "yellow",
+      "embedding": null,
+      "metadata": {}
+    },
+    "n10": {
+      "type": "word",
+      "label": "red",
+      "embedding": null,
+      "metadata": {}
+    },
+    "n11": {
+      "type": "phrase",
+      "label": "red",
+      "embedding": null,
+      "metadata": {}
+    },
+    "n12": {
+      "type": "state",
+      "label": "colors",
+      "embedding": null,
+      "metadata": {}
+    },
+    "n13": {
+      "type": "word",
+      "label": "violet",
+      "embedding": null,
+      "metadata": {}
+    },
+    "n14": {
+      "type": "phrase",
+      "label": "violet",
+      "embedding": null,
+      "metadata": {}
+    },
+    "n15": {
+      "type": "word",
+      "label": "rose",
+      "embedding": null,
+      "metadata": {}
+    },
+    "n16": {
+      "type": "word",
+      "label": "flower",
+      "embedding": null,
+      "metadata": {}
+    },
+    "n17": {
+      "type": "word",
+      "label": "living",
+      "embedding": null,
+      "metadata": {}
+    },
+    "n18": {
+      "type": "word",
+      "label": "is",
+      "embedding": null,
+      "metadata": {}
+    },
+    "n19": {
+      "type": "phrase",
+      "label": "rose",
+      "embedding": null,
+      "metadata": {}
+    },
+    "n20": {
+      "type": "state",
+      "label": "red",
+      "embedding": null,
+      "metadata": {}
+    },
+    "n21": {
+      "type": "word",
+      "label": "car",
+      "embedding": null,
+      "metadata": {}
+    },
+    "n22": {
+      "type": "word",
+      "label": "green",
+      "embedding": null,
+      "metadata": {}
+    },
+    "n23": {
+      "type": "word",
+      "label": "gree",
+      "embedding": null,
+      "metadata": {}
+    },
+    "n24": {
+      "type": "word",
+      "label": "colors'",
+      "embedding": null,
+      "metadata": {}
+    },
+    "n25": {
+      "type": "phrase",
+      "label": "hi",
+      "embedding": null,
+      "metadata": {}
+    },
+    "n26": {
+      "type": "word",
+      "label": "chat",
+      "embedding": null,
+      "metadata": {}
+    },
+    "n27": {
+      "type": "phrase",
+      "label": "chat",
+      "embedding": null,
+      "metadata": {}
+    },
+    "n28": {
+      "type": "phrase",
+      "label": "greetings",
+      "embedding": null,
+      "metadata": {}
+    },
+    "n29": {
+      "type": "state",
+      "label": "greetings",
+      "embedding": null,
+      "metadata": {}
+    },
+    "n30": {
+      "type": "word",
+      "label": "human",
+      "embedding": null,
+      "metadata": {}
+    },
+    "n31": {
+      "type": "word",
+      "label": "walking",
+      "embedding": null,
+      "metadata": {}
+    },
+    "n32": {
+      "type": "word",
+      "label": "transport",
+      "embedding": null,
+      "metadata": {}
+    },
+    "n33": {
+      "type": "word",
+      "label": "travel",
+      "embedding": null,
+      "metadata": {}
+    },
+    "n34": {
+      "type": "word",
+      "label": "ccar",
+      "embedding": null,
+      "metadata": {}
+    },
+    "n35": {
+      "type": "phrase",
+      "label": "ccar",
+      "embedding": null,
+      "metadata": {}
+    },
+    "n36": {
+      "type": "phrase",
+      "label": "car",
+      "embedding": null,
+      "metadata": {}
+    },
+    "n37": {
+      "type": "state",
+      "label": "car",
+      "embedding": null,
+      "metadata": {}
+    },
+    "n38": {
+      "type": "word",
+      "label": "am",
+      "embedding": null,
+      "metadata": {}
+    },
+    "n39": {
+      "type": "word",
+      "label": "hrishi",
+      "embedding": null,
+      "metadata": {}
+    },
+    "n40": {
+      "type": "phrase",
+      "label": "travel",
+      "embedding": null,
+      "metadata": {}
+    },
+    "n41": {
+      "type": "state",
+      "label": "travel",
+      "embedding": null,
+      "metadata": {}
+    },
+    "n42": {
+      "type": "word",
+      "label": "you",
+      "embedding": null,
+      "metadata": {}
+    },
+    "n43": {
+      "type": "word",
+      "label": "are",
+      "embedding": null,
+      "metadata": {}
+    },
+    "n44": {
+      "type": "word",
+      "label": "herebot",
+      "embedding": null,
+      "metadata": {}
+    }
+  },
+  "edges": [
+    [
+      "n1",
+      "n2",
+      "co_occur",
+      0.4511883639059736
+    ],
+    [
+      "n1",
+      "n3",
+      "co_occur",
+      0.18126924692201818
+    ],
+    [
+      "n1",
+      "n26",
+      "co_occur",
+      0.3296799539643607
+    ],
+    [
+      "n2",
+      "n1",
+      "co_occur",
+      0.4511883639059736
+    ],
+    [
+      "n2",
+      "n3",
+      "co_occur",
+      0.18126924692201818
+    ],
+    [
+      "n2",
+      "n2",
+      "co_occur",
+      0.5506710358827784
+    ],
+    [
+      "n2",
+      "n4",
+      "co_occur",
+      0.3296799539643607
+    ],
+    [
+      "n2",
+      "n5",
+      "co_occur",
+      0.6321205588285577
+    ],
+    [
+      "n2",
+      "n6",
+      "co_occur",
+      0.8646647167633873
+    ],
+    [
+      "n2",
+      "n10",
+      "co_occur",
+      0.3296799539643607
+    ],
+    [
+      "n2",
+      "n13",
+      "co_occur",
+      0.4511883639059736
+    ],
+    [
+      "n2",
+      "n15",
+      "co_occur",
+      0.3296799539643607
+    ],
+    [
+      "n2",
+      "n16",
+      "co_occur",
+      0.5506710358827784
+    ],
+    [
+      "n2",
+      "n17",
+      "co_occur",
+      0.3296799539643607
+    ],
+    [
+      "n2",
+      "n18",
+      "co_occur",
+      0.3296799539643607
+    ],
+    [
+      "n2",
+      "n26",
+      "co_occur",
+      0.3296799539643607
+    ],
+    [
+      "n2",
+      "n31",
+      "co_occur",
+      0.18126924692201818
+    ],
+    [
+      "n2",
+      "n32",
+      "co_occur",
+      0.3296799539643607
+    ],
+    [
+      "n2",
+      "n33",
+      "co_occur",
+      0.18126924692201818
+    ],
+    [
+      "n2",
+      "n34",
+      "co_occur",
+      0.4511883639059736
+    ],
+    [
+      "n2",
+      "n21",
+      "co_occur",
+      0.4511883639059736
+    ],
+    [
+      "n3",
+      "n1",
+      "co_occur",
+      0.18126924692201818
+    ],
+    [
+      "n3",
+      "n2",
+      "co_occur",
+      0.18126924692201818
+    ],
+    [
+      "n3",
+      "n10",
+      "co_occur",
+      0.18126924692201818
+    ],
+    [
+      "n3",
+      "n6",
+      "co_occur",
+      0.18126924692201818
+    ],
+    [
+      "n3",
+      "n12",
+      "associated",
+      1.0
+    ],
+    [
+      "n3",
+      "n38",
+      "co_occur",
+      0.4511883639059736
+    ],
+    [
+      "n3",
+      "n39",
+      "co_occur",
+      0.4511883639059736
+    ],
+    [
+      "n4",
+      "n2",
+      "co_occur",
+      0.3296799539643607
+    ],
+    [
+      "n5",
+      "n2",
+      "co_occur",
+      0.6321205588285577
+    ],
+    [
+      "n5",
+      "n6",
+      "co_occur",
+      0.6321205588285577
+    ],
+    [
+      "n6",
+      "n5",
+      "co_occur",
+      0.6321205588285577
+    ],
+    [
+      "n6",
+      "n2",
+      "co_occur",
+      0.8646647167633873
+    ],
+    [
+      "n6",
+      "n9",
+      "associated",
+      1.0
+    ],
+    [
+      "n6",
+      "n10",
+      "co_occur",
+      0.4511883639059736
+    ],
+    [
+      "n6",
+      "n13",
+      "co_occur",
+      0.4511883639059736
+    ],
+    [
+      "n6",
+      "n22",
+      "co_occur",
+      0.18126924692201818
+    ],
+    [
+      "n6",
+      "n18",
+      "co_occur",
+      0.3296799539643607
+    ],
+    [
+      "n6",
+      "n24",
+      "co_occur",
+      0.18126924692201818
+    ],
+    [
+      "n6",
+      "n3",
+      "co_occur",
+      0.18126924692201818
+    ],
+    [
+      "n7",
+      "n8",
+      "unknown",
+      1.0
+    ],
+    [
+      "n10",
+      "n2",
+      "co_occur",
+      0.3296799539643607
+    ],
+    [
+      "n10",
+      "n6",
+      "co_occur",
+      0.4511883639059736
+    ],
+    [
+      "n10",
+      "n12",
+      "associated",
+      1.0
+    ],
+    [
+      "n10",
+      "n15",
+      "co_occur",
+      0.3296799539643607
+    ],
+    [
+      "n10",
+      "n18",
+      "co_occur",
+      0.4511883639059736
+    ],
+    [
+      "n10",
+      "n21",
+      "co_occur",
+      0.3296799539643607
+    ],
+    [
+      "n10",
+      "n3",
+      "co_occur",
+      0.18126924692201818
+    ],
+    [
+      "n11",
+      "n7",
+      "unknown",
+      1.0
+    ],
+    [
+      "n13",
+      "n2",
+      "co_occur",
+      0.4511883639059736
+    ],
+    [
+      "n13",
+      "n6",
+      "co_occur",
+      0.4511883639059736
+    ],
+    [
+      "n13",
+      "n12",
+      "associated",
+      1.0
+    ],
+    [
+      "n14",
+      "n7",
+      "unknown",
+      1.0
+    ],
+    [
+      "n15",
+      "n2",
+      "co_occur",
+      0.3296799539643607
+    ],
+    [
+      "n15",
+      "n16",
+      "co_occur",
+      0.3296799539643607
+    ],
+    [
+      "n15",
+      "n18",
+      "co_occur",
+      0.3296799539643607
+    ],
+    [
+      "n15",
+      "n10",
+      "co_occur",
+      0.3296799539643607
+    ],
+    [
+      "n15",
+      "n20",
+      "associated",
+      1.0
+    ],
+    [
+      "n16",
+      "n15",
+      "co_occur",
+      0.3296799539643607
+    ],
+    [
+      "n16",
+      "n2",
+      "co_occur",
+      0.5506710358827784
+    ],
+    [
+      "n16",
+      "n17",
+      "co_occur",
+      0.3296799539643607
+    ],
+    [
+      "n17",
+      "n16",
+      "co_occur",
+      0.3296799539643607
+    ],
+    [
+      "n17",
+      "n2",
+      "co_occur",
+      0.3296799539643607
+    ],
+    [
+      "n17",
+      "n30",
+      "co_occur",
+      0.4511883639059736
+    ],
+    [
+      "n17",
+      "n18",
+      "co_occur",
+      0.3296799539643607
+    ],
+    [
+      "n18",
+      "n2",
+      "co_occur",
+      0.3296799539643607
+    ],
+    [
+      "n18",
+      "n15",
+      "co_occur",
+      0.3296799539643607
+    ],
+    [
+      "n18",
+      "n10",
+      "co_occur",
+      0.4511883639059736
+    ],
+    [
+      "n18",
+      "n21",
+      "co_occur",
+      0.4511883639059736
+    ],
+    [
+      "n18",
+      "n22",
+      "co_occur",
+      0.18126924692201818
+    ],
+    [
+      "n18",
+      "n6",
+      "co_occur",
+      0.3296799539643607
+    ],
+    [
+      "n18",
+      "n24",
+      "co_occur",
+      0.18126924692201818
+    ],
+    [
+      "n18",
+      "n30",
+      "co_occur",
+      0.4511883639059736
+    ],
+    [
+      "n18",
+      "n17",
+      "co_occur",
+      0.3296799539643607
+    ],
+    [
+      "n18",
+      "n31",
+      "co_occur",
+      0.18126924692201818
+    ],
+    [
+      "n18",
+      "n34",
+      "co_occur",
+      0.18126924692201818
+    ],
+    [
+      "n18",
+      "n32",
+      "co_occur",
+      0.3296799539643607
+    ],
+    [
+      "n18",
+      "n33",
+      "co_occur",
+      0.18126924692201818
+    ],
+    [
+      "n19",
+      "n11",
+      "unknown",
+      1.0
+    ],
+    [
+      "n21",
+      "n18",
+      "co_occur",
+      0.4511883639059736
+    ],
+    [
+      "n21",
+      "n10",
+      "co_occur",
+      0.3296799539643607
+    ],
+    [
+      "n21",
+      "n34",
+      "co_occur",
+      0.4511883639059736
+    ],
+    [
+      "n21",
+      "n2",
+      "co_occur",
+      0.4511883639059736
+    ],
+    [
+      "n21",
+      "n32",
+      "co_occur",
+      0.4511883639059736
+    ],
+    [
+      "n21",
+      "n33",
+      "co_occur",
+      0.18126924692201818
+    ],
+    [
+      "n21",
+      "n41",
+      "associated",
+      1.0
+    ],
+    [
+      "n22",
+      "n18",
+      "co_occur",
+      0.18126924692201818
+    ],
+    [
+      "n22",
+      "n6",
+      "co_occur",
+      0.18126924692201818
+    ],
+    [
+      "n23",
+      "n24",
+      "co_occur",
+      0.18126924692201818
+    ],
+    [
+      "n24",
+      "n23",
+      "co_occur",
+      0.18126924692201818
+    ],
+    [
+      "n24",
+      "n18",
+      "co_occur",
+      0.18126924692201818
+    ],
+    [
+      "n24",
+      "n6",
+      "co_occur",
+      0.18126924692201818
+    ],
+    [
+      "n25",
+      "n7",
+      "unknown",
+      1.0
+    ],
+    [
+      "n26",
+      "n2",
+      "co_occur",
+      0.3296799539643607
+    ],
+    [
+      "n26",
+      "n1",
+      "co_occur",
+      0.3296799539643607
+    ],
+    [
+      "n26",
+      "n29",
+      "associated",
+      1.0
+    ],
+    [
+      "n27",
+      "n28",
+      "unknown",
+      1.0
+    ],
+    [
+      "n30",
+      "n18",
+      "co_occur",
+      0.4511883639059736
+    ],
+    [
+      "n30",
+      "n17",
+      "co_occur",
+      0.4511883639059736
+    ],
+    [
+      "n30",
+      "n31",
+      "co_occur",
+      0.18126924692201818
+    ],
+    [
+      "n31",
+      "n30",
+      "co_occur",
+      0.18126924692201818
+    ],
+    [
+      "n31",
+      "n18",
+      "co_occur",
+      0.18126924692201818
+    ],
+    [
+      "n31",
+      "n2",
+      "co_occur",
+      0.18126924692201818
+    ],
+    [
+      "n31",
+      "n32",
+      "co_occur",
+      0.18126924692201818
+    ],
+    [
+      "n32",
+      "n31",
+      "co_occur",
+      0.18126924692201818
+    ],
+    [
+      "n32",
+      "n2",
+      "co_occur",
+      0.3296799539643607
+    ],
+    [
+      "n32",
+      "n33",
+      "co_occur",
+      0.18126924692201818
+    ],
+    [
+      "n32",
+      "n34",
+      "co_occur",
+      0.18126924692201818
+    ],
+    [
+      "n32",
+      "n18",
+      "co_occur",
+      0.3296799539643607
+    ],
+    [
+      "n32",
+      "n21",
+      "co_occur",
+      0.4511883639059736
+    ],
+    [
+      "n33",
+      "n32",
+      "co_occur",
+      0.18126924692201818
+    ],
+    [
+      "n33",
+      "n2",
+      "co_occur",
+      0.18126924692201818
+    ],
+    [
+      "n33",
+      "n21",
+      "co_occur",
+      0.18126924692201818
+    ],
+    [
+      "n33",
+      "n18",
+      "co_occur",
+      0.18126924692201818
+    ],
+    [
+      "n34",
+      "n18",
+      "co_occur",
+      0.18126924692201818
+    ],
+    [
+      "n34",
+      "n32",
+      "co_occur",
+      0.18126924692201818
+    ],
+    [
+      "n34",
+      "n2",
+      "co_occur",
+      0.4511883639059736
+    ],
+    [
+      "n34",
+      "n21",
+      "co_occur",
+      0.4511883639059736
+    ],
+    [
+      "n34",
+      "n37",
+      "associated",
+      1.0
+    ],
+    [
+      "n35",
+      "n36",
+      "unknown",
+      1.0
+    ],
+    [
+      "n38",
+      "n3",
+      "co_occur",
+      0.4511883639059736
+    ],
+    [
+      "n38",
+      "n39",
+      "co_occur",
+      0.4511883639059736
+    ],
+    [
+      "n39",
+      "n3",
+      "co_occur",
+      0.4511883639059736
+    ],
+    [
+      "n39",
+      "n38",
+      "co_occur",
+      0.4511883639059736
+    ],
+    [
+      "n36",
+      "n40",
+      "unknown",
+      1.0
+    ],
+    [
+      "n42",
+      "n43",
+      "co_occur",
+      0.18126924692201818
+    ],
+    [
+      "n42",
+      "n44",
+      "co_occur",
+      0.18126924692201818
+    ],
+    [
+      "n43",
+      "n42",
+      "co_occur",
+      0.18126924692201818
+    ],
+    [
+      "n43",
+      "n44",
+      "co_occur",
+      0.18126924692201818
+    ],
+    [
+      "n44",
+      "n42",
+      "co_occur",
+      0.18126924692201818
+    ],
+    [
+      "n44",
+      "n43",
+      "co_occur",
+      0.18126924692201818
+    ]
+  ],
+  "edge_metadata": {},
+  "node_counter": 44
+}

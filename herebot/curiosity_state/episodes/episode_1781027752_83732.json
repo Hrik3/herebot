@@ -1,0 +1,24 @@
+{
+  "timestamp": 1781027752.9822054,
+  "user_input": "colors means yellow",
+  "system_response": "TPL.DEF.MAYBE word='greetings' value='greetings means hi' TPL.STATE.NO_PARSE",
+  "factor_vector": {
+    "curiosity": 0.3692789462812257,
+    "threat": 0.0904260770522109,
+    "trust": 0.6276485688199184,
+    "confidence": 0.8479640502157888,
+    "uncertainty": 0.01808292919700564,
+    "energy": 0.3390000000000001,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9491499999999999,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.5378396673433967,
+  "metadata": {
+    "ci_confidence": 0.8479640502157888,
+    "generated_plugin_influence": null
+  }
+}

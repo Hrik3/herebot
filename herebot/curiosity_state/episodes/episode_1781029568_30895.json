@@ -1,0 +1,24 @@
+{
+  "timestamp": 1781029568.0783339,
+  "user_input": "hi",
+  "system_response": "TPL.HYP.REL word='hi' candidate='greetings'",
+  "factor_vector": {
+    "curiosity": 0.6672022213097824,
+    "threat": 0.1581562323965155,
+    "trust": 0.6971086697757972,
+    "confidence": 0.6961590006218926,
+    "uncertainty": 0.013322143603396577,
+    "energy": 0.3390000000000001,
+    "attention": 0.05,
+    "comprehension": 0.5,
+    "fluency": 0.7,
+    "cognitive_load": 0.98305,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.3761417420609535,
+  "metadata": {
+    "ci_confidence": 0.6961590006218926,
+    "generated_plugin_influence": null
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "timestamp": 1781028999.8331234,
+  "user_input": "car is transport",
+  "system_response": "TPL.HYP.REL word='car' candidate='is'",
+  "factor_vector": {
+    "curiosity": 1.770038882516616,
+    "threat": 0.14181829697446374,
+    "trust": 0.5870133198869658,
+    "confidence": 0.7699196418113734,
+    "uncertainty": 0.011399943326909722,
+    "energy": 0.32499999999999996,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.95125,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 1.0033577022188394,
+  "metadata": {
+    "ci_confidence": 0.7699196418113734,
+    "generated_plugin_influence": null
+  }
+}

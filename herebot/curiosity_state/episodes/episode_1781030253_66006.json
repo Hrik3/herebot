@@ -1,0 +1,24 @@
+{
+  "timestamp": 1781030253.0429366,
+  "user_input": "hello",
+  "system_response": "TPL.STATE.CURIOUS word='ccar' | TPL.CHAT.MORE?",
+  "factor_vector": {
+    "curiosity": 1.39018496146278,
+    "threat": 0.09992962404052311,
+    "trust": 0.7455813528276032,
+    "confidence": 0.813246700821344,
+    "uncertainty": 0.01046739854548302,
+    "energy": 0.32799999999999996,
+    "attention": 0.05,
+    "comprehension": 0.5,
+    "fluency": 0.7,
+    "cognitive_load": 0.9836,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 4.41750305048705,
+  "metadata": {
+    "ci_confidence": 0.813246700821344,
+    "generated_plugin_influence": null
+  }
+}
