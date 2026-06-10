@@ -151,3 +151,18 @@ Session update - 2026-05-19
  d) ../bot/bin/python -m unittest tests.cor.ProbabilisticLabeling_test
  e) ../bot/bin/python -m py_compile traits/code_generator.py components/barriers.py core/heart.py core/cuengine/processing.py core/cuengine/idle.py core/cuengine/language.py core/mind.py
  f) ../bot/bin/python -m py_compile concepts/hdp.py components/factor_handler.py components/learner.py core/cuengine/curiosity.py core/cuengine/processing.py core/cuengine/idle.py core/heart.py components/config_manager.py components/probabilistic_labeling.py
+
+
+
+
+
+CHnages to be done :
+Stop learning durning convorsations , just collect data , no state mutations 
+
+implement two way learning system 
+no mutation at core during working
+only sub mutation 
+
+2) core mutation only during idle thing 
+
+change between phases learning and convorsation 
