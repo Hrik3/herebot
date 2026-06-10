@@ -128,3 +128,115 @@ Purpose:
 
 ---
 
+#### `_update_context_model`
+
+The `_update_context_model` function updates the Beta distribution parameters for a specific context-sentiment pair.
+
+Parameters:
+- `context_key`: A string representing the key of the contextual information.
+- `sentiment`: A string indicating the sentiment ('positive', 'negative', or 'neutral').
+
+Return value:
+- None
+
+Important behavior:
+- Checks if `context_key` is already in `self.context_models`. If not, initializes it with default Beta distributions for positive, negative, and neutral sentiments.
+- Retrieves the relevant Beta distribution parameters (`a`, `b`) from `self.context_models[context_key][sentiment]`.
+- Updates the count of either 'a' or 'b' based on the sentiment:
+  - Increments 'a' if the sentiment is 'positive'.
+  - Increments 'b' otherwise.
+
+Side-effects:
+- Modifies `self.context_models` by updating the Beta distribution parameters for the specified context-sentiment pair.
+
+Purpose:
+- Incrementally update the counts of positive, negative, and neutral sentiments in a Bayesian manner using Beta distributions.
+
+---
+
+#### `get_sentiment_probability`
+
+The `get_sentiment_probability` function returns the posterior mean probability of a given sentiment for a specified context.
+
+Parameters:
+- `context_key`: A string representing the key of the contextual information.
+- `sentiment`: A string indicating the sentiment ('positive', 'negative', or 'neutral').
+
+Return value:
+- A float representing the posterior mean probability of the specified sentiment in the given context.
+
+Important behavior:
+- Checks if `context_key` is present in `self.context_models`. If not, returns a uniform prior probability of 0.33.
+- Retrieves the relevant Beta distribution parameters (`a`, `b`) from `self.context_models[context_key][sentiment]`.
+- Computes and returns the posterior mean probability using the formula:
+  \[
+  P(\text{sentiment} | \text{context}) = \frac{a}{a + b}
+  \]
+
+Side-effects:
+- None
+
+Purpose:
+- Provides a probabilistic estimate of sentiment given a specific context, based on previously observed feedback.
+
+---
+
+#### `get_confidence`
+
+The `get_confidence` function calculates and returns the confidence level for the most probable sentiment in a given context.
+
+Parameters:
+- `context_key`: A string representing the key of the contextual information.
+
+Return value:
+- A float representing the maximum confidence (1 - posterior variance) among all sentiments for the specified context.
+
+Important behavior:
+- Checks if `context_key` is present in `self.context_models`. If not, returns 0.0.
+- Iterates over each sentiment (`sent`) and its corresponding Beta distribution parameters (`a`, `b`) from `self.context_models[context_key]`.
+- Computes the probability of the sentiment using the formula:
+  \[
+  P(\text{sentiment} | \text{context}) = \frac{a}{a + b}
+  \]
+- Calculates the posterior variance for each sentiment using the formula:
+  \[
+  \text{variance} = \frac{ab}{(a+b)^2 (a+b+1)}
+  \]
+- Computes confidence as \(1 - \text{variance}\).
+- Tracks and returns the maximum confidence among all sentiments.
+- Ensures that there are at least `self.MIN_SAMPLES` samples before returning a non-zero confidence.
+
+Side-effects:
+- None
+
+Purpose:
+- Provides an estimate of how confident the model is in predicting the most probable sentiment for a given context, based on previously observed feedback.
+
+---
+
+#### `should_ask_feedback`
+
+The `should_ask_feedback` function determines whether more feedback is needed for the current context based on confidence levels.
+
+Parameters:
+- `tokens`: A list of strings representing tokens from user input.
+- `factor_dict`: A dictionary mapping emotional factors to their values (floats).
+- `template_id`: An optional string representing a response template ID, defaulting to None if not provided.
+
+Return value:
+- A boolean indicating whether more feedback is needed (`True`) or not (`False`).
+
+Important behavior:
+- Checks the confidence level for each token context. If any token's confidence is below `self.CONFIDENCE_THRESHOLD`, returns `True`.
+- Iterates over emotional factors in `['threat', 'trust', 'curiosity', 'energy', 'conscience_active']`. For each factor, categorizes its value into high, low, or mid ranges and checks the corresponding context's confidence. If any factor context has a confidence below `self.CONFIDENCE_THRESHOLD`, returns `True`.
+- Checks the response template ID if provided. If the confidence for this context is below `self.CONFIDENCE_THRESHOLD`, returns `True`.
+
+Side-effects:
+- None
+
+Purpose:
+- Determines whether additional feedback should be requested based on the current level of confidence in sentiment predictions for different contextual factors and tokens, ensuring that more data is collected when necessary to improve model accuracy.
+
+---
+
+
