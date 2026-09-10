@@ -1,0 +1,24 @@
+{
+  "timestamp": 1789062990.6924608,
+  "user_input": "please is a word",
+  "system_response": "TPL.ASK.SYN word='how' candidate='thing'?",
+  "factor_vector": {
+    "curiosity": 0.4295980859869254,
+    "threat": 0.12413436362632949,
+    "trust": 0.6280163657414983,
+    "confidence": 0.8578733299317188,
+    "uncertainty": 0.004937625053861081,
+    "energy": 0.347,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.94795,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.831756044422881,
+  "metadata": {
+    "ci_confidence": 0.8578733299317188,
+    "generated_plugin_influence": null
+  }
+}

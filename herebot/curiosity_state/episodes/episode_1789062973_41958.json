@@ -1,0 +1,24 @@
+{
+  "timestamp": 1789062973.619109,
+  "user_input": "morning is a time",
+  "system_response": "TPL.ASK.SYN word='when' candidate='thing'?",
+  "factor_vector": {
+    "curiosity": 0.40843118030572034,
+    "threat": 0.11695764965148447,
+    "trust": 0.634892633847286,
+    "confidence": 0.866737421211003,
+    "uncertainty": 0.005013588516231252,
+    "energy": 0.364,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9454,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.599715685942689,
+  "metadata": {
+    "ci_confidence": 0.866737421211003,
+    "generated_plugin_influence": null
+  }
+}

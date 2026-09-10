@@ -1,0 +1,24 @@
+{
+  "timestamp": 1789064023.5033875,
+  "user_input": "what is a friend",
+  "system_response": "TPL.RECALL.PHRASE phrase='what is a friend'",
+  "factor_vector": {
+    "curiosity": 0.45919420977436504,
+    "threat": 0.13432804644803942,
+    "trust": 0.6210364587118073,
+    "confidence": 0.8368070422661936,
+    "uncertainty": 0.0032237272871840617,
+    "energy": 0.35,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9475,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.9935171288216817,
+  "metadata": {
+    "ci_confidence": 0.8368070422661936,
+    "generated_plugin_influence": null
+  }
+}

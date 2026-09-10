@@ -1,0 +1,24 @@
+{
+  "timestamp": 1789063034.75379,
+  "user_input": "i is a person",
+  "system_response": "TPL.ASK.SYN word='morning' candidate='thing'?",
+  "factor_vector": {
+    "curiosity": 0.36411648387405404,
+    "threat": 0.15765454025799724,
+    "trust": 0.608217616900554,
+    "confidence": 0.8231068594557827,
+    "uncertainty": 0.004589904979631425,
+    "energy": 0.361,
+    "attention": 0.1,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9639,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.41528094956001416,
+  "metadata": {
+    "ci_confidence": 0.8231068594557827,
+    "generated_plugin_influence": null
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "timestamp": 1789064193.2611172,
+  "user_input": "goodnight moon",
+  "system_response": "TPL.DEF.REL word='moon' value='moon is a nature' rel='unknown nature'",
+  "factor_vector": {
+    "curiosity": 1.7168828099411282,
+    "threat": 0.10618491834065169,
+    "trust": 0.6254517410432783,
+    "confidence": 0.8516087371357597,
+    "uncertainty": 0.0030147820000387972,
+    "energy": 0.353,
+    "attention": 0.1,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9647,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 4.84540315839199,
+  "metadata": {
+    "ci_confidence": 0.8516087371357597,
+    "generated_plugin_influence": null
+  }
+}

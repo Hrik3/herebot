@@ -715,8 +715,12 @@ class ReasoningEngine:
         for key, emb in self.phrase_embeddings.items():
             sim = np.dot(phrase_emb, emb) / (np.linalg.norm(phrase_emb) * np.linalg.norm(emb) + 1e-12)
             if sim >= threshold:
-                # retrieve original phrase from metadata
-                phrase = self.phrase_metadata.get(key, {}).get('phrase', key)
+                # retrieve original phrase from metadata; skip entries whose
+                # text was never stored (legacy hash-only keys) instead of
+                # leaking an internal hash into user-visible output.
+                phrase = self.phrase_metadata.get(key, {}).get('phrase')
+                if not phrase:
+                    continue
                 results.append((phrase, sim))
         results.sort(key=lambda x: -x[1])
         return results
@@ -728,7 +732,10 @@ class ReasoningEngine:
             return
         key = str(hash(canon))
         self.phrase_embeddings[key] = embedding
-        self.phrase_metadata[key] = metadata or {'phrase': canon, 'timestamp': time.time()}
+        meta = dict(metadata) if isinstance(metadata, dict) else {}
+        meta.setdefault('phrase', canon)
+        meta.setdefault('timestamp', time.time())
+        self.phrase_metadata[key] = meta
     # ------------------------------------------------------------------
     # Synonym/category hypothesis generation
     # ------------------------------------------------------------------

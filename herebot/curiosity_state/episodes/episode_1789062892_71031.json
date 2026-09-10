@@ -1,0 +1,24 @@
+{
+  "timestamp": 1789062892.5812948,
+  "user_input": "with is a word",
+  "system_response": "TPL.ASK.SYN word='on' candidate='thing'?",
+  "factor_vector": {
+    "curiosity": 0.4894812036689363,
+    "threat": 0.1404387152914155,
+    "trust": 0.6121800778648125,
+    "confidence": 0.8239046976742513,
+    "uncertainty": 0.006203726517914271,
+    "energy": 0.355,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.94675,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.8894280088701216,
+  "metadata": {
+    "ci_confidence": 0.8239046976742513,
+    "generated_plugin_influence": null
+  }
+}

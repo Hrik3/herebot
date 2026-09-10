@@ -1,0 +1,24 @@
+{
+  "timestamp": 1789064256.2481172,
+  "user_input": "positive",
+  "system_response": "TPL.STATE.CURIOUS word='crow fly over water' | TPL.CHAT.MORE?",
+  "factor_vector": {
+    "curiosity": 1.5891061499523287,
+    "threat": 0.10558418266544803,
+    "trust": 0.7544377555200411,
+    "confidence": 0.8076249369653984,
+    "uncertainty": 0.0029050459064499344,
+    "energy": 0.35,
+    "attention": 0.05,
+    "comprehension": 0.5,
+    "fluency": 0.7,
+    "cognitive_load": 0.9825,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 4.405711730727449,
+  "metadata": {
+    "ci_confidence": 0.8076249369653984,
+    "generated_plugin_influence": null
+  }
+}

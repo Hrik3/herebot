@@ -1,0 +1,24 @@
+{
+  "timestamp": 1789063151.363895,
+  "user_input": "cat is a animal",
+  "system_response": "TPL.ASK.SYN word='it' candidate='thing'?",
+  "factor_vector": {
+    "curiosity": 0.4393989048265627,
+    "threat": 0.11641580969143897,
+    "trust": 0.6319680849533688,
+    "confidence": 0.8658519012636177,
+    "uncertainty": 0.003974186018922329,
+    "energy": 0.35,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9475,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.7027024374364035,
+  "metadata": {
+    "ci_confidence": 0.8658519012636177,
+    "generated_plugin_influence": null
+  }
+}

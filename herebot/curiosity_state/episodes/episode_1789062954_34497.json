@@ -1,0 +1,24 @@
+{
+  "timestamp": 1789062954.543713,
+  "user_input": "hey is a greeting",
+  "system_response": "TPL.ASK.SYN word='where' candidate='thing'?",
+  "factor_vector": {
+    "curiosity": 0.4598371059574195,
+    "threat": 0.11609840071462185,
+    "trust": 0.6301067177506257,
+    "confidence": 0.8573056974565418,
+    "uncertainty": 0.00541595172196325,
+    "energy": 0.3420000000000001,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9487,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.8484915715805961,
+  "metadata": {
+    "ci_confidence": 0.8573056974565418,
+    "generated_plugin_influence": null
+  }
+}

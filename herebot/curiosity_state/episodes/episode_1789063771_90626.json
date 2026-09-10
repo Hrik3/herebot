@@ -1,0 +1,24 @@
+{
+  "timestamp": 1789063771.0868359,
+  "user_input": "hello friend, how are you",
+  "system_response": "TPL.RECALL.PHRASE phrase='5108527926291681122'",
+  "factor_vector": {
+    "curiosity": 1.406200718528134,
+    "threat": 0.0969294500780715,
+    "trust": 0.6348283650512525,
+    "confidence": 0.8628507141071232,
+    "uncertainty": 0.003463792085180748,
+    "energy": 0.375,
+    "attention": 0.25,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.90625,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 2.0230854532356903,
+  "metadata": {
+    "ci_confidence": 0.8628507141071232,
+    "generated_plugin_influence": null
+  }
+}

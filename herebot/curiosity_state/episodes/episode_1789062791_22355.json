@@ -1,0 +1,24 @@
+{
+  "timestamp": 1789062791.1636593,
+  "user_input": "are",
+  "system_response": "TPL.ASK.SYN word='time' candidate='thing'?",
+  "factor_vector": {
+    "curiosity": 1.027946938393526,
+    "threat": 0.15823714028180558,
+    "trust": 0.7154716315959603,
+    "confidence": 0.7509416038996065,
+    "uncertainty": 0.007934999034597328,
+    "energy": 0.352,
+    "attention": 0.05,
+    "comprehension": 0.5,
+    "fluency": 0.7,
+    "cognitive_load": 0.9824,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.2565019929459924,
+  "metadata": {
+    "ci_confidence": 0.7509416038996065,
+    "generated_plugin_influence": null
+  }
+}

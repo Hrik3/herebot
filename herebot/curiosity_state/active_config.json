@@ -1,6 +1,6 @@
 {
   "hierarchical_concept_model": {
-    "alpha": 1.181386727698181,
+    "alpha": 0.779408558806595,
     "beta": 1.0,
     "active_probability_threshold": 0.01
   },
@@ -8,10 +8,10 @@
     "input_dim": 5,
     "n_features": 100,
     "length_scale": 1.0,
-    "sigma_noise": 0.10227998866538195
+    "sigma_noise": 0.10095848015751303
   },
   "meta_curiosity_learner": {
-    "n_factors": 0.1351949871239231
+    "n_factors": 0.15198824154081003
   },
   "intrinsic_reward_tracker": {},
   "semantic_learner": {

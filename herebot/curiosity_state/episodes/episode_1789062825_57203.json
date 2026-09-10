@@ -1,0 +1,24 @@
+{
+  "timestamp": 1789062825.6215758,
+  "user_input": "can is a word",
+  "system_response": "TPL.ASK.SYN word='can' candidate='thing'?",
+  "factor_vector": {
+    "curiosity": 0.4134690442759605,
+    "threat": 0.1539255597413489,
+    "trust": 0.5877175674832075,
+    "confidence": 0.7798875859266735,
+    "uncertainty": 0.007259679967806064,
+    "energy": 0.3420000000000001,
+    "attention": 0.2,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9316,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 1.240758549254372,
+  "metadata": {
+    "ci_confidence": 0.7798875859266735,
+    "generated_plugin_influence": null
+  }
+}

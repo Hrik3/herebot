@@ -1,0 +1,24 @@
+{
+  "timestamp": 1789062931.4616892,
+  "user_input": "when is a word",
+  "system_response": "TPL.ASK.SYN word='with' candidate='thing'?",
+  "factor_vector": {
+    "curiosity": 0.5068889386635573,
+    "threat": 0.16354282551079052,
+    "trust": 0.5844542065879483,
+    "confidence": 0.7743760738357194,
+    "uncertainty": 0.0056867493080714135,
+    "energy": 0.353,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.94705,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.828661382610185,
+  "metadata": {
+    "ci_confidence": 0.7743760738357194,
+    "generated_plugin_influence": null
+  }
+}

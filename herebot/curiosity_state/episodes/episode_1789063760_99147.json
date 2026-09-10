@@ -1,0 +1,24 @@
+{
+  "timestamp": 1789063760.273882,
+  "user_input": "hello means a greeting",
+  "system_response": "TPL.ASK.SYN word='horse' candidate='thing'?",
+  "factor_vector": {
+    "curiosity": 1.1369232319453324,
+    "threat": 0.11006502320077344,
+    "trust": 0.6278843148418827,
+    "confidence": 0.8509011544175881,
+    "uncertainty": 0.003463792085180748,
+    "energy": 0.345,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.94825,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.5302154058417959,
+  "metadata": {
+    "ci_confidence": 0.8509011544175881,
+    "generated_plugin_influence": null
+  }
+}

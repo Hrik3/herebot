@@ -1,0 +1,24 @@
+{
+  "timestamp": 1789062729.816389,
+  "user_input": "animal is a thing",
+  "system_response": "TPL.ASK.SYN word='thing' candidate='word'?",
+  "factor_vector": {
+    "curiosity": 0.711040238438523,
+    "threat": 0.12699540085815,
+    "trust": 0.6351808101055324,
+    "confidence": 0.8654484137471414,
+    "uncertainty": 0.008030162171626446,
+    "energy": 0.33099999999999996,
+    "attention": 0.2,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9338,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 1.2800325615350316,
+  "metadata": {
+    "ci_confidence": 0.8654484137471414,
+    "generated_plugin_influence": null
+  }
+}

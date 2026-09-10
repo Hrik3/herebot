@@ -1,0 +1,24 @@
+{
+  "timestamp": 1789062724.3065042,
+  "user_input": "person is a thing",
+  "system_response": "TPL.ASK.SYN word='greeting' candidate='thing'?",
+  "factor_vector": {
+    "curiosity": 0.7848367243501148,
+    "threat": 0.13779112498399956,
+    "trust": 0.6222263659727678,
+    "confidence": 0.8361954309278071,
+    "uncertainty": 0.008266343411974283,
+    "energy": 0.3420000000000001,
+    "attention": 0.2,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9316,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 1.253681793239873,
+  "metadata": {
+    "ci_confidence": 0.8361954309278071,
+    "generated_plugin_influence": null
+  }
+}

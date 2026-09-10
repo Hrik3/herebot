@@ -116,6 +116,11 @@ def main():
                 for line in result["curiosity_artifacts"]:
                     print(line)
                 print("------------------------\n")
+            except EOFError:
+                # stdin exhausted (piped session over) — shut down cleanly
+                # instead of spinning forever on dead input.
+                print("\nEnd of input. Exiting.")
+                break
             except Exception:
                 import traceback
                 traceback.print_exc()

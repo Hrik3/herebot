@@ -1,0 +1,24 @@
+{
+  "timestamp": 1789062938.2605052,
+  "user_input": "how is a word",
+  "system_response": "TPL.ASK.SYN word='for' candidate='thing'?",
+  "factor_vector": {
+    "curiosity": 0.4409923425691155,
+    "threat": 0.1506298273076984,
+    "trust": 0.5904016345319193,
+    "confidence": 0.7881876143297415,
+    "uncertainty": 0.00559352390957516,
+    "energy": 0.32499999999999996,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.95125,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.7923670829331936,
+  "metadata": {
+    "ci_confidence": 0.7881876143297415,
+    "generated_plugin_influence": null
+  }
+}

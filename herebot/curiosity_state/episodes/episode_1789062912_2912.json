@@ -1,0 +1,24 @@
+{
+  "timestamp": 1789062912.3645504,
+  "user_input": "who is a word",
+  "system_response": "TPL.ASK.SYN word='and' candidate='thing'?",
+  "factor_vector": {
+    "curiosity": 0.44627921724927744,
+    "threat": 0.1633843616728529,
+    "trust": 0.57776575048873,
+    "confidence": 0.7644874811216946,
+    "uncertainty": 0.005882844111804911,
+    "energy": 0.33599999999999997,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9496,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.9425945868440677,
+  "metadata": {
+    "ci_confidence": 0.7644874811216946,
+    "generated_plugin_influence": null
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "timestamp": 1789063006.8876169,
+  "user_input": "sorry is a word",
+  "system_response": "TPL.ASK.SYN word='hey' candidate='thing'?",
+  "factor_vector": {
+    "curiosity": 0.55881711761319,
+    "threat": 0.15198824154081003,
+    "trust": 0.6084291949983285,
+    "confidence": 0.8129116648758917,
+    "uncertainty": 0.004792400787565166,
+    "energy": 0.355,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.94675,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.9153301959059268,
+  "metadata": {
+    "ci_confidence": 0.8129116648758917,
+    "generated_plugin_influence": null
+  }
+}
