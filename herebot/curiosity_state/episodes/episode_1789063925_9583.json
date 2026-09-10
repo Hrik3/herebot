@@ -1,0 +1,24 @@
+{
+  "timestamp": 1789063925.2032065,
+  "user_input": "fish swim in river",
+  "system_response": "TPL.ASK.SYN word='sun' candidate='thing'?",
+  "factor_vector": {
+    "curiosity": 1.7787672727241746,
+    "threat": 0.10790958362445784,
+    "trust": 0.625381770716261,
+    "confidence": 0.841589980089687,
+    "uncertainty": 0.0033224128163896966,
+    "energy": 0.353,
+    "attention": 0.2,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9294,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 3.110491458030407,
+  "metadata": {
+    "ci_confidence": 0.841589980089687,
+    "generated_plugin_influence": null
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "timestamp": 1789062899.201017,
+  "user_input": "for is a word",
+  "system_response": "TPL.ASK.SYN word='of' candidate='thing'?",
+  "factor_vector": {
+    "curiosity": 0.3809705979279886,
+    "threat": 0.1538964840688265,
+    "trust": 0.5886251391824595,
+    "confidence": 0.7800091288542638,
+    "uncertainty": 0.006092945687233659,
+    "energy": 0.355,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.94675,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.9496105167365749,
+  "metadata": {
+    "ci_confidence": 0.7800091288542638,
+    "generated_plugin_influence": null
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "timestamp": 1789063778.2295508,
+  "user_input": "what is water",
+  "system_response": "TPL.DEF.REL word='what' value='what is a word' rel='unknown word'",
+  "factor_vector": {
+    "curiosity": 0.4633848342271782,
+    "threat": 0.13413788969735127,
+    "trust": 0.5817621902241763,
+    "confidence": 0.7724096894293845,
+    "uncertainty": 0.003463792085180748,
+    "energy": 0.3390000000000001,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9491499999999999,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.9327883731422764,
+  "metadata": {
+    "ci_confidence": 0.7724096894293845,
+    "generated_plugin_influence": null
+  }
+}

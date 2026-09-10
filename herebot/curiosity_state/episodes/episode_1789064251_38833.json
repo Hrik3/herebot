@@ -1,0 +1,24 @@
+{
+  "timestamp": 1789064251.7192025,
+  "user_input": "what do you see",
+  "system_response": "TPL.PFX.CURIOUS | TPL.DEF.REL word='what' value='what is a word' rel='unknown word'",
+  "factor_vector": {
+    "curiosity": 1.756644730478171,
+    "threat": 0.1089577149704621,
+    "trust": 0.6283605731205162,
+    "confidence": 0.8623930450985522,
+    "uncertainty": 0.0029312174911945285,
+    "energy": 0.355,
+    "attention": 0.2,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.929,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 6.423620670082094,
+  "metadata": {
+    "ci_confidence": 0.8623930450985522,
+    "generated_plugin_influence": null
+  }
+}

@@ -329,7 +329,13 @@ class HeartCuriosityMixin:
         print("\n [State Learning] I encountered a new internal state.")
         print("    Factor vector: " + " ".join(f"{v:.2f}" for v in factor_vector))
         print("    How do humans call this state? (e.g., 'confident exploration', 'cautious inquiry')")
-        label = input("    🏷️  Label: ").strip()
+        try:
+            label = input("    🏷️  Label: ").strip()
+        except EOFError:
+            # Non-interactive / piped session with no answer left: auto-label
+            # instead of crashing so training can continue.
+            label = f"auto_state_{self.interaction_counter}"
+            print(f"    🏷️  Label: {label} (auto)")
         if not label:
             label = "unnamed_state"
 

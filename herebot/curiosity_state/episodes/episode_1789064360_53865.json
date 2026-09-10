@@ -1,0 +1,24 @@
+{
+  "timestamp": 1789064360.4438028,
+  "user_input": "goodbye friend",
+  "system_response": "TPL.DEF.REL word='goodbye' value='goodbye is a greeting' rel='unknown greeting'",
+  "factor_vector": {
+    "curiosity": 0.4801840737965336,
+    "threat": 0.10503562018560636,
+    "trust": 0.6176734061390163,
+    "confidence": 0.8397061100184117,
+    "uncertainty": 0.002879337535594625,
+    "energy": 0.358,
+    "attention": 0.1,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9642,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.5890894608832768,
+  "metadata": {
+    "ci_confidence": 0.8397061100184117,
+    "generated_plugin_influence": null
+  }
+}

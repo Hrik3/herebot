@@ -1,0 +1,24 @@
+{
+  "timestamp": 1789062774.2859554,
+  "user_input": "time is a thing",
+  "system_response": "TPL.ASK.SYN word='feeling' candidate='thing'?",
+  "factor_vector": {
+    "curiosity": 0.504063372153019,
+    "threat": 0.1308392965802364,
+    "trust": 0.626381338152209,
+    "confidence": 0.8515068096919617,
+    "uncertainty": 0.008123927583044883,
+    "energy": 0.347,
+    "attention": 0.2,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9306,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 1.5340906226212068,
+  "metadata": {
+    "ci_confidence": 0.8515068096919617,
+    "generated_plugin_influence": null
+  }
+}

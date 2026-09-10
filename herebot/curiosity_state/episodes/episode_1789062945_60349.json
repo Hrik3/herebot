@@ -1,0 +1,24 @@
+{
+  "timestamp": 1789062945.261873,
+  "user_input": "why is a word",
+  "system_response": "TPL.ASK.SYN word='what' candidate='thing'?",
+  "factor_vector": {
+    "curiosity": 0.6292199090944526,
+    "threat": 0.18829710956838394,
+    "trust": 0.5726505485533153,
+    "confidence": 0.7462257270911768,
+    "uncertainty": 0.005503305781998142,
+    "energy": 0.353,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.94705,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.9900363112694198,
+  "metadata": {
+    "ci_confidence": 0.7462257270911768,
+    "generated_plugin_influence": null
+  }
+}

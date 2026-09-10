@@ -165,14 +165,43 @@ class HerebotMemoryBridge:
         report = SyncReport(mode="snapshot")
         docs = self._collect_engine_documents(engine)
         report.documents_seen = len(docs)
+        batch = []
         for doc in docs:
-            self._sync_one(
-                report,
-                doc.get("text"),
-                source=doc.get("source", "snapshot"),
-                doc_id=doc.get("doc_id"),
-                metadata=doc.get("metadata") or {},
-            )
+            clean = _clean_text(doc.get("text"))
+            if not clean:
+                continue
+            batch.append({
+                "text": clean,
+                "source": doc.get("source", "snapshot"),
+                "doc_id": doc.get("doc_id"),
+                "metadata": doc.get("metadata") or {},
+            })
+        # Batch path persists the document index once instead of per document.
+        add_many = getattr(self.csr, "add_documents", None)
+        if add_many is not None:
+            try:
+                results = add_many(batch)
+            except Exception as e:
+                report.errors.append(f"snapshot:{e}")
+                results = []
+            for result in results:
+                if not isinstance(result, dict):
+                    continue
+                if result.get("added"):
+                    report.added += 1
+                elif result.get("reason", "").startswith("error:"):
+                    report.errors.append(f"snapshot:{result.get('reason')}")
+                else:
+                    report.skipped += 1
+        else:  # pragma: no cover - legacy CSR without batch API
+            for doc in batch:
+                self._sync_one(
+                    report,
+                    doc.get("text"),
+                    source=doc.get("source", "snapshot"),
+                    doc_id=doc.get("doc_id"),
+                    metadata=doc.get("metadata") or {},
+                )
         with self._lock:
             self._last_snapshot_turn = self._turn_count
             self._last_snapshot_time = time.time()

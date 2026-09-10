@@ -1,0 +1,24 @@
+{
+  "timestamp": 1789064165.3959446,
+  "user_input": "the sun is bright and hot",
+  "system_response": "TPL.ASK.SYN word='rain' candidate='thing'?",
+  "factor_vector": {
+    "curiosity": 1.8037849344718033,
+    "threat": 0.12294923137247424,
+    "trust": 0.6157764069602907,
+    "confidence": 0.8144702986438648,
+    "uncertainty": 0.0031611306408270887,
+    "energy": 0.352,
+    "attention": 0.3,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.8944,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 5.902681360764009,
+  "metadata": {
+    "ci_confidence": 0.8144702986438648,
+    "generated_plugin_influence": null
+  }
+}

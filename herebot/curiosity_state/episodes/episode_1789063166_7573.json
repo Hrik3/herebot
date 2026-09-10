@@ -1,0 +1,24 @@
+{
+  "timestamp": 1789063166.1463172,
+  "user_input": "fish is a animal",
+  "system_response": "TPL.ASK.SYN word='man' candidate='thing'?",
+  "factor_vector": {
+    "curiosity": 0.417158900369798,
+    "threat": 0.12035335681473,
+    "trust": 0.6321288612039916,
+    "confidence": 0.8660897446568656,
+    "uncertainty": 0.003926304259655795,
+    "energy": 0.355,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.94675,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.6406579801651102,
+  "metadata": {
+    "ci_confidence": 0.8660897446568656,
+    "generated_plugin_influence": null
+  }
+}

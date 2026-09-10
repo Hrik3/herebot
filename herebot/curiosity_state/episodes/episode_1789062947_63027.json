@@ -1,0 +1,24 @@
+{
+  "timestamp": 1789062947.6008313,
+  "user_input": "hello",
+  "system_response": "TPL.ASK.SYN word='who' candidate='thing'?",
+  "factor_vector": {
+    "curiosity": 0.9644207923238944,
+    "threat": 0.089663888074172,
+    "trust": 0.7593365557840334,
+    "confidence": 0.8380544598221747,
+    "uncertainty": 0.005503305781998142,
+    "energy": 0.3390000000000001,
+    "attention": 0.05,
+    "comprehension": 0.5,
+    "fluency": 0.7,
+    "cognitive_load": 0.98305,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.19114859313509897,
+  "metadata": {
+    "ci_confidence": 0.8380544598221747,
+    "generated_plugin_influence": null
+  }
+}

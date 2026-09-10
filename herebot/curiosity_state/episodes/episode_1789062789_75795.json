@@ -1,0 +1,24 @@
+{
+  "timestamp": 1789062789.1697989,
+  "user_input": "place is a thing",
+  "system_response": "TPL.ASK.SYN word='color' candidate='thing'?",
+  "factor_vector": {
+    "curiosity": 0.381527099973549,
+    "threat": 0.1311713012218237,
+    "trust": 0.6252982730096044,
+    "confidence": 0.8459415806643626,
+    "uncertainty": 0.007934999034597328,
+    "energy": 0.33299999999999996,
+    "attention": 0.2,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9334,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 1.028146860385124,
+  "metadata": {
+    "ci_confidence": 0.8459415806643626,
+    "generated_plugin_influence": null
+  }
+}

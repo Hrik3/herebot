@@ -1,0 +1,24 @@
+{
+  "timestamp": 1789062768.6456327,
+  "user_input": "color is a thing",
+  "system_response": "TPL.ASK.SYN word='action' candidate='thing'?",
+  "factor_vector": {
+    "curiosity": 0.4189167131999817,
+    "threat": 0.1360746326699433,
+    "trust": 0.6209629630959134,
+    "confidence": 0.8337633404428251,
+    "uncertainty": 0.006855016487944525,
+    "energy": 0.3420000000000001,
+    "attention": 0.2,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9316,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 1.2073603298807667,
+  "metadata": {
+    "ci_confidence": 0.8337633404428251,
+    "generated_plugin_influence": null
+  }
+}

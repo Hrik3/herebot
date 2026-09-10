@@ -1,0 +1,24 @@
+{
+  "timestamp": 1789064617.0466413,
+  "user_input": "3 * 4",
+  "system_response": "TPL.MATH.RESULT value='12'",
+  "factor_vector": {
+    "curiosity": 3.3544357435536885,
+    "threat": 0.6241068152886686,
+    "trust": 0.6523451397645477,
+    "confidence": 0.5453579617783283,
+    "uncertainty": 0.0027791020098325535,
+    "energy": 0.3390000000000001,
+    "attention": 0.15,
+    "comprehension": 0.5,
+    "fluency": 0.7,
+    "cognitive_load": 0.9491499999999999,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 8.413404668344947,
+  "metadata": {
+    "ci_confidence": 0.5453579617783283,
+    "generated_plugin_influence": null
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "timestamp": 1789064328.218214,
+  "user_input": "do you know what water is",
+  "system_response": "TPL.PFX.CURIOUS | TPL.DEF.KNOWN word='do' value='do is a word'",
+  "factor_vector": {
+    "curiosity": 1.413713906628104,
+    "threat": 0.10704035549445548,
+    "trust": 0.630327442981983,
+    "confidence": 0.8502653804697422,
+    "uncertainty": 0.0029312174911945285,
+    "energy": 0.33099999999999996,
+    "attention": 0.3,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9007000000000001,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 2.940791223082414,
+  "metadata": {
+    "ci_confidence": 0.8502653804697422,
+    "generated_plugin_influence": null
+  }
+}

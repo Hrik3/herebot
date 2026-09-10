@@ -1,0 +1,24 @@
+{
+  "timestamp": 1789064518.9186995,
+  "user_input": "zibber means a glowing stone",
+  "system_response": "TPL.ASK.SYN word='stone' candidate='thing'?",
+  "factor_vector": {
+    "curiosity": 1.7679153567113641,
+    "threat": 0.12871110232359095,
+    "trust": 0.6896870729520113,
+    "confidence": 0.8067840339788399,
+    "uncertainty": 0.002852236273254463,
+    "energy": 0.347,
+    "attention": 0.2,
+    "comprehension": 0.24999999999999997,
+    "fluency": 0.7,
+    "cognitive_load": 0.9306,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 2.87711624252911,
+  "metadata": {
+    "ci_confidence": 0.8067840339788399,
+    "generated_plugin_influence": null
+  }
+}

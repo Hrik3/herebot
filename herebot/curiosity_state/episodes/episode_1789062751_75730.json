@@ -1,0 +1,24 @@
+{
+  "timestamp": 1789062751.8604174,
+  "user_input": "food is a thing",
+  "system_response": "TPL.ASK.SYN word='object' candidate='thing'?",
+  "factor_vector": {
+    "curiosity": 0.4937089614484564,
+    "threat": 0.13991722667958248,
+    "trust": 0.6192769683537931,
+    "confidence": 0.8361385687079649,
+    "uncertainty": 0.007396202000166462,
+    "energy": 0.355,
+    "attention": 0.2,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.929,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 1.1713879939188518,
+  "metadata": {
+    "ci_confidence": 0.8361385687079649,
+    "generated_plugin_influence": null
+  }
+}

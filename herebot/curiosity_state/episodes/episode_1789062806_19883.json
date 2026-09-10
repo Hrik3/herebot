@@ -1,0 +1,24 @@
+{
+  "timestamp": 1789062806.244356,
+  "user_input": "do is a word",
+  "system_response": "TPL.ASK.SYN word='do' candidate='thing'?",
+  "factor_vector": {
+    "curiosity": 0.36443565519452853,
+    "threat": 0.1647355524455083,
+    "trust": 0.5732003556972806,
+    "confidence": 0.7529449344228962,
+    "uncertainty": 0.007582332410828558,
+    "energy": 0.35,
+    "attention": 0.2,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.93,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 1.3584405065689966,
+  "metadata": {
+    "ci_confidence": 0.7529449344228962,
+    "generated_plugin_influence": null
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "timestamp": 1789062832.617906,
+  "user_input": "will is a word",
+  "system_response": "TPL.ASK.SYN word='will' candidate='thing'?",
+  "factor_vector": {
+    "curiosity": 0.42444071423542173,
+    "threat": 0.15256406375837564,
+    "trust": 0.5971097814613253,
+    "confidence": 0.7935876061397704,
+    "uncertainty": 0.007108436635139272,
+    "energy": 0.33599999999999997,
+    "attention": 0.2,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9328,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 1.208091530203541,
+  "metadata": {
+    "ci_confidence": 0.7935876061397704,
+    "generated_plugin_influence": null
+  }
+}

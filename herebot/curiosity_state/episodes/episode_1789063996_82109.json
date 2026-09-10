@@ -1,0 +1,24 @@
+{
+  "timestamp": 1789063996.510693,
+  "user_input": "good morning friend",
+  "system_response": "TPL.ASK.SYN word='moon' candidate='thing'?",
+  "factor_vector": {
+    "curiosity": 1.5945476594198793,
+    "threat": 0.09813612688657694,
+    "trust": 0.6322497512140837,
+    "confidence": 0.8546647238719514,
+    "uncertainty": 0.0032888530909695986,
+    "energy": 0.35,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9475,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 2.6681479302152535,
+  "metadata": {
+    "ci_confidence": 0.8546647238719514,
+    "generated_plugin_influence": null
+  }
+}

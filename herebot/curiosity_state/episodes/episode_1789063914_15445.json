@@ -1,0 +1,24 @@
+{
+  "timestamp": 1789063914.6053307,
+  "user_input": "calm water",
+  "system_response": "TPL.ASK.SYN word='tree' candidate='thing'?",
+  "factor_vector": {
+    "curiosity": 1.681620407393124,
+    "threat": 0.14033722505041102,
+    "trust": 0.5787188503587277,
+    "confidence": 0.7364144835805803,
+    "uncertainty": 0.00335666449491124,
+    "energy": 0.35,
+    "attention": 0.1,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.965,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 2.5151496684100656,
+  "metadata": {
+    "ci_confidence": 0.7364144835805803,
+    "generated_plugin_influence": null
+  }
+}

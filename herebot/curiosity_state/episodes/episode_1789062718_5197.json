@@ -1,0 +1,24 @@
+{
+  "timestamp": 1789062718.6125162,
+  "user_input": "greeting is a thing",
+  "system_response": "TPL.ASK.SYN word='word' candidate='thing'?",
+  "factor_vector": {
+    "curiosity": 0.8858495059909769,
+    "threat": 0.12899867936094908,
+    "trust": 0.6292227678579034,
+    "confidence": 0.8503247950584727,
+    "uncertainty": 0.008516838666888656,
+    "energy": 0.35,
+    "attention": 0.2,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.93,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 1.2890516500361895,
+  "metadata": {
+    "ci_confidence": 0.8503247950584727,
+    "generated_plugin_influence": null
+  }
+}

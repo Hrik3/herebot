@@ -1,0 +1,24 @@
+{
+  "timestamp": 1789062740.8134851,
+  "user_input": "nature is a thing",
+  "system_response": "TPL.ASK.SYN word='animal' candidate='thing'?",
+  "factor_vector": {
+    "curiosity": 0.5527779946235598,
+    "threat": 0.1255089069414469,
+    "trust": 0.6331557039128688,
+    "confidence": 0.8638482725355112,
+    "uncertainty": 0.007596099351527719,
+    "energy": 0.32499999999999996,
+    "attention": 0.2,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.935,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 1.2247947359192013,
+  "metadata": {
+    "ci_confidence": 0.8638482725355112,
+    "generated_plugin_influence": null
+  }
+}

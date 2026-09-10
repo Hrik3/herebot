@@ -1,0 +1,24 @@
+{
+  "timestamp": 1789063085.6375191,
+  "user_input": "child is a person",
+  "system_response": "TPL.ASK.SYN word='yes' candidate='thing'?",
+  "factor_vector": {
+    "curiosity": 0.49158994906407644,
+    "threat": 0.13505283646513494,
+    "trust": 0.6244446793121514,
+    "confidence": 0.8409972400536245,
+    "uncertainty": 0.004232250046138067,
+    "energy": 0.378,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9433,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.6936052262109933,
+  "metadata": {
+    "ci_confidence": 0.8409972400536245,
+    "generated_plugin_influence": null
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "timestamp": 1789063221.1213346,
+  "user_input": "sky is a nature",
+  "system_response": "TPL.ASK.SYN word='crow' candidate='thing'?",
+  "factor_vector": {
+    "curiosity": 0.7245845733057819,
+    "threat": 0.15187376495289528,
+    "trust": 0.6142830150736391,
+    "confidence": 0.8251424877683962,
+    "uncertainty": 0.003661609590452033,
+    "energy": 0.35,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9475,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.8082186163565463,
+  "metadata": {
+    "ci_confidence": 0.8251424877683962,
+    "generated_plugin_influence": null
+  }
+}

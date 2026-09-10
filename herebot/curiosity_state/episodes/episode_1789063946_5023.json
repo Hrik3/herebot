@@ -1,0 +1,24 @@
+{
+  "timestamp": 1789063946.0329444,
+  "user_input": "tell me about the sun",
+  "system_response": "TPL.DEF.KNOWN word='the' value='the is a word'",
+  "factor_vector": {
+    "curiosity": 1.7297142133098269,
+    "threat": 0.101892705770397,
+    "trust": 0.6292178677045439,
+    "confidence": 0.8530451156283338,
+    "uncertainty": 0.0032237272871840617,
+    "energy": 0.358,
+    "attention": 0.25,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9105,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 15.280151838434545,
+  "metadata": {
+    "ci_confidence": 0.8530451156283338,
+    "generated_plugin_influence": null
+  }
+}

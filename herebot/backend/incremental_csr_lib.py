@@ -306,8 +306,18 @@ class IncrementalCSR:
         """
         return self._queue_sentences(sentences)
 
-    def add_document(self, text: str, doc_id: str, source: str, metadata: dict = None) -> Dict[str, Any]:
-        """Add one stable document with source-aware dedupe."""
+    def save_document_index(self):
+        """Persist the in-memory document index (call once after a batch)."""
+        with self.lock:
+            self._save_document_index()
+
+    def add_document(self, text: str, doc_id: str, source: str, metadata: dict = None, save: bool = True) -> Dict[str, Any]:
+        """Add one stable document with source-aware dedupe.
+
+        Pass save=False when adding many documents in a batch, then call
+        save_document_index() once at the end — otherwise every document
+        triggers a full JSON rewrite of the index.
+        """
         clean = self._normalize_document_text(text)
         if not clean:
             return {"added": False, "skipped": True, "reason": "empty", "doc_key": None}
@@ -323,7 +333,7 @@ class IncrementalCSR:
             if doc_key in docs:
                 docs[doc_key]["metadata"] = metadata or docs[doc_key].get("metadata", {})
                 docs[doc_key]["updated_at"] = time.time()
-                self._save_document_index()
+                # No save here: metadata touch only, persists on next batch save.
                 return {"added": False, "skipped": True, "reason": "doc_exists", "doc_key": doc_key}
             if source_content in source_keys:
                 existing = source_keys[source_content]
@@ -340,7 +350,8 @@ class IncrementalCSR:
                 "updated_at": time.time(),
             }
             source_keys[source_content] = doc_key
-            self._save_document_index()
+            if save:
+                self._save_document_index()
 
         queued = self._queue_sentences([clean], [doc_key])[0]
         queued.update({"added": True, "skipped": False, "reason": "added", "doc_key": doc_key})
@@ -349,16 +360,20 @@ class IncrementalCSR:
     def add_documents(self, docs: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """Add a batch of document dictionaries with text/doc_id/source keys."""
         results = []
-        for doc in docs or []:
-            try:
-                results.append(self.add_document(
-                    doc.get("text", ""),
-                    doc.get("doc_id"),
-                    doc.get("source", "unknown"),
-                    metadata=doc.get("metadata") or {},
-                ))
-            except Exception as e:
-                results.append({"added": False, "skipped": False, "reason": f"error:{e}", "doc_key": None})
+        try:
+            for doc in docs or []:
+                try:
+                    results.append(self.add_document(
+                        doc.get("text", ""),
+                        doc.get("doc_id"),
+                        doc.get("source", "unknown"),
+                        metadata=doc.get("metadata") or {},
+                        save=False,
+                    ))
+                except Exception as e:
+                    results.append({"added": False, "skipped": False, "reason": f"error:{e}", "doc_key": None})
+        finally:
+            self.save_document_index()
         return results
 
     def flush(self):

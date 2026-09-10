@@ -1,0 +1,24 @@
+{
+  "timestamp": 1789062762.949868,
+  "user_input": "feeling is a thing",
+  "system_response": "TPL.ASK.SYN word='food' candidate='thing'?",
+  "factor_vector": {
+    "curiosity": 0.42486656764286534,
+    "threat": 0.12353807750143289,
+    "trust": 0.6368697729247814,
+    "confidence": 0.8652795001267055,
+    "uncertainty": 0.007026391900148138,
+    "energy": 0.31099999999999994,
+    "attention": 0.2,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9378,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 1.2394026582805573,
+  "metadata": {
+    "ci_confidence": 0.8652795001267055,
+    "generated_plugin_influence": null
+  }
+}

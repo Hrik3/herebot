@@ -1,0 +1,24 @@
+{
+  "timestamp": 1789063298.9506433,
+  "user_input": "mountain is a nature",
+  "system_response": "TPL.ASK.SYN word='cat' candidate='thing'?",
+  "factor_vector": {
+    "curiosity": 0.4389567653527173,
+    "threat": 0.09909402852342175,
+    "trust": 0.6523375180506538,
+    "confidence": 0.9067312734466594,
+    "uncertainty": 0.003466843122864158,
+    "energy": 0.3420000000000001,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9487,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.6029599562844716,
+  "metadata": {
+    "ci_confidence": 0.9067312734466594,
+    "generated_plugin_influence": null
+  }
+}

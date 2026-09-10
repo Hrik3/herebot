@@ -20,6 +20,16 @@ class HeartProcessingMixin:
         """Apply signed reward for explicit user feedback."""
         return self.reward_tracker.apply_feedback_reward(rating, magnitude, source=source)
 
+    def _feedback_words(self, text: str):
+        """Tokenize rater input into whole words for feedback classification.
+
+        Substring matching ('right' in 'bright', 'no' in 'know') caused
+        ordinary sentences to be misread as ratings, so all feedback
+        handlers must match whole words through this helper.
+        """
+        import re
+        return set(re.findall(r"[a-z']+", (text or '').lower()))
+
     def _backend_report_dict(self, report) -> Dict[str, Any]:
         if report is None:
             return {}
@@ -165,6 +175,21 @@ class HeartProcessingMixin:
             """
             self.last_interaction_time = time.time()
 
+            # Empty/whitespace input carries no signal — ignore it instead of
+            # burning a training cycle and polluting episodic memory.
+            if not text or not text.strip():
+                return {
+                    "ci_report": {},
+                    "phon_score": 0,
+                    "diagnostic": {},
+                    "token_analyses": [],
+                    "curiosity_artifacts": ["TPL.NO.CTX"],
+                    "meta_weights": self.meta_learner.get_weights(),
+                    "total_intrinsic_reward": self.reward_tracker.total_reward,
+                    "episode_reward": 0.0,
+                    "factor_vector": {},
+                }
+
             # Pre-initialise so section 8 (behavioral rule testing) can safely reference it
             # before the normal-response block computes the real value.
             factor_dict: Dict[str, Any] = {}
@@ -227,9 +252,9 @@ class HeartProcessingMixin:
 #done
             # 1.5 Shadow differentiation proposal confirmation
             if not self.chat_mode_active and getattr(self, "expecting_shadow_diff_confirmation", False):
-                feedback_lower = text.lower()
-                is_positive = any(kw in feedback_lower for kw in ['yes', 'correct', 'right', 'yeah', 'true', 'yep', 'ok', 'sure', 'confirm'])
-                is_negative = any(kw in feedback_lower for kw in ['no', 'wrong', 'incorrect', 'not', 'nope', 'never', 'reject'])
+                feedback_words = self._feedback_words(text)
+                is_positive = bool(feedback_words & {'yes', 'correct', 'right', 'yeah', 'true', 'yep', 'ok', 'sure', 'confirm'})
+                is_negative = bool(feedback_words & {'no', 'wrong', 'incorrect', 'not', 'nope', 'never', 'reject'})
                 if is_positive:
                     self.reasoner.commit_shadow_differentiation_link(self.pending_shadow_diff_key)
                     artifact = "Shadow differentiation link committed."
@@ -254,13 +279,15 @@ class HeartProcessingMixin:
 
             # 2. Response feedback (emergent sentiment learning)
             if not self.chat_mode_active and self.expecting_response_feedback:
-                feedback_lower = text.lower()
+                feedback_words = self._feedback_words(text)
+                has_thumb_up = '👍' in text
+                has_thumb_down = '👎' in text
                 rating = None
-                if any(kw in feedback_lower for kw in ['positive', 'good', 'great', 'yes', 'correct', 'right', '👍']):
+                if feedback_words & {'positive', 'good', 'great', 'yes', 'correct', 'right'} or has_thumb_up:
                     rating = 'positive'
-                elif any(kw in feedback_lower for kw in ['negative', 'bad', 'wrong', 'no', 'incorrect', '👎']):
+                elif feedback_words & {'negative', 'bad', 'wrong', 'no', 'incorrect'} or has_thumb_down:
                     rating = 'negative'
-                elif any(kw in feedback_lower for kw in ['neutral', 'ok', 'fine', 'average']):
+                elif feedback_words & {'neutral', 'ok', 'fine', 'average'}:
                     rating = 'neutral'
 
                 if rating is not None and self.pending_feedback_context is not None:
@@ -310,9 +337,9 @@ class HeartProcessingMixin:
 
             # 3. Rule confirmation response
             if not self.chat_mode_active and self.expecting_rule_confirmation:
-                feedback_lower = text.lower()
-                is_positive = any(kw in feedback_lower for kw in ['yes', 'correct', 'right', 'yeah', 'true', 'yep', 'ok', 'sure', 'confirm'])
-                is_negative = any(kw in feedback_lower for kw in ['no', 'wrong', 'incorrect', 'not', 'nope', 'never'])
+                feedback_words = self._feedback_words(text)
+                is_positive = bool(feedback_words & {'yes', 'correct', 'right', 'yeah', 'true', 'yep', 'ok', 'sure', 'confirm'})
+                is_negative = bool(feedback_words & {'no', 'wrong', 'incorrect', 'not', 'nope', 'never'})
 
                 if is_positive or is_negative:
                     rule_id = self.pending_rule_id
@@ -346,10 +373,10 @@ class HeartProcessingMixin:
 
             # 4. Logic doubt feedback
             if not self.chat_mode_active and self.expecting_logic_feedback:
-                feedback_lower = text.lower()
-                is_positive = any(kw in feedback_lower for kw in ['yes', 'correct', 'right', 'yeah', 'true', 'yep', 'ok', 'sure', 'confirm'])
-                is_negative = any(kw in feedback_lower for kw in ['no', 'wrong', 'incorrect', 'not', 'nope', 'never'])
-                is_neutral = any(kw in feedback_lower for kw in ['neutral', 'maybe', 'unsure', 'average'])
+                feedback_words = self._feedback_words(text)
+                is_positive = bool(feedback_words & {'yes', 'correct', 'right', 'yeah', 'true', 'yep', 'ok', 'sure', 'confirm'})
+                is_negative = bool(feedback_words & {'no', 'wrong', 'incorrect', 'not', 'nope', 'never'})
+                is_neutral = bool(feedback_words & {'neutral', 'maybe', 'unsure', 'average'})
 
                 if self.pending_logic_doubt:
                     logic_id = self.pending_logic_doubt['logic_id']
@@ -421,10 +448,10 @@ class HeartProcessingMixin:
 
             # 6. Trust feedback (from earlier attempt)
             if not self.chat_mode_active and self.expecting_feedback:
-                feedback_lower = text.lower()
-                is_positive = any(kw in feedback_lower for kw in ['yes', 'correct', 'right', 'yeah', 'true', 'yep'])
-                is_negative = any(kw in feedback_lower for kw in ['no', 'wrong', 'incorrect', 'not', 'nope'])
-                is_neutral = any(kw in feedback_lower for kw in ['neutral', 'ok', 'fine', 'average', 'maybe'])
+                feedback_words = self._feedback_words(text)
+                is_positive = bool(feedback_words & {'yes', 'correct', 'right', 'yeah', 'true', 'yep'})
+                is_negative = bool(feedback_words & {'no', 'wrong', 'incorrect', 'not', 'nope'})
+                is_neutral = bool(feedback_words & {'neutral', 'ok', 'fine', 'average', 'maybe'})
 
                 if is_positive or is_negative or is_neutral:
                     rating = "positive" if is_positive else "negative" if is_negative else "neutral"
@@ -512,9 +539,15 @@ class HeartProcessingMixin:
 #done2
 
             # 8. Definition response (when last_asked_word is set and user provides a definition)
+            # Guard: only consume the turn as a definition when the pending
+            # word/phrase actually occurs in the input. Otherwise the sentence
+            # belongs to a different word and must flow into normal processing
+            # (previously e.g. 'road is ...' was attached to pending 'vehicle').
             handled_definition = False
             if not self.chat_mode_active and self.last_asked_word is not None:
-                if "means" in text.lower() or "is" in text.lower() or "refers to" in text.lower():
+                pending = self.last_asked_word
+                pending_in_text = pending.lower() in text.lower()
+                if ("means" in text.lower() or "is" in text.lower() or "refers to" in text.lower()) and pending_in_text:
                     is_phrase = ' ' in self.last_asked_word
                     if is_phrase:
                         phrase = self.last_asked_word
@@ -818,7 +851,13 @@ class HeartProcessingMixin:
             if not self.chat_mode_active:
                 unknown_tokens = [t for t in tokens if t not in self.semantic_learner.word_embeddings]
                 unknown_ratio = len(unknown_tokens) / max(len(tokens), 1)
-                if unknown_ratio > 0.5 and unknown_tokens:
+                # Pure math expressions (numbers + operators) must reach the
+                # math reply path instead of being treated as vocabulary gaps.
+                op_symbols = set(getattr(getattr(self, 'reasoner', None), 'operators', {}) or {})
+                non_op = [t for t in tokens if t not in op_symbols]
+                is_pure_math = bool(op_symbols and any(t in op_symbols for t in tokens)
+                                    and non_op and all(t.replace('.', '', 1).isdigit() for t in non_op))
+                if not is_pure_math and unknown_ratio > 0.5 and unknown_tokens:
                     # Score each unknown token (structural score)
                     scored_unknowns = [(t, self.structural_score(t)) for t in unknown_tokens]
                     # Sort by score ascending (most semantic first)
@@ -826,6 +865,9 @@ class HeartProcessingMixin:
                     target, struct_score = scored_unknowns[0]
                     # Only ask if structural score is not too high (i.e., it's likely semantic)
                     if struct_score <= 0.65:
+                        if self.last_asked_word is not None and self.last_asked_word != target:
+                            print(f"   [Definition Dropped] Previous pending word '{self.last_asked_word}' "
+                                  f"never got a definition; now asking about '{target}'.")
                         self.last_asked_word = target
                         system_reply = f"TPL.ASK.DEF target='{target}'?"
                         print(f"\n [Knowledge Gap] {system_reply}")
@@ -1247,7 +1289,11 @@ class HeartProcessingMixin:
             import re
 
             # --- Base tokenization ---
-            raw = [t.lower() for t in re.findall(r"[a-zA-Z']+|\d+\.?\d*|[+\-*/=<>%^()]", text) if len(t) >= 2]
+            # Keep single-char numbers/operators so math + single-letter
+            # words survive; the min-length gate below still filters noise
+            # once the vocabulary is large enough.
+            raw = [t.lower() for t in re.findall(r"[a-zA-Z']+|\d+\.?\d*|[+\-*/=<>%^()]", text)
+                   if len(t) >= 2 or t.isdigit() or re.fullmatch(r"[+\-*/=<>%^()]", t) or len(t) == 1]
 
             # --- State-based min-length gate (adapts as vocabulary grows) ---
             vocab_size = len(self.semantic_learner.word_embeddings) if hasattr(self, 'semantic_learner') else 0
