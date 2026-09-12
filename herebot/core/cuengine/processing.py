@@ -138,16 +138,22 @@ class HeartProcessingMixin:
             ep = episodes[i]
             next_ep = episodes[i+1]
             if 'factor_vector' in ep and 'factor_vector' in next_ep:
-                vec = self._align_factor_vector(np.array(list(ep['factor_vector'].values())))
-                next_vec = self._align_factor_vector(np.array(list(next_ep['factor_vector'].values())))
+                # Episodes are dictionaries.  Their insertion order is never a schema.
+                # The state system compares named observations across their own versions.
+                vec, space = self._episode_control_vector(ep)
+                next_vec, next_space = self._episode_control_vector(next_ep)
                 state_label = self.state_manager.find_similar_state(
                     vec,
+                    factor_space=space,
+                    factor_statuses=ep.get('factor_statuses'),
                     threshold=0.7,
                     interaction_index=self.interaction_counter,
                     reward=float(getattr(self.reward_tracker, 'episode_reward', 0.0) or 0.0),
                 )
                 next_state_label = self.state_manager.find_similar_state(
                     next_vec,
+                    factor_space=next_space,
+                    factor_statuses=next_ep.get('factor_statuses'),
                     threshold=0.7,
                     interaction_index=self.interaction_counter,
                     reward=float(getattr(self.reward_tracker, 'episode_reward', 0.0) or 0.0),
@@ -155,6 +161,20 @@ class HeartProcessingMixin:
                 if state_label and next_state_label:
                     action = ep.get('system_response', '')   # crude action representation
                     self.structured_world_model.observe_episode(state_label, action, next_state_label)
+
+    def _episode_control_vector(self, episode):
+        """Materialize an episode only against its declared control-name schema."""
+        values = episode.get('factor_vector', {})
+        names = episode.get('factor_names')
+        if not names:
+            # Legacy dicts are already name-addressed.  Its key order is only used
+            # to record a compatibility schema, never to match today's positions.
+            names = list(values.keys())
+        vector = np.array([values.get(name, 0.0) for name in names], dtype=float)
+        space = {'space_id': episode.get('factor_space_id', 'control'),
+                 'version': episode.get('factor_space_version', 0),
+                 'factor_names': names}
+        return vector, space
                     
     def process_input(self, text: str) -> Dict[str, Any]:
             """
@@ -1101,10 +1121,10 @@ class HeartProcessingMixin:
                 factor_dict = {}
 
             # Build factor vector
-            factor_vector_list = []
-            for k in self.control_space.all_factors:
-                factor_vector_list.append(factor_dict.get(k, 0.5))
+            control_names = self.control_space.factor_space.factor_names
+            factor_vector_list = [factor_dict.get(k, 0.5) for k in control_names]
             factor_vector = np.array(factor_vector_list)
+            self.control_space.validate_control_vector(factor_vector, factor_names=control_names)
             self._last_factor_vector = factor_vector
             self._last_factor_dict = factor_dict
 
@@ -1116,7 +1136,7 @@ class HeartProcessingMixin:
             }
             # State learning gate
             if not self.chat_mode_active and len(self.semantic_learner.word_embeddings) > 20:
-                self._handle_state_learning(factor_vector, metadata)
+                self._handle_state_learning(factor_vector, metadata, factor_space=self.control_space.factor_space)
             if not self.config_manager.get('state_manager.legacy_interactive_conflicts', False):
                 self.state_manager.archive_legacy_conflicts(interaction_index=self.interaction_counter)
                 self.state_manager.refresh_state_regrouping(
@@ -1246,7 +1266,10 @@ class HeartProcessingMixin:
                 metadata={
                     'ci_confidence': ci_report.get('confidence'),
                     'generated_plugin_influence': getattr(self, '_last_generated_plugin_influence', None),
-                }
+                },
+                factor_space=self.control_space.factor_space,
+                factor_statuses={name: 'observed' if name in factor_dict else 'unavailable'
+                                 for name in control_names},
             )
             if getattr(self, '_last_generated_plugin_influence', None):
                 try:
@@ -1382,10 +1405,15 @@ class HeartProcessingMixin:
                 artifacts.append(f"     - {k}: {factor_dict[k]:.3f} (dynamic)")
         
         # Check if this state is already known
-        vec = np.array([factor_dict[k] for k in self.control_space.all_factors if k in factor_dict])
+        control_names = self.control_space.factor_space.factor_names
+        vec = np.array([factor_dict.get(k, 0.5) for k in control_names])
+        self.control_space.validate_control_vector(vec, factor_names=control_names)
         threshold = self.config_manager.get('engine.state_similarity_threshold', 0.85)
         similar_label = self.state_manager.find_similar_state(
             vec,
+            factor_space=self.control_space.factor_space,
+            factor_statuses={name: 'observed' if name in factor_dict else 'unavailable'
+                             for name in control_names},
             threshold=threshold,
             interaction_index=self.interaction_counter,
             reward=float(getattr(self.reward_tracker, 'episode_reward', 0.0) or 0.0),

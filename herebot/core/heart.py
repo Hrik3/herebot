@@ -198,7 +198,7 @@ class CuriosityEngine(HeartPersistenceMixin, HeartCuriosityMixin, HeartProcessin
             self.conscience_manager.guilt_tracker = self.guilt_tracker
         # Add conscience_active to base control factors
         if "conscience_active" not in self.control_space.base_factors:
-            self.control_space.base_factors.append("conscience_active")
+            self.control_space.add_base_factor("conscience_active", metadata={'source': 'conscience'})
         self.identity_aliases = set()   # store learned aliases for self-reference
         self.logic_inheritance = LogicInheritanceManager(
             config_manager=self.config_manager,

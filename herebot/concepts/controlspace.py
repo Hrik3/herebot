@@ -3,6 +3,7 @@ from components.config_manager import ConfigManager
 from components.directory_handler import STATE_DIR
 from components.learner import KnowledgeGraph
 from components.factor_handler import StateManager
+from components.factor_space import FactorSpace, FactorSpaceInvariantError
 # ------------------------------------------------------------
 # Adaptive Control Space – dynamic expansion of control factors
 # ------------------------------------------------------------
@@ -42,6 +43,8 @@ class AdaptiveControlSpace:
         # Listeners to be notified when a new factor is added
         self._listeners = []
         self._load()
+        if not hasattr(self, 'factor_space'):
+            self.factor_space = FactorSpace('control', self.all_factors)
 
     def add_listener(self, callback: Callable[[str, Callable, dict], None]):
         """
@@ -65,9 +68,16 @@ class AdaptiveControlSpace:
             try:
                 with open(path, 'r') as f:
                     data = json.load(f)
+                self.base_factors = data.get('base_factors', self.base_factors)
                 self.dynamic_factors = data.get('dynamic_factors', [])
                 # Deserialize compute functions? We store only metadata; compute functions must be registered at runtime.
                 self.factor_definitions = data.get('factor_definitions', {})
+                persisted = data.get('factor_space')
+                self.factor_space = FactorSpace(
+                    (persisted or {}).get('space_id', 'control'), self.all_factors,
+                    version=(persisted or {}).get('version', 0),
+                    history=(persisted or {}).get('history'),
+                    factor_metadata=(persisted or {}).get('factor_metadata', {}))
             except Exception as e:
                 print(f"Could not load control space: {e}")
     
@@ -78,16 +88,27 @@ class AdaptiveControlSpace:
         for name, defn in self.factor_definitions.items():
             serializable_defs[name] = {k: v for k, v in defn.items() if k != 'compute'}
         path = os.path.join(STATE_DIR, "control_space.json")
+        os.makedirs(os.path.dirname(path) or '.', exist_ok=True)
         with open(path, 'w') as f:
             json.dump({
+                'base_factors': self.base_factors,
                 'dynamic_factors': self.dynamic_factors,
-                'factor_definitions': serializable_defs
+                'factor_definitions': serializable_defs,
+                'factor_space': self.factor_space.as_dict(),
             }, f, indent=2)
     
     @property
     def all_factors(self) -> List[str]:
         """Return the complete list of control factors (base + dynamic)."""
         return self.base_factors + self.dynamic_factors
+
+    def add_base_factor(self, name: str, metadata: dict = None):
+        """Register a non-dynamic semantic control signal without mutating a schema in place."""
+        if name in self.all_factors:
+            return
+        self.base_factors.append(name)
+        self.factor_space.add(name, metadata=metadata or {'kind': 'base'})
+        self.save()
     
     def add_factor(self, name: str, compute_function: Callable, metadata: dict = None):
         """
@@ -101,6 +122,7 @@ class AdaptiveControlSpace:
             print(f"⚠️ Cannot add factor '{name}': max factors ({self.max_factors}) reached.")
             return
         self.dynamic_factors.append(name)
+        self.factor_space.add(name, metadata=metadata)
         self.factor_definitions[name] = {
             'compute': compute_function,
             'metadata': metadata or {},
@@ -126,6 +148,14 @@ class AdaptiveControlSpace:
             if callable(func):
                 return np.clip(func(state), 0, 1)
         return 0.5
+
+    def validate_control_vector(self, vector: np.ndarray, *, factor_names: List[str] = None):
+        names = self.factor_space.factor_names if factor_names is None else list(factor_names)
+        if names != self.factor_space.factor_names:
+            raise FactorSpaceInvariantError(
+                f"control factor ordering mismatch at v{self.factor_space.version}: "
+                f"provided={names}, expected={self.factor_space.factor_names}")
+        self.factor_space.validate_vector(vector)
     
     def record_value(self, name: str, value: float):
         """Store the value in history for later analysis."""
@@ -190,4 +220,3 @@ class StructuredWorldModel:
             sequence.append((action, next_state))
             current = next_state
         return sequence
-
