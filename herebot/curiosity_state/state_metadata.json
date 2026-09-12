@@ -6,14 +6,17 @@
     "phase": "active",
     "last_used": 1781029568.019288,
     "confidence": 1.0,
-    "usage": 11.681675667918908,
-    "reward_trace": 7.9459737010738385,
-    "last_interaction": 1,
-    "last_decay_interaction": 2,
-    "probability": 0.8820984786695009,
+    "usage": 13.686433998739941,
+    "reward_trace": 9.333275485811997,
+    "last_interaction": 8,
+    "last_decay_interaction": 8,
+    "probability": 0.9029807258539766,
     "tier": 4,
-    "activation": 11.681674203315547,
-    "archive_pressure": 2.899134613784783e-10
+    "activation": 13.686433891708786,
+    "archive_pressure": 0.0,
+    "state_groups": [
+      "is zibber what"
+    ]
   },
   "bright curiosity": {
     "energy_cost": 1.0,
@@ -22,13 +25,16 @@
     "phase": "active",
     "last_used": 1789063883.852774,
     "confidence": 1.0,
-    "usage": 1.3583256005061617,
-    "reward_trace": 0.4337344120428808,
-    "last_interaction": 1,
-    "last_decay_interaction": 2,
-    "probability": 0.07223097002163462,
+    "usage": 1.7906174701694864,
+    "reward_trace": 0.7623658823538322,
+    "last_interaction": 4,
+    "last_decay_interaction": 8,
+    "probability": 0.09701927414602339,
     "tier": 0,
-    "activation": 0.9565583430717256,
-    "archive_pressure": 0.005382011428754293
+    "activation": 1.4705163064973885,
+    "archive_pressure": 0.01041537556398697,
+    "state_groups": [
+      "is zibber what"
+    ]
   }
 }

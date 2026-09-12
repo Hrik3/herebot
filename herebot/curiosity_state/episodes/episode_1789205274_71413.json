@@ -1,0 +1,11 @@
+{
+  "timestamp": 1789205274.4856827,
+  "user_input": "you feeling today",
+  "system_response": "[synthetic]",
+  "factor_vector": {},
+  "factor_dim": 0,
+  "intrinsic_reward": 0.0,
+  "metadata": {
+    "synthetic": true
+  }
+}

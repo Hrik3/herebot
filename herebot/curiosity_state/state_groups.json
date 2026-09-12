@@ -1,0 +1,58 @@
+{
+  "group::bright curiosity||greetings": {
+    "head_label": "is zibber what",
+    "child_labels": [
+      "bright curiosity",
+      "greetings"
+    ],
+    "centroid_vector": [
+      0.387615028092422,
+      0.08534777079994524,
+      0.3820393588195821,
+      0.39069366873358435,
+      0.006951189333549158,
+      0.18740906891627734,
+      0.031703401774898256,
+      0.25556081436163247,
+      0.3864726350203821,
+      0.5413194271911087,
+      0.0
+    ],
+    "dominant_tokens": [
+      "is",
+      "zibber",
+      "what",
+      "bird",
+      "travel",
+      "hello"
+    ],
+    "dominant_phrases": [],
+    "factor_signature": [
+      {
+        "factor_index": 7,
+        "mean_delta": 0.27672261380403285
+      },
+      {
+        "factor_index": 0,
+        "mean_delta": 0.20252088212449015
+      },
+      {
+        "factor_index": 2,
+        "mean_delta": 0.07003625374577943
+      },
+      {
+        "factor_index": 9,
+        "mean_delta": 0.06717099518586694
+      },
+      {
+        "factor_index": 6,
+        "mean_delta": 0.04776565095509506
+      }
+    ],
+    "probability": 1.0,
+    "reward_trace": 10.095641368165829,
+    "last_interaction": 8,
+    "phase": "active",
+    "first_interaction": 7
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "timestamp": 1789203542.145184,
+  "user_input": "what is travel",
+  "system_response": "TPL.HYP.REL word='what' candidate='is'",
+  "factor_vector": {
+    "curiosity": 0.43790598801650343,
+    "threat": 0.11710372623402782,
+    "trust": 0.6158194001482993,
+    "confidence": 0.826209673434603,
+    "uncertainty": 0.0025789920813745,
+    "energy": 0.35,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9475,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.7015414853324737,
+  "metadata": {
+    "ci_confidence": 0.826209673434603,
+    "generated_plugin_influence": null
+  }
+}

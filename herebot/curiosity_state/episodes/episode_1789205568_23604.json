@@ -1,0 +1,24 @@
+{
+  "timestamp": 1789205568.2123325,
+  "user_input": "are you fine",
+  "system_response": "TPL.RECALL.PHRASE phrase='what is zibber'",
+  "factor_vector": {
+    "curiosity": 1.2383440201708107,
+    "threat": 0.12912390888396713,
+    "trust": 0.5934039757607183,
+    "confidence": 0.7996239745983508,
+    "uncertainty": 0.002958632867124936,
+    "energy": 0.385,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.94225,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 1.2406973565148023,
+  "metadata": {
+    "ci_confidence": 0.7996239745983508,
+    "generated_plugin_influence": null
+  }
+}
