@@ -166,3 +166,19 @@ only sub mutation
 2) core mutation only during idle thing 
 
 change between phases learning and convorsation 
+
+
+Session update - 2026-09-12
+
+10) E10 versioned factor-space architecture:
+ a) Added a shared FactorSpace contract while retaining separate MetaLearner (`meta`) and ControlSpace (`control`) semantic registries.
+ b) Factor-space snapshots now persist a space ID, monotonic version, ordered factor names, factor metadata, and schema history.
+ c) State vectors now persist factor-space ID, version, ordered names, and factor statuses without rewriting historical vectors.
+ d) Episodes retain name-keyed factor dictionaries and now persist factor-space metadata.
+ e) State comparison now aligns vectors by shared observed factor names before cosine similarity; it does not pad or truncate positional arrays.
+ f) Added explicit, append-only migration/projection audit logging. Historical absence, unavailable computation, and observed zero remain distinct.
+ g) Updated world-model transition construction to materialize episode vectors against their declared factor-name schema instead of dictionary insertion order.
+ h) MetaLearner and ControlSpace now reject representation length or ordering invariant violations rather than silently resizing arrays.
+ i) Added E10 regression tests for 11-to-13 and 13-to-11 comparisons, status semantics, ordering violations, invariant failures, and factor-space persistence.
+ j) Preserved historical experiment artifacts. Dynamic factor compute-function persistence remains a documented separate issue and was not changed.
+ k) Implementation commit: 5b2003cbacb3717ff69468e4a43c8ee45d3aa37a.
