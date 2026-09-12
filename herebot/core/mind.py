@@ -248,7 +248,8 @@ class ActionGenerator:
 
         # 1.5 Check if user input is similar to known phrases
         if base_reply is None:
-            input_emb = self.semantic_learner.text_to_embedding(user_input, fallback_to_char=True)
+            detector = getattr(getattr(self.reasoner, 'pattern_observer', None), 'detector', None)
+            input_emb = self.semantic_learner.text_to_embedding(user_input, fallback_to_char=True, structural_detector=detector)
             if input_emb is not None:
                 similar = self.reasoner.find_similar_phrases(input_emb, threshold=0.8)
                 if similar:

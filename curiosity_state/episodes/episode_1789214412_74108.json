@@ -1,0 +1,13 @@
+{
+  "timestamp": 1789214412.053736,
+  "user_input": "stone is hard",
+  "system_response": "",
+  "factor_vector": {
+    "curiosity": 0.9,
+    "threat": 0.1,
+    "energy": 0.8
+  },
+  "factor_dim": 3,
+  "intrinsic_reward": 1.0,
+  "metadata": {}
+}
