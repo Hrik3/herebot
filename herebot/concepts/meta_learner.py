@@ -1,7 +1,7 @@
 from importglobal import Optional, Dict,Callable,time,np,os,traceback
 from components.config_manager import ConfigManager
 from components.directory_handler  import STATE_DIR
-from functionsglobal import align_factor_vector
+from components.factor_space import FactorSpace, FactorSpaceInvariantError
 class MetaCuriosityLearner:
     """
     Learns the weights of curiosity factors via Bayesian linear regression.
@@ -39,6 +39,9 @@ class MetaCuriosityLearner:
         # Dictionary to store compute functions for dynamic curiosity factors
         self.dynamic_compute_functions = {}  # factor_name -> callable
         self._load()
+        if not hasattr(self, 'factor_space'):
+            self.factor_space = FactorSpace('meta', self.factor_names)
+        self._assert_invariants()
 
     @property
     def factor_names(self):
@@ -58,6 +61,7 @@ class MetaCuriosityLearner:
 
         # append ONLY to dynamic list
         self.dynamic_factor_names.append(factor_name)
+        self.factor_space.add(factor_name, metadata=metadata)
 
         if compute_function is not None:
             self.dynamic_compute_functions[factor_name] = compute_function
@@ -80,6 +84,16 @@ class MetaCuriosityLearner:
         }
 
         self.save(os.path.join(STATE_DIR, 'meta_learner.npz'))
+
+    def _assert_invariants(self, vector=None):
+        lengths = {'mu': len(self.mu), 'lambda_': len(self.lambda_), 'alpha': len(self.alpha),
+                   'beta': len(self.beta), 'factor_names': len(self.factor_names)}
+        if len(set(lengths.values())) != 1:
+            raise FactorSpaceInvariantError(
+                f"meta factor-space v{self.factor_space.version if hasattr(self, 'factor_space') else 'unbound'} "
+                f"invariant violation: {lengths}")
+        if vector is not None:
+            self.factor_space.validate_vector(vector)
 
     def compute_dynamic_factor(self, factor_name: str, token: str,
                                token_ci: Dict, token_phon: float,
@@ -114,23 +128,7 @@ class MetaCuriosityLearner:
         return 0.0
     
     def update(self, factors: np.ndarray, information_gain: float):
-
-        target_dim = len(factors)
-
-        # ---- ensure all parameter arrays match the same size ----
-        def _expand(arr, fill):
-            if len(arr) < target_dim:
-                return np.append(arr, np.full(target_dim - len(arr), fill))
-            return arr
-
-        self.mu = _expand(self.mu, 0.0)
-        self.lambda_ = _expand(self.lambda_, 0.1)
-        self.alpha = _expand(self.alpha, 1.0)
-        self.beta = _expand(self.beta, 1.0)
-
-        # if learner larger than factors → pad factors
-        if len(factors) < len(self.mu):
-            factors = np.pad(factors, (0, len(self.mu) - len(factors)))
+        self._assert_invariants(factors)
 
         # ---- safe update ----
         for i in range(len(self.mu)):
@@ -143,21 +141,12 @@ class MetaCuriosityLearner:
 
     def predict_curiosity(self, factors: np.ndarray) -> float:
         """Weighted sum of factors using posterior mean weights."""
-        # ---- Auto align dimensionality (dynamic factor safety) ----
-        if len(self.mu) < len(factors):
-            # expand mu
-            pad = np.zeros(len(factors) - len(self.mu))
-            self.mu = np.concatenate([self.mu, pad])
-
-        elif len(self.mu) > len(factors):
-            # pad factors
-            factors = np.pad(factors, (0, len(self.mu) - len(factors)))
-
-        factors = align_factor_vector(factors, len(self.mu))
+        self._assert_invariants(factors)
         return np.dot(self.mu, factors)
 
     def get_weights(self) -> Dict[str, float]:
         """Return dictionary mapping factor names to learned weights."""
+        self._assert_invariants()
         return dict(zip(self.factor_names, self.mu))
 
     def apply_guilt_to_weights(self, guilt_factor: float):
@@ -176,6 +165,7 @@ class MetaCuriosityLearner:
 
     def save(self, path: str):
         """Save weights and factor names."""
+        self._assert_invariants()
         np.savez(path,
                  mu=self.mu,
                  lambda_=self.lambda_,
@@ -183,7 +173,8 @@ class MetaCuriosityLearner:
                  beta=self.beta,
                  base_factor_names=self.base_factor_names,
                  dynamic_factor_names=self.dynamic_factor_names,
-                factor_metadata=self.factor_metadata) 
+                factor_metadata=self.factor_metadata,
+                factor_space=self.factor_space.as_dict())
 
     def load(self, path: str):
         """Load weights and factor names."""
@@ -199,6 +190,18 @@ class MetaCuriosityLearner:
             self.factor_metadata = data['factor_metadata'].item()
         else:
             self.factor_metadata = {}
+        if 'factor_space' in data:
+            persisted = data['factor_space'].item()
+            self.factor_space = FactorSpace(
+                persisted.get('space_id', 'meta'), self.factor_names,
+                version=persisted.get('version', 0), history=persisted.get('history'),
+                factor_metadata=persisted.get('factor_metadata', self.factor_metadata))
+        else:
+            # Legacy arrays predate identity metadata; v0 records that fact explicitly.
+            self.factor_space = FactorSpace('meta', self.factor_names, version=0,
+                                            factor_metadata=self.factor_metadata)
+            print('[FactorSpace compatibility] meta learner loaded as legacy v0 schema')
+        self._assert_invariants()
     
     def _load(self):
         """Load from default path if exists."""

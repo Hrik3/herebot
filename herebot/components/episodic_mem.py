@@ -55,7 +55,7 @@ class EpisodicMemory:
 
     def add_episode(self, user_input: str, system_response: str,
                     factor_vector: Dict, intrinsic_reward: float,
-                    metadata: dict = None):
+                    metadata: dict = None, factor_space=None, factor_statuses: dict = None):
 
         if not isinstance(factor_vector, dict):
             factor_vector = {}
@@ -69,6 +69,16 @@ class EpisodicMemory:
             "intrinsic_reward": float(intrinsic_reward),
             "metadata": metadata or {},
         }
+        if factor_space is not None:
+            snapshot = factor_space.snapshot() if hasattr(factor_space, 'snapshot') else factor_space
+            episode.update({
+                "factor_space_id": snapshot.space_id,
+                "factor_space_version": snapshot.version,
+                "factor_names": list(snapshot.factor_names),
+                "factor_statuses": dict(factor_statuses or {
+                    name: "observed" for name in factor_vector
+                }),
+            })
         self.episodes.append(episode)
         # save to disk
         fname = f"episode_{int(episode['timestamp'])}_{np.random.randint(100000)}.json"

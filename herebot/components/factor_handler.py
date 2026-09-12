@@ -10,6 +10,10 @@ from components.probabilistic_labeling import (
     ensure_probabilistic_stats,
     normalize_probability_field,
 )
+from components.factor_space import (
+    FactorSpace, FactorSpaceInvariantError, observation_from_vector,
+    compare_observations, project_observation, OBSERVED,
+)
 
 # ------------------------------------------------------------
 # Multi-Factor Curiosity with Meta-Learned Weights (extended)
@@ -60,7 +64,12 @@ class StateManager:
             print(f"[WARN] Could not create STATE_DIR: {e}")
         self.relation_file = os.path.join(STATE_DIR, "state_relations.json")
         self.group_file = os.path.join(STATE_DIR, "state_groups.json")
+        self.factor_space_log_file = os.path.join(STATE_DIR, "factor_space_migrations.jsonl")
         self.states = {}          # label -> factor_vector (np.array)
+        self.state_raw_vectors: Dict[str, np.ndarray] = {}
+        self.state_factor_spaces: Dict[str, dict] = {}
+        self.comparison_audit: List[dict] = []
+        self.migration_audit: List[dict] = []
         self.aliases = {}  # old_label -> new_label
         self.state_metadata: Dict[str, dict] = {}   # label -> probabilistic and metabolic metadata
         self.state_relation_observations: Dict[str, dict] = {}
@@ -158,15 +167,9 @@ class StateManager:
     def _align_pair(self, v1: np.ndarray, v2: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         v1 = self._normalize_vector(v1)
         v2 = self._normalize_vector(v2)
-        max_len = max(len(v1), len(v2))
-        if len(v1) < max_len:
-            v1 = np.pad(v1, (0, max_len - len(v1)), 'constant')
-        elif len(v1) > max_len:
-            v1 = v1[:max_len]
-        if len(v2) < max_len:
-            v2 = np.pad(v2, (0, max_len - len(v2)), 'constant')
-        elif len(v2) > max_len:
-            v2 = v2[:max_len]
+        if len(v1) != len(v2):
+            raise FactorSpaceInvariantError(
+                'positional state comparison is forbidden across differing dimensions; use named observations')
         return v1, v2
 
     def _cosine_similarity(self, v1: np.ndarray, v2: np.ndarray) -> float:
@@ -339,6 +342,8 @@ class StateManager:
                     vector = data.get("vector", [])
                     metadata = data.get("metadata", {})
                     self.states[label] = self._normalize_vector(np.array(vector))
+                    self.state_raw_vectors[label] = np.array(vector, dtype=float)
+                    self.state_factor_spaces[label] = self._state_space_from_data(data, vector, label)
                     # Store metadata in a separate dictionary for later use
                     if not hasattr(self, 'state_metadata'):
                         self.state_metadata = {}
@@ -347,7 +352,88 @@ class StateManager:
                     print(f"Could not load state {fname}: {e}")
         self._update_ref_dim()
 
-    def save_state(self, label: str, vector: np.ndarray, metadata: dict = None, is_shadow: bool = False, response: str = None, interaction_index: int = 0):
+    def _state_space_from_data(self, data: dict, vector, label: str) -> dict:
+        names = data.get('factor_names')
+        if names and len(names) == len(vector):
+            return {'space_id': data.get('factor_space_id', 'control'),
+                    'version': int(data.get('factor_space_version', 0)), 'factor_names': list(names),
+                    'statuses': dict(data.get('factor_statuses', {}))}
+        # Old files lack a schema.  We preserve the raw vector and create a
+        # deliberately labelled legacy schema; it is not claimed to be native metadata.
+        names = [f'legacy_position_{i}' for i in range(len(vector))]
+        event = {'event_id': f'legacy-{label}', 'timestamp': time.time(), 'kind': 'legacy_state_schema_inferred',
+                 'label': label, 'source_factors': names, 'policy_used': 'unaddressed_legacy_positions'}
+        self.migration_audit.append(event)
+        self._record_migration_event(event)
+        return {'space_id': 'control', 'version': 0, 'factor_names': names,
+                'statuses': {name: OBSERVED for name in names}, 'legacy_compatibility': event}
+
+    def _record_migration_event(self, event: dict):
+        """Append-only reproducibility log; historical observations are never changed."""
+        os.makedirs(os.path.dirname(self.factor_space_log_file) or '.', exist_ok=True)
+        with open(self.factor_space_log_file, 'a') as log:
+            log.write(json.dumps(event, sort_keys=True) + '\n')
+
+    @staticmethod
+    def _snapshot_from_argument(factor_space, vector) -> dict:
+        if factor_space is None:
+            return {'space_id': 'control', 'version': 0,
+                    'factor_names': [f'legacy_position_{i}' for i in range(len(vector))]}
+        if isinstance(factor_space, FactorSpace):
+            snap = factor_space.snapshot()
+            return snap.as_dict()
+        if hasattr(factor_space, 'snapshot'):
+            return factor_space.snapshot().as_dict()
+        return dict(factor_space)
+
+    def _observation(self, vector, factor_space=None, statuses=None):
+        snap_data = self._snapshot_from_argument(factor_space, vector)
+        from components.factor_space import FactorSpaceSnapshot
+        snap = FactorSpaceSnapshot(snap_data['space_id'], int(snap_data['version']),
+                                   tuple(snap_data['factor_names']), snap_data.get('factor_metadata', {}))
+        return observation_from_vector(vector, snap, statuses)
+
+    def compare_state_vector(self, label: str, vector: np.ndarray, *, factor_space=None, factor_statuses=None):
+        if label not in self.state_raw_vectors:
+            # Compatibility for in-memory callers/tests that construct a state
+            # directly.  It is explicitly a legacy positional observation.
+            if label not in self.states:
+                raise KeyError(label)
+            raw = np.array(self.states[label], dtype=float)
+            self.state_raw_vectors[label] = raw
+            self.state_factor_spaces[label] = self._state_space_from_data({}, raw, label)
+        query = self._observation(vector, factor_space, factor_statuses)
+        stored_space = self.state_factor_spaces[label]
+        # Historic states predate schemas.  The old implementation only appended
+        # dynamic control factors, so an ordered prefix is the single documented
+        # compatibility inference when the query supplies the descendant schema.
+        if stored_space.get('legacy_compatibility') and query['space_id'] == 'control' and len(self.state_raw_vectors[label]) <= len(query['factor_names']):
+            inferred_names = query['factor_names'][:len(self.state_raw_vectors[label])]
+            stored_space = dict(stored_space, factor_names=inferred_names)
+            event = dict(stored_space['legacy_compatibility'], policy_used='append_only_prefix_schema_inference',
+                         target_factors=list(query['factor_names']), source_factors=list(inferred_names))
+            if not any(x.get('event_id') == event['event_id'] and x.get('policy_used') == event['policy_used']
+                       for x in self.migration_audit):
+                self.migration_audit.append(event)
+                self._record_migration_event(event)
+        stored = self._observation(self.state_raw_vectors[label], stored_space, stored_space.get('statuses'))
+        result = compare_observations(query, stored)
+        result['label'] = label
+        self.comparison_audit.append(result)
+        self.comparison_audit = self.comparison_audit[-1000:]
+        return result
+
+    def project_state(self, label: str, target_space, *, missing_policy='unavailable'):
+        """Explicit, auditable migration; never mutates the historical state."""
+        source = self._observation(self.state_raw_vectors[label], self.state_factor_spaces[label],
+                                   self.state_factor_spaces[label].get('statuses'))
+        target = target_space.snapshot() if hasattr(target_space, 'snapshot') else target_space
+        result = project_observation(source, target, missing_policy=missing_policy)
+        self.migration_audit.append(result)
+        self._record_migration_event(result)
+        return result
+
+    def save_state(self, label: str, vector: np.ndarray, metadata: dict = None, is_shadow: bool = False, response: str = None, interaction_index: int = 0, factor_space=None, factor_statuses=None):
         """Save a factor vector under the given label."""
         os.makedirs(self.state_dir, exist_ok=True)
         safe_label = "".join(c for c in label if c.isalnum() or c in " _-").strip()
@@ -360,6 +446,7 @@ class StateManager:
         path = os.path.join(self.state_dir, fname)
         
         # Store the vector as-is (original length)
+        observation = self._observation(vector, factor_space, factor_statuses)
         data = {
             "label": safe_label,
             "vector": vector.tolist(),
@@ -367,6 +454,10 @@ class StateManager:
             "timestamp": time.time(),
             "metadata": metadata or {},
             "is_shadow": is_shadow,
+            "factor_space_id": observation['space_id'],
+            "factor_space_version": observation['version'],
+            "factor_names": observation['factor_names'],
+            "factor_statuses": observation['statuses'],
         }
         # ---- metabolic metadata for new state ----
         self.state_metadata[safe_label] = {
@@ -393,6 +484,10 @@ class StateManager:
             self.shadow_states[safe_label] = vector
         else:
             self.states[safe_label] = vector
+        self.state_raw_vectors[safe_label] = np.array(data['vector'], dtype=float)
+        self.state_factor_spaces[safe_label] = {
+            'space_id': observation['space_id'], 'version': observation['version'],
+            'factor_names': observation['factor_names'], 'statuses': observation['statuses']}
 
         self._update_ref_dim()
         self._save_state_metadata()   # <-- save metadata after change
@@ -423,6 +518,8 @@ class StateManager:
             del self.states[label]
         if label in self.shadow_states:
             del self.shadow_states[label]
+        self.state_raw_vectors.pop(label, None)
+        self.state_factor_spaces.pop(label, None)
         for fname in os.listdir(self.state_dir):
             if fname.startswith(label) and fname.endswith(".json"):
                 os.remove(os.path.join(self.state_dir, fname))
@@ -431,7 +528,7 @@ class StateManager:
             self._save_state_metadata()
         self._update_ref_dim()
 
-    def find_similar_state(self, vector: np.ndarray, threshold: float = None, include_shadows: bool = False, interaction_index: int = 0, reward: float = 0.0) -> Optional[str]:
+    def find_similar_state(self, vector: np.ndarray, threshold: float = None, include_shadows: bool = False, interaction_index: int = 0, reward: float = 0.0, factor_space=None, factor_statuses=None) -> Optional[str]:
         """
         Return the label of the most similar known state if cosine similarity > threshold.
         """
@@ -441,7 +538,6 @@ class StateManager:
             else:
                 threshold = 0.85
 
-        query_vec = self._normalize_vector(vector)
         all_states = dict(self.states)
         if include_shadows:
             all_states.update(self.shadow_states)
@@ -455,11 +551,8 @@ class StateManager:
             return None
         candidates = []
         for label, stored_vec in all_states.items():
-            stored_norm = self._normalize_vector(stored_vec)
-            if np.linalg.norm(query_vec) == 0 or np.linalg.norm(stored_norm) == 0:
-                sim = 0.0
-            else:
-                sim = np.dot(query_vec, stored_norm) / (np.linalg.norm(query_vec) * np.linalg.norm(stored_norm))
+            sim = self.compare_state_vector(label, vector, factor_space=factor_space,
+                                            factor_statuses=factor_statuses)['similarity']
             if sim >= threshold:
                 prob = probabilities.get(label, 0.0)
                 candidates.append((label, float(sim), float(prob), float(sim) * max(prob, 1e-9)))
@@ -486,7 +579,7 @@ class StateManager:
             return best_label
         return None
 
-    def find_similar_states(self, vector: np.ndarray, threshold: float = None, include_shadows: bool = False, interaction_index: int = 0, reward: float = 0.0) -> List[Tuple[str, float]]:
+    def find_similar_states(self, vector: np.ndarray, threshold: float = None, include_shadows: bool = False, interaction_index: int = 0, reward: float = 0.0, factor_space=None, factor_statuses=None) -> List[Tuple[str, float]]:
         """
         Return a list of (label, similarity) for all states with similarity > threshold.
         """
@@ -496,7 +589,6 @@ class StateManager:
             else:
                 threshold = 0.85
 
-        query_vec = self._normalize_vector(vector)
         all_states = dict(self.states)
         if include_shadows:
             all_states.update(self.shadow_states)
@@ -509,11 +601,8 @@ class StateManager:
 
         results = []
         for label, stored_vec in all_states.items():
-            stored_norm = self._normalize_vector(stored_vec)
-            if np.linalg.norm(query_vec) == 0 or np.linalg.norm(stored_norm) == 0:
-                sim = 0.0
-            else:
-                sim = np.dot(query_vec, stored_norm) / (np.linalg.norm(query_vec) * np.linalg.norm(stored_norm))
+            sim = self.compare_state_vector(label, vector, factor_space=factor_space,
+                                            factor_statuses=factor_statuses)['similarity']
             if sim >= threshold and probabilities.get(label, 0.0) >= probability_threshold:
                 results.append((label, sim))
                 self._normalize_state_probabilities(
@@ -579,7 +668,7 @@ class StateManager:
         observations = []
         for i, l1 in enumerate(clean_labels):
             for l2 in clean_labels[i + 1:]:
-                sim = self._cosine_similarity(self.states[l1], self.states[l2])
+                sim = self.compare_state_vector(l1, self.states[l2])['similarity']
                 if sim < threshold:
                     continue
                 obs = self._record_state_relation_pair(
@@ -610,7 +699,7 @@ class StateManager:
         observations = []
         for i, l1 in enumerate(labels):
             for l2 in labels[i + 1:]:
-                sim = self._cosine_similarity(self.states[l1], self.states[l2])
+                sim = self.compare_state_vector(l1, self.states[l2])['similarity']
                 if sim >= threshold:
                     observations.append(self._record_state_relation_pair(
                         l1, l2, sim, probabilities, tokens=tokens or [],
@@ -947,6 +1036,10 @@ class StateManager:
                     continue
                 meta2 = self.state_metadata.get(l2, {})
                 words2 = meta2.get('tokens', [])
+                # Legacy interactive conflict resolution is disabled by default.
+                # It has no named query schema for a synthesized centroid.
+                if len(v1) != len(self.states[l2]):
+                    raise FactorSpaceInvariantError('cannot compare synthesized positional centroid across schemas')
                 sim = self._cosine_similarity(v1, self.states[l2])
                 if sim >= threshold:
                     conflict = {
@@ -1021,6 +1114,8 @@ class StateManager:
                     label = data.get("label", fname[:-5])
                     vector = data.get("vector", [])
                     self.shadow_states[label] = self._normalize_vector(np.array(vector))
+                    self.state_raw_vectors[label] = np.array(vector, dtype=float)
+                    self.state_factor_spaces[label] = self._state_space_from_data(data, vector, label)
                 except Exception as e:
                     print(f"Could not load shadow state {fname}: {e}")
 

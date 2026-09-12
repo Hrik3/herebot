@@ -258,7 +258,7 @@ class HeartCuriosityMixin:
     # ------------------------------------------------------------------
     # State learning (unchanged logic, but uses configurable threshold)
     # ------------------------------------------------------------------
-    def _handle_state_learning(self, factor_vector: np.ndarray, metadata: dict):
+    def _handle_state_learning(self, factor_vector: np.ndarray, metadata: dict, factor_space=None):
         """
         Compare current factor vector with known states. Update active states list.
         """
@@ -282,6 +282,7 @@ class HeartCuriosityMixin:
         # Find all states above similarity threshold
         similar = self.state_manager.find_similar_states(
             factor_vector,
+            factor_space=factor_space,
             threshold=sim_threshold,
             interaction_index=self.interaction_counter,
             reward=float(getattr(self.reward_tracker, 'episode_reward', 0.0) or 0.0),
@@ -294,16 +295,11 @@ class HeartCuriosityMixin:
             label = self.resolve_state_label(label)
             stored_vec = self.state_manager.states.get(label)
             if stored_vec is not None:
-                v1 = self.state_manager._normalize_vector(factor_vector)
-                v2 = self.state_manager._normalize_vector(stored_vec)
-                if v1.shape != v2.shape:
-                    max_len = max(len(v1), len(v2))
-                    v1 = np.pad(v1, (0, max_len - len(v1)))
-                    v2 = np.pad(v2, (0, max_len - len(v2)))
-                dist = np.linalg.norm(v1 - v2)
+                comparison = self.state_manager.compare_state_vector(label, factor_vector, factor_space=factor_space)
+                dist = 1.0 - comparison['similarity']
                 if dist <= novelty_dist_threshold:
                     active_labels.append(label)
-                    active_embeddings.append(self._align_vector_to_emb_dim(v2))
+                    active_embeddings.append(self._align_vector_to_emb_dim(stored_vec))
 
         if active_labels:
             print(f"\n🔍 [State Recognition] This state matches: {', '.join(active_labels)}.")
@@ -340,7 +336,9 @@ class HeartCuriosityMixin:
             label = "unnamed_state"
 
         metadata['tokens'] = self._tokenize(metadata.get('input_text', ''))
-        self.state_manager.save_state(label, factor_vector, metadata, interaction_index=self.interaction_counter)
+        self.state_manager.save_state(label, factor_vector, metadata,
+                                      factor_space=factor_space,
+                                      interaction_index=self.interaction_counter)
         print(f"    ✅ State saved as '{label}'.")
         self._last_state_learning_time = time.time()
         self._last_state_learning_interaction = self.interaction_counter
