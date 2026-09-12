@@ -308,7 +308,7 @@
         "node_type": "word"
       },
       "created_at": 1781027700.1336942,
-      "updated_at": 1789205557.854649
+      "updated_at": 1789215836.9630332
     },
     "9067d6d66a87565ec7a935045f6c3efc47cc4ae73165675a0116825f5bdbf5d9": {
       "doc_id": "c3acf1175590fb0c4ef34d97785c2512ec429d48d3dbf66009c4f622b4b39036",
@@ -369,12 +369,12 @@
       "content_hash": "d18f573f7165275cf4401d15ca245c0716b56163bfff89ba0d46236a98dd6e03",
       "source_content_key": "132e6926cba854d12de10d38360ceb16306c52f80a21cd24f187fc287e355f78",
       "metadata": {
-        "confidence": 0.4511883639059736,
+        "confidence": 0.18126924692201818,
         "node1": "n1",
         "node2": "n2"
       },
       "created_at": 1781027700.1385584,
-      "updated_at": 1789205557.8551009
+      "updated_at": 1789215836.9630413
     },
     "60994caf32fe9c44a8d6025055291e5f162b028ca3f1fe12161c04d5aa958b09": {
       "doc_id": "4b29ab96053160026237905f2ca3e7528223c111c76183eacad175b5cf265362",
@@ -388,7 +388,7 @@
         "node2": "n3"
       },
       "created_at": 1781027700.139074,
-      "updated_at": 1789205557.855105
+      "updated_at": 1789215836.9630451
     },
     "7f80d04815f44d9938be74367744679d654d77b437579c5c615b1c9ae9bc412a": {
       "doc_id": "d17f362099cb8960918c381022b0be8b8c5af52dc58df923b6695ad70d8b4132",
@@ -397,12 +397,12 @@
       "content_hash": "d7b8365b68825d3b6966442007fcfc98a91f7c642d0a95d25e84111acc5fc57c",
       "source_content_key": "e4bdd207e2a287d8c8b2c781924164e99c17cad163079527e7a2e81dc84063d0",
       "metadata": {
-        "confidence": 0.4511883639059736,
+        "confidence": 0.18126924692201818,
         "node1": "n2",
         "node2": "n1"
       },
       "created_at": 1781027700.1395752,
-      "updated_at": 1789205557.855113
+      "updated_at": 1789215836.9630494
     },
     "3ee8688e27700b705e48dd3cb77f0f9f9ebdd69c85cb2623082856153f50d7dd": {
       "doc_id": "91de91c719ae5bb496750f5d900697d08f5fd29777f6577e0517591f824faa67",
@@ -416,7 +416,7 @@
         "node2": "n3"
       },
       "created_at": 1781027700.1401632,
-      "updated_at": 1789205557.8551168
+      "updated_at": 1789215836.9630527
     },
     "8b22fa2f6e1e0bdb882ff632ead3bffb07d9490d80eb1267f94ee5a2074f0cbd": {
       "doc_id": "f201c86c02ad8f7cd9eac33b0de5fd8a8b8386e3b4ae0ff0e2658c3223cfe05b",
@@ -486,7 +486,7 @@
         "node2": "n1"
       },
       "created_at": 1781027700.1432211,
-      "updated_at": 1789205557.8552542
+      "updated_at": 1789215836.963057
     },
     "fa68b7f595cdfed9d13d2e891beecb88a5329afcf657060a0b9437afa98a8d68": {
       "doc_id": "ee2842484165c54adfb615223c6c99c8fc4451c5dd465c77e2ea66e10caafe27",
@@ -500,7 +500,7 @@
         "node2": "n2"
       },
       "created_at": 1781027700.143899,
-      "updated_at": 1789205557.855259
+      "updated_at": 1789215836.9630606
     },
     "367c8caab795773bc2c885b88a11fd216f893627aed303d5d7ea8b1d9ceb6079": {
       "doc_id": "d758ed5d49a5eba222fe63c8f9b450e3a841c304a3947af7c78829a9ec264169",
@@ -3910,10 +3910,10 @@
       "source_content_key": "16522aebafdfee8971a77ea8b7d3577d1c115963e733b964389b8c4b4eea48c0",
       "metadata": {
         "turn": 1,
-        "timestamp": 1789214399.5941563
+        "timestamp": 1789215698.2497704
       },
       "created_at": 1781030249.2466092,
-      "updated_at": 1789214399.5941706
+      "updated_at": 1789215698.249787
     },
     "dc087faa4c89053518d51e46d842252a324e5bec1ceac05ef589323c946d34fa": {
       "doc_id": "d2b8666544ac6801668715ad1b53799bbb7c9730e8724f4f9cb574f051b9b0b4",
@@ -13816,11 +13816,11 @@
       "content_hash": "0f4168490e38b8447e11ba4bd656aa11b925bd22af30bac464bc153fdb608501",
       "source_content_key": "7889accd87222d702cd6ddf88e10cbf3767e89f3b6f11cf6fca23010ee5669d1",
       "metadata": {
-        "turn": 114,
-        "timestamp": 1789063175.2422547
+        "turn": 1,
+        "timestamp": 1789215816.3339713
       },
       "created_at": 1789063175.2422693,
-      "updated_at": 1789063175.2422693
+      "updated_at": 1789215816.3339984
     },
     "92269f7cbbf049d6e62f3524c251c74e29c1381fa42ca823eb14e1df25e9f036": {
       "doc_id": "0bf0bfc287d155153228a4cab64e5a45765d67e4620f61d829428ec656008e61",
@@ -18482,10 +18482,10 @@
       "source_content_key": "99990abb77190319ef2d970ba2a4969345fd970e1a38864a4db1ad849dc0765f",
       "metadata": {
         "turn": 1,
-        "timestamp": 1789214366.8037274
+        "timestamp": 1789215665.709383
       },
       "created_at": 1789064103.0157852,
-      "updated_at": 1789214366.8037407
+      "updated_at": 1789215665.709403
     },
     "68d2da9dfa076d7d7cfbe349432b7956e2cbb05b7a308534efbe70b91f94ce8c": {
       "doc_id": "ef7b0616ea3e599097c1c89c671104d2fc8229d324d75eae512d47612d1b14e0",
@@ -18497,7 +18497,7 @@
         "history_index": 0
       },
       "created_at": 1789064103.0364711,
-      "updated_at": 1789214366.803774
+      "updated_at": 1789215665.7096367
     },
     "9b27fe0a28bade4b42f5c6f597b6f02234990af9da6dce22c6e61c5d43eb57f1": {
       "doc_id": "72a3f1e62ca92cd80924852e4deec80f5a7c3166545821e0c6c7c98a26269019",
@@ -18507,10 +18507,10 @@
       "source_content_key": "83677a76a683ab132e401e77a6307b089eceb844ea3c816a7ed7579b781e2253",
       "metadata": {
         "turn": 1,
-        "timestamp": 1789214374.9411476
+        "timestamp": 1789215673.7964265
       },
       "created_at": 1789064109.1622038,
-      "updated_at": 1789214374.9411612
+      "updated_at": 1789215673.7964413
     },
     "2c6210bf053e298c11165120d11a98872dd4bc38cd161637d3d12063e0c2aa14": {
       "doc_id": "ed287d15d6a81f8f77dcd57008fb0c12feb370e9ec6dbe9eda87e42682b3a34b",
@@ -18522,7 +18522,7 @@
         "history_index": 0
       },
       "created_at": 1789064109.1825242,
-      "updated_at": 1789214374.941195
+      "updated_at": 1789215673.7965765
     },
     "c2ef9df7a2198b4ce8d5d28141ae83a06e792c6c1f32b7aab5c0e2bc419ae602": {
       "doc_id": "02b47d8d01b76127a5e8d2d021f8654cf2daa1cf57312cd5e77ca835067c856b",
@@ -18532,10 +18532,10 @@
       "source_content_key": "c1309bbc32a309b67865e0471fed3a63f4c06e03ed0a2be2b0c9d59731302403",
       "metadata": {
         "turn": 1,
-        "timestamp": 1789214391.581987
+        "timestamp": 1789215689.9861734
       },
       "created_at": 1789064114.869487,
-      "updated_at": 1789214391.582
+      "updated_at": 1789215689.9861946
     },
     "1fe57f1b0093159e20eafabf2e5dc283e84c90c8c14799eda08ffcada325e92a": {
       "doc_id": "ec907cb7bba4132214d39f3c4cd64a699dc7065307d97acbd64e1bcd324934ab",
@@ -18547,7 +18547,7 @@
         "history_index": 0
       },
       "created_at": 1789064114.888507,
-      "updated_at": 1789214391.5820336
+      "updated_at": 1789215689.9863718
     },
     "f6dd623d17019ab057aaaa231df844abcf9ff9adc8754066f26e8c6053ef77b6": {
       "doc_id": "93b8bb4e30fbf428f0479c47d9a8738c67b6059f4a7546ff965a21c8aed4ff19",
@@ -25021,6 +25021,105 @@
       },
       "created_at": 1789214039.0430615,
       "updated_at": 1789214071.2892938
+    },
+    "a4c6649118656023ba6b57b7d52aefdc77b84b9f4d5764bc99f85eb963cfea95": {
+      "doc_id": "fe443edcecdd626f4dcb74398853f204803751708da2a424e12a13e226d678d8",
+      "source": "turn:user_input",
+      "text": "water means liquid",
+      "content_hash": "fc9f90f658d917a37be389e4d35542a7aaedc760bcd419e0628661c8cf7f4ed6",
+      "source_content_key": "f32da881de5b4cad40fd9722fab1512871531b492725814945e32febb4e6e116",
+      "metadata": {
+        "turn": 2,
+        "timestamp": 1789214773.4637153
+      },
+      "created_at": 1789214773.4637303,
+      "updated_at": 1789214773.4637303
+    },
+    "0805d2097dddfef2ca3bfc170f18c69c60671773b856d06a025e571ed9b02f3b": {
+      "doc_id": "a74fd591814b99dd63581391ed36d2e66374796c00b1fe171ab64ee0c787bc4a",
+      "source": "episode:user_input",
+      "text": "water",
+      "content_hash": "0f4168490e38b8447e11ba4bd656aa11b925bd22af30bac464bc153fdb608501",
+      "source_content_key": "60b415846bac3c48787d824a2419458cec18ddb94133b0ab819d5b71eb07b2ba",
+      "metadata": {
+        "episode_timestamp": 1789214791.8243444
+      },
+      "created_at": 1789214836.5037808,
+      "updated_at": 1789215754.7590113
+    },
+    "a810e86ddfa14c0920c42e8576e03464d68d4da0a3128e602fb9e2facc99c2a6": {
+      "doc_id": "339e5b9de1b4160960d54c10e99e4bc4041f6e3f353abb911fb696756e6fa336",
+      "source": "episode:system_response",
+      "text": "TPL.DEF.MAYBE word='water' value='water means liquid' TPL.STATE.UNDERSTAND",
+      "content_hash": "f6c57a66771cd53be6da5430e6762edc8ec532b703466a3301fc8d0ef3725dad",
+      "source_content_key": "83851469bbc5dfb09deb59af5660c10565c84ac08432ddfca7ccbe82a52d3074",
+      "metadata": {
+        "episode_timestamp": 1789214791.8243444
+      },
+      "created_at": 1789214836.5037904,
+      "updated_at": 1789215754.759016
+    },
+    "980352e0f7fa43546c8308d4dd9dd933a255179b83781cfcb82be22f2cff4e2b": {
+      "doc_id": "e4e6f787e7a64cd22a8fad31076603961801a3388bcdc83e8516407f32e899ea",
+      "source": "knowledge_graph:node",
+      "text": "liquid",
+      "content_hash": "42110162e06395fd53647c77db6814026e22e26a10c24b98431ff20dc5eafbc3",
+      "source_content_key": "412feead42406729fa386ea11463a3ac476c778543c8ca18bdb1c68a1e8868f4",
+      "metadata": {
+        "node_id": "n3",
+        "node_type": "word"
+      },
+      "created_at": 1789214836.503804,
+      "updated_at": 1789215836.963037
+    },
+    "f3c0f4533c9f522a0d57646f99fb42bcbaceecb30ab357d3e247b1f5732e0485": {
+      "doc_id": "1782f05ff2837fefe2c0a6643f6f712dc14e1b758c414344d755b11e5a89a58d",
+      "source": "episode:system_response",
+      "text": "TPL.ACK.LISTEN",
+      "content_hash": "a13b40319d9b45cc5a56d9dd894fbc10e140fd524af93b15636c834cb5050a06",
+      "source_content_key": "91345366391e5ad39be20a9c3c7acd395740d7545c9eaae485571499cf06bc09",
+      "metadata": {
+        "episode_timestamp": 1789214857.8329473
+      },
+      "created_at": 1789215594.7266335,
+      "updated_at": 1789215754.75902
+    },
+    "460a334d6a50a5f3fcd8909e252e2659800148a3f8fa3683c05a335cd9e7fb99": {
+      "doc_id": "e90bdd5b0cd9ef832df3c0ce1a1f745014475879df0e39dd1853c654678c35f8",
+      "source": "turn:user_input",
+      "text": "unknownwordxyz",
+      "content_hash": "b4871c450237b738e90f22fb49d0533a7960b8ef9254ade267e2447566803ddd",
+      "source_content_key": "1501c9b3834156dc85e7af782e9ce11a338298e4f64833adefd744925b5274cc",
+      "metadata": {
+        "turn": 1,
+        "timestamp": 1789215836.962895
+      },
+      "created_at": 1789215636.2727153,
+      "updated_at": 1789215836.9629078
+    },
+    "ff3897e026c13f519942675ab56bfd5433087b2a5bc0325641e61f453fd3853a": {
+      "doc_id": "74a599343fe96f02911d931d458c24785778bbac2ab1ec20af80fd0a0bf88c8a",
+      "source": "history:user_input",
+      "text": "unknownwordxyz",
+      "content_hash": "b4871c450237b738e90f22fb49d0533a7960b8ef9254ade267e2447566803ddd",
+      "source_content_key": "eacc47d165fe1b24b53f7eb9a418b0bf918b8db471e1beb291e19352dc43fc3d",
+      "metadata": {
+        "history_index": 0
+      },
+      "created_at": 1789215636.2979014,
+      "updated_at": 1789215836.963013
+    },
+    "fe8ca32babb51754a8b53eb6005d0a98e8bcac63a45a5e4f902dcb364d7a92ae": {
+      "doc_id": "adda1097d0732f201e3d70803f253e3d2b58794775280f42ddd3fca55c8810ae",
+      "source": "episode:system_response",
+      "text": "TPL.HYP.REL word='water' candidate='means'",
+      "content_hash": "d61cb84070b054f2d62dd7e9948af7dda326e10d6ed7375af6391f323b158054",
+      "source_content_key": "6968b1725a58506b50d0a50de68ac3beae601a9392dc81de1dfd039554cc6e31",
+      "metadata": {
+        "episode_timestamp": 1789215732.531303
+      },
+      "created_at": 1789215732.8304157,
+      "updated_at": 1789215754.759024
     }
   },
   "source_content_keys": {
@@ -26926,6 +27025,14 @@
     "a70fdb356333f8762bcb4a0a875c9b2d3898913c52a48fcbe7f7855f22b98ffe": "ff51983306b49ff98dd07e51371fc6ec85bd1c870338b3b0e236ad86f78eea19",
     "c8bcfd0d3686d30019c188d9b37bd4ffb3e14bbdb57f517eb0c4576d254bd046": "c27d79c650c06d948acec6afe9fd85038c9814f4550ee64150c993d60b52ff90",
     "90e0063cddb8bfe3db8769f2796d4a6191d4b06f45140381205781f9ad7b9048": "668d3ef0ea46f7401066c1b0e35ad71335dfcb7a07265cd27495d36fb0a0ede3",
-    "76a2a767bf920a925a30404581621bd756845daaca47e062cd1545786b154394": "0a3ff464c7209f8a2b0335b708b1a393609733e329a4fca65b20c122114c3f71"
+    "76a2a767bf920a925a30404581621bd756845daaca47e062cd1545786b154394": "0a3ff464c7209f8a2b0335b708b1a393609733e329a4fca65b20c122114c3f71",
+    "f32da881de5b4cad40fd9722fab1512871531b492725814945e32febb4e6e116": "a4c6649118656023ba6b57b7d52aefdc77b84b9f4d5764bc99f85eb963cfea95",
+    "60b415846bac3c48787d824a2419458cec18ddb94133b0ab819d5b71eb07b2ba": "0805d2097dddfef2ca3bfc170f18c69c60671773b856d06a025e571ed9b02f3b",
+    "83851469bbc5dfb09deb59af5660c10565c84ac08432ddfca7ccbe82a52d3074": "a810e86ddfa14c0920c42e8576e03464d68d4da0a3128e602fb9e2facc99c2a6",
+    "412feead42406729fa386ea11463a3ac476c778543c8ca18bdb1c68a1e8868f4": "980352e0f7fa43546c8308d4dd9dd933a255179b83781cfcb82be22f2cff4e2b",
+    "91345366391e5ad39be20a9c3c7acd395740d7545c9eaae485571499cf06bc09": "f3c0f4533c9f522a0d57646f99fb42bcbaceecb30ab357d3e247b1f5732e0485",
+    "1501c9b3834156dc85e7af782e9ce11a338298e4f64833adefd744925b5274cc": "460a334d6a50a5f3fcd8909e252e2659800148a3f8fa3683c05a335cd9e7fb99",
+    "eacc47d165fe1b24b53f7eb9a418b0bf918b8db471e1beb291e19352dc43fc3d": "ff3897e026c13f519942675ab56bfd5433087b2a5bc0325641e61f453fd3853a",
+    "6968b1725a58506b50d0a50de68ac3beae601a9392dc81de1dfd039554cc6e31": "fe8ca32babb51754a8b53eb6005d0a98e8bcac63a45a5e4f902dcb364d7a92ae"
   }
 }

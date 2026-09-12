@@ -193,11 +193,13 @@ class CuriosityTracker:
 
     def _snapshot(self, engine) -> Dict:
         """Extract every trackable metric from the engine right now."""
+        trigger = getattr(self, "_current_trigger", "interaction")
         snap: Dict = {
+            "schema_version": 2,
             "timestamp": time.time(),
             "session_id": self._session_id,
             "interaction_num": int(getattr(engine, "interaction_counter", 0)),
-            "trigger": self._current_trigger,
+            "trigger": trigger,
         }
 
         # ── word / concept counts ────────────────────────────────────────────
@@ -214,8 +216,10 @@ class CuriosityTracker:
         reward_tracker = getattr(engine, "reward_tracker", None)
         if reward_tracker is not None:
             snap["total_reward"] = _safe_float(getattr(reward_tracker, "total_reward", 0.0))
+            snap["episode_reward"] = _safe_float(getattr(reward_tracker, "episode_reward", 0.0))
         else:
             snap["total_reward"] = 0.0
+            snap["episode_reward"] = 0.0
 
         # ── average entropy ──────────────────────────────────────────────────
         if concept_model is not None and word_history:
@@ -278,20 +282,38 @@ class CuriosityTracker:
         token_profile = getattr(engine, "token_profile", {})
         snap["unique_tokens"] = len(token_profile)
 
-        # ── GP predictive variance (mean across all known words) ─────────────
+        # ── GP predictive variance & uncertainty across vocabulary ───────────
         gp_model = getattr(engine, "gp_model", None)
+        variances = []
+        uncertainties = []
         if gp_model is not None and word_history:
-            try:
-                variances = []
-                for w in list(word_history.keys())[:200]:      # cap for speed
-                    v = gp_model.predict_variance(w)
-                    if v is not None:
-                        variances.append(_safe_float(v))
-                snap["avg_gp_variance"] = float(np.mean(variances)) if variances else 0.0
-            except Exception:
-                snap["avg_gp_variance"] = 0.0
-        else:
-            snap["avg_gp_variance"] = 0.0
+            for w in list(word_history.keys())[:200]:      # cap for speed
+                hist = word_history[w]
+                if hist:
+                    last = hist[-1]
+                    features = last.get("features")
+                    if features:
+                        farr = engine._features_to_array(features)
+                        var = gp_model.predict_variance(farr)
+                        unc = gp_model.uncertainty(farr)
+                        if var is not None and np.isfinite(var):
+                            variances.append(float(var))
+                        if unc is not None and np.isfinite(unc):
+                            uncertainties.append(float(unc))
+        snap["avg_gp_variance"] = float(np.mean(variances)) if variances else None
+        snap["avg_gp_uncertainty"] = float(np.mean(uncertainties)) if uncertainties else None
+
+        # ── turn-level telemetry ──────────────────────────────────────────────
+        turn_telem = getattr(engine, "_last_turn_telemetry", {})
+        snap["turn_gp_uncertainty"] = turn_telem.get("turn_gp_uncertainty", None)
+        snap["turn_info_gain"] = turn_telem.get("turn_info_gain", None)
+        snap["turn_bayesian_surprise"] = turn_telem.get("turn_bayesian_surprise", None)
+        snap["turn_curiosity_score"] = turn_telem.get("turn_curiosity_score", None)
+        snap["turn_prediction_error"] = getattr(engine, "_last_prediction_error", None)
+        snap["total_info_gain"] = _safe_float(getattr(engine, "total_info_gain", 0.0))
+
+        # ── control factors ───────────────────────────────────────────────────
+        snap["control_factors"] = getattr(engine, "_last_control_factors", {})
 
         return snap
 
@@ -379,9 +401,14 @@ class CuriosityTracker:
         # 1b. Intrinsic reward
         ax = fig.add_subplot(gs[0, 1])
         ax.plot(*_bs([d.get("total_reward", 0) for d in data]),
-                color=_PALETTE[2], linewidth=1.8)
+                color=_PALETTE[2], linewidth=1.8, label="Cumulative")
+        ep_rewards = [d.get("episode_reward") for d in data]
+        if any(r is not None and r != 0.0 for r in ep_rewards):
+            ax.plot(*_bs([d.get("episode_reward", 0) for d in data]),
+                    color=_PALETTE[8], linewidth=1.2, linestyle="--", alpha=0.75, label="Episode")
+            ax.legend(fontsize=7, loc="upper left")
         _shade_sessions(ax, data, ts)
-        ax.set_title("Cumulative Intrinsic Reward")
+        ax.set_title("Intrinsic Reward")
         ax.set_ylabel("Reward")
         ax.set_xlabel("Interaction index", fontsize=7)
 
@@ -389,8 +416,25 @@ class CuriosityTracker:
         ax = fig.add_subplot(gs[1, 0])
         ax.plot(*_bs([d.get("avg_entropy", 0) for d in data]),
                 color=_PALETTE[3], linewidth=1.8, label="Avg entropy")
-        ax.plot(*_bs([d.get("avg_gp_variance", 0) for d in data]),
+        
+        # Pen-lift on historical missing/zero GP variance
+        gp_vars = []
+        for d in data:
+            v = d.get("avg_gp_variance")
+            # In historical data (schema 1 or unversioned), exactly 0.0 was the swallowed exception
+            if v is None or v == 0.0:
+                gp_vars.append(None)
+            else:
+                gp_vars.append(v)
+        
+        ax.plot(*_bs(gp_vars),
                 color=_PALETTE[4], linewidth=1.8, linestyle=":", label="Avg GP variance")
+                
+        turn_gpus = [d.get("turn_gp_uncertainty") for d in data]
+        if any(u is not None for u in turn_gpus):
+            ax.plot(*_bs(turn_gpus),
+                    color=_PALETTE[9], linewidth=1.3, alpha=0.8, linestyle="-.", label="Turn GP uncertainty")
+
         _shade_sessions(ax, data, ts)
         ax.set_title("Uncertainty Signals")
         ax.set_ylabel("Value")
