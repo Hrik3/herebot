@@ -1,3 +1,4 @@
+import hashlib
 from importglobal import os,pickle,np,Counter,List,Optional
 from components.config_manager import ConfigManager
 # ------------------------------------------------------------
@@ -23,6 +24,9 @@ class SemanticLearner:
             self.emb_dim = emb_dim if emb_dim is not None else 64
             self.alpha = alpha if alpha is not None else 0.1
 
+        # Schema version for semantic representation
+        self.semantic_space_version = 1
+
         # word -> (mu, log_sigma) for its embedding
         self.word_embeddings = {}   # word -> np.ndarray(mean)
         self.word_logsigma = {}     # word -> np.ndarray(log variance)
@@ -39,8 +43,14 @@ class SemanticLearner:
             self.alpha = new_alpha
 
     def initialize_word(self, word: str):
-        """Initialise embedding with prior N(0, I/alpha)."""
-        self.word_embeddings[word] = np.zeros(self.emb_dim)
+        """
+        Initialise word embedding with a deterministic morphological subword prior.
+        Avoids the zero-vector absorbing barrier while providing an empirical prior
+        where morphologically related words start proximal and unrelated words have
+        expected cosine similarity of zero.
+        """
+        prior = self.char_ngram_embedding(word, emb_dim=self.emb_dim)
+        self.word_embeddings[word] = prior
         self.word_logsigma[word] = np.zeros(self.emb_dim)  # log(1) = 0
         self.word_counts[word] = 0
 
@@ -49,7 +59,7 @@ class SemanticLearner:
         Update embedding using co-occurrence information.
         Simplified: assume that if two words appear together,
         their embeddings should be close (cosine similarity).
-        Performs one step of variational inference.
+        Performs one step of variational inference on the unit semantic sphere.
         """
         if word not in self.word_embeddings:
             self.initialize_word(word)
@@ -72,6 +82,9 @@ class SemanticLearner:
         if np.any(np.isnan(grad)) or np.any(np.isinf(grad)):
             grad = np.zeros_like(grad)
         self.word_embeddings[word] += lr * grad
+        norm_post = np.linalg.norm(self.word_embeddings[word])
+        if norm_post > 0:
+            self.word_embeddings[word] /= norm_post
         self.word_counts[word] += 1
 
     def observe_definition(self, word: str, definition_text: str,
@@ -88,19 +101,31 @@ class SemanticLearner:
         # tokenise definition, optionally filter structural/function words
         tokens = definition_text.split()
         if structural_detector is not None:
-            tokens = [t for t in tokens if not structural_detector.is_structural(t)]
+            content_tokens = [t for t in tokens if not structural_detector.is_structural(t)]
+            if content_tokens:
+                tokens = content_tokens
         known_embs = [self.word_embeddings[t] for t in tokens if t in self.word_embeddings]
+        if not known_embs:
+            # Fall back to character embeddings of definition tokens if none registered yet
+            known_embs = [self.char_ngram_embedding(t, emb_dim=self.emb_dim) for t in tokens]
         if not known_embs:
             return
         target = np.mean(known_embs, axis=0)
-        target = target / (np.linalg.norm(target) + 1e-12)
+        norm_t = np.linalg.norm(target)
+        if norm_t > 0:
+            target /= norm_t
+        else:
+            return
 
         if word not in self.word_embeddings:
             self.initialize_word(word)
         # pull embedding toward target
         emb = self.word_embeddings[word]
         grad = (target - emb) - self.alpha * emb
-        self.word_embeddings[word] += 0.1 * grad
+        self.word_embeddings[word] += 0.5 * grad
+        norm_post = np.linalg.norm(self.word_embeddings[word])
+        if norm_post > 0:
+            self.word_embeddings[word] /= norm_post
         self.word_counts[word] += 1
 
     def similarity(self, w1: str, w2: str) -> float:
@@ -113,55 +138,80 @@ class SemanticLearner:
         norm2 = np.linalg.norm(e2)
         if norm1 == 0 or norm2 == 0:
             return 0.0
-        return np.dot(e1, e2) / (norm1 * norm2)
+        return float(np.dot(e1, e2) / (norm1 * norm2))
 
-    def text_to_embedding(self, text: str, fallback_to_char=True) -> Optional[np.ndarray]:
+    def text_to_embedding(self, text: str, fallback_to_char=True, structural_detector=None) -> Optional[np.ndarray]:
         """
-        Convert a text string to an embedding by averaging embeddings of known words.
-        If fallback_to_char, use character n-gram embedding for unknown words.
-        Returns None only if no words and no characters (empty).
+        Convert a text string to an embedding with content-aware weighting:
+        tokens are weighted by inverse frequency and soft structural downweighting,
+        preserving grammatical distinction without allowing structural frames to dominate.
         """
         tokens = text.split()
-        known_embs = []
+        if not tokens:
+            return None
+        weights = []
+        vectors = []
         for t in tokens:
             if t in self.word_embeddings:
-                known_embs.append(self.word_embeddings[t])
+                v = self.word_embeddings[t]
             elif fallback_to_char:
-                # use character embedding
-                known_embs.append(self.char_ngram_embedding(t, emb_dim=self.emb_dim))
-        if not known_embs:
+                v = self.char_ngram_embedding(t, emb_dim=self.emb_dim)
+            else:
+                continue
+
+            cnt = self.word_counts.get(t, 1)
+            w = 1.0 / np.sqrt(1.0 + cnt * 0.1)
+
+            if structural_detector is not None and structural_detector.is_structural(t):
+                w *= 0.15
+
+            weights.append(max(0.1, w))
+            vectors.append(v)
+
+        if not vectors:
             return None
-        emb = np.mean(known_embs, axis=0)
-        norm = np.linalg.norm(emb)
+
+        weighted_sum = np.zeros(self.emb_dim, dtype=float)
+        for v, w in zip(vectors, weights):
+            weighted_sum += v * w
+
+        norm = np.linalg.norm(weighted_sum)
         if norm > 0:
-            emb /= norm
-        return emb
+            weighted_sum /= norm
+            return weighted_sum
+        return None
 
     def char_ngram_embedding(self, text: str, n=3, emb_dim=64) -> np.ndarray:
         """
-        Compute a simple character n-gram embedding for unknown words.
-        Hash each n-gram to a position, use bag-of-char-ngrams.
+        Compute a deterministic character n-gram feature representation for text/subwords.
+        Uses cryptographic MD5 hash modulo emb_dim with alternating sign-hashing
+        (feature hashing) to ensure:
+        1. Strict process-invariance across Python runs and platforms.
+        2. Unbiased inner products (expected inner product of unrelated strings is 0).
+        3. Preservation of subword/morphological similarity.
         """
-        # Pad text
         text = ' ' + text.lower() + ' '
         ngrams = []
         for i in range(len(text)-n+1):
-            ngram = text[i:i+n]
-            ngrams.append(ngram)
-        emb = np.zeros(emb_dim)
+            ngrams.append(text[i:i+n])
+        emb = np.zeros(emb_dim, dtype=float)
         for ng in set(ngrams):  # unique n-grams
-            idx = hash(ng) % emb_dim
-            emb[idx] += 1.0
+            digest = hashlib.md5(ng.encode('utf-8')).digest()
+            h = int.from_bytes(digest[:4], byteorder='little')
+            idx = h % emb_dim
+            sign = 1.0 if ((h >> 16) & 1) == 0 else -1.0
+            emb[idx] += sign
         # normalize
         norm = np.linalg.norm(emb)
         if norm > 0:
             emb /= norm
         return emb
-    
+
     def save(self, path: str):
         tmp = path + ".tmp"
         with open(tmp, 'wb') as f:
             pickle.dump({
+                'version': self.semantic_space_version,
                 'embeddings': self.word_embeddings,
                 'logsigma': self.word_logsigma,
                 'counts': self.word_counts,
@@ -171,6 +221,24 @@ class SemanticLearner:
     def load(self, path: str):
         with open(path, 'rb') as f:
             data = pickle.load(f)
-            self.word_embeddings = data['embeddings']
-            self.word_logsigma = data['logsigma']
-            self.word_counts = data['counts']
+            self.word_embeddings = data.get('embeddings', {})
+            self.word_logsigma = data.get('logsigma', {})
+            self.word_counts = data.get('counts', Counter())
+            version = data.get('version', 0)
+            if version == 0:
+                # Migration of legacy v0 representations:
+                # 1. Clean up multi-word state labels and factor-contaminated vectors
+                legacy_keys = list(self.word_embeddings.keys())
+                for k in legacy_keys:
+                    v = self.word_embeddings[k]
+                    v_norm = np.linalg.norm(v)
+                    is_factor_contaminated = (v_norm > 0 and len(v) >= 14 and np.all(np.abs(v[13:]) < 1e-9) and np.any(v[:11] > 0))
+                    if ' ' in k and k not in ['new york']:
+                        del self.word_embeddings[k]
+                        self.word_counts.pop(k, None)
+                        self.word_logsigma.pop(k, None)
+                    elif is_factor_contaminated or v_norm == 0:
+                        self.word_embeddings[k] = self.char_ngram_embedding(k, emb_dim=self.emb_dim)
+                self.semantic_space_version = 1
+            else:
+                self.semantic_space_version = version

@@ -526,43 +526,18 @@ class HeartIdleMixin:
             return
 
         print("🔄 [Cross‑modal Alignment] Aligning semantic, state, episodic embeddings...")
-        # gather positive pairs: (state_vector, text_embedding) from same episode
-        pos_pairs = []
-        for ep in self.episodic_memory.episodes[-100:]:
-            if 'factor_vector' in ep and ep['factor_vector']:
-                state_vec = self._align_factor_vector(np.array(list(ep['factor_vector'].values())))
-                state_vec = self._align_vector_to_emb_dim(state_vec)
-                text = ep.get('user_input', '')
-                text_emb = self.semantic_learner.text_to_embedding(text)
-                if text_emb is not None:
-                    pos_pairs.append((state_vec, text_emb))
-        if len(pos_pairs) < 5:
-            return
-        # simple contrastive update: pull positive pairs together, push negatives apart
-        lr = 0.01 * throttle   # reduce learning rate when throttled
-        for state_vec, text_emb in pos_pairs:
-            # positive pair similarity
-            sim_pos = np.dot(state_vec, text_emb) / (np.linalg.norm(state_vec)*np.linalg.norm(text_emb)+1e-12)
-            # sample a negative text embedding (random other episode)
-            neg_candidates = [p for p in pos_pairs if not np.allclose(p[1], text_emb)]
-            neg_pair = None
-            if neg_candidates:
-                neg_pair = neg_candidates[np.random.randint(len(neg_candidates))]
-
-            if neg_pair:
-                neg_emb = neg_pair[1]
-                sim_neg = np.dot(state_vec, neg_emb) / (np.linalg.norm(state_vec)*np.linalg.norm(neg_emb)+1e-12)
-                # InfoNCE‑like loss: maximize exp(sim_pos)/ (exp(sim_pos)+exp(sim_neg))
-                # gradient ascent on log prob
-                prob_pos = np.exp(sim_pos) / (np.exp(sim_pos) + np.exp(sim_neg))
-                # update text embedding towards state_vec (very crude)
-                grad = (1 - prob_pos) * (state_vec - text_emb)
-                # update the words in the text embedding? We'll approximate by adjusting each word's embedding
-                tokens = self._tokenize(ep['user_input'])
+        # Cross-modal alignment associates words from recent episodes with active state labels
+        # via WordStateAssociator, NEVER directly mutating semantic word vectors with factor control vectors.
+        if hasattr(self.reasoner, 'word_state') and getattr(self, 'current_state_labels', None):
+            for ep in self.episodic_memory.episodes[-100:]:
+                tokens = self._tokenize(ep.get('user_input', ''))
                 for t in tokens:
-                    if t in self.semantic_learner.word_embeddings:
-                        self.semantic_learner.word_embeddings[t] += lr * grad / len(tokens)
-        print("   Contrastive alignment step completed (throttle={:.2f}).".format(throttle))
+                    for lbl in self.current_state_labels:
+                        self.reasoner.word_state.add_association(
+                            t, lbl, confidence=0.7 * throttle, source="cross_modal_alignment",
+                            interaction_index=getattr(self, 'interaction_counter', 0)
+                        )
+        print("   Cross‑modal association alignment completed (throttle={:.2f}).".format(throttle))
 
     def exploration_policy_distillation(self):
         """8. Exploration Policy Distillation."""
@@ -1211,9 +1186,10 @@ class HeartIdleMixin:
             return
 
         # Compute embeddings for these phrases (if possible)
+        detector = getattr(getattr(self.reasoner, 'pattern_observer', None), 'detector', None)
         phrase_embs = {}
         for p in phrases:
-            emb = self.semantic_learner.text_to_embedding(p, fallback_to_char=True)
+            emb = self.semantic_learner.text_to_embedding(p, fallback_to_char=True, structural_detector=detector)
             if emb is not None:
                 phrase_embs[p] = emb
 
@@ -1237,6 +1213,8 @@ class HeartIdleMixin:
                             'similarity': sim,
                             'text': f"I notice that '{p1}' and '{p2}' seem similar. Are they related?",
                             'asked': False,
+                            'provenance': 'idle_mining',
+                            'evidence_count': 1,
                         }
                         self.reasoner.hypotheses.append(hyp)
                         print(f"   ➕ Proposed phrase similarity: '{p1}' ↔ '{p2}' (sim={sim:.2f})")

@@ -343,7 +343,7 @@ class HeartCuriosityMixin:
         self._last_state_learning_time = time.time()
         self._last_state_learning_interaction = self.interaction_counter
         self._reinforce_identity(factor_vector, reward_signal=0.2)
-        self._update_state_embedding([label], self._align_vector_to_emb_dim(factor_vector))
+        self._update_state_embedding([label])
 
     def _detect_semantic_relations(self, tokens: List[str], token_analyses: List[Dict]):
         """
@@ -435,35 +435,24 @@ class HeartCuriosityMixin:
 
     def _update_state_embedding(self, labels: List[str], combined_vector: Optional[np.ndarray] = None):
         """
-        Set the current active state labels and combined embedding.
-        If combined_vector is None, compute it as the average of each label's embedding.
-        Also store each label's embedding in the semantic learner.
+        Set the current active state labels and combined semantic embedding.
+        Uses text_to_embedding on the state's linguistic name.
+        Does NOT inject factor vectors into semantic_learner.word_embeddings.
         """
-        if combined_vector is None:
-            # compute average of embeddings for all labels
-            embs = []
-            for lbl in labels:
-                if lbl in self.semantic_learner.word_embeddings:
-                    embs.append(self.semantic_learner.word_embeddings[lbl])
-                else:
-                    # label not yet in semantic learner – create it
-                    self.semantic_learner.initialize_word(lbl)
-                    embs.append(self.semantic_learner.word_embeddings[lbl])
-            if embs:
-                combined = np.mean(embs, axis=0)
-            else:
-                combined = np.zeros(self.semantic_learner.emb_dim)
-        else:
-            combined = combined_vector
-
-        # Ensure each label has an embedding in semantic learner
+        embs = []
         for lbl in labels:
-            if lbl not in self.semantic_learner.word_embeddings:
-                self.semantic_learner.initialize_word(lbl)
-                # use the combined vector as a rough embedding (or could use a stored state vector)
-                if lbl in self.state_manager.states:
-                    vec = self.state_manager.states[lbl]
-                    self.semantic_learner.word_embeddings[lbl] = self._align_vector_to_emb_dim(vec)
+            emb = self.semantic_learner.text_to_embedding(lbl)
+            if emb is not None:
+                embs.append(emb)
+        if embs:
+            combined = np.mean(embs, axis=0)
+            norm = np.linalg.norm(combined)
+            if norm > 0:
+                combined /= norm
+        elif combined_vector is not None:
+            combined = self._align_vector_to_emb_dim(combined_vector)
+        else:
+            combined = np.zeros(self.semantic_learner.emb_dim)
 
         self.current_state_labels = labels
         if hasattr(self.state_manager, 'get_group_heads_for_labels'):

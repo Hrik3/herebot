@@ -584,8 +584,9 @@ class HeartProcessingMixin:
                         word = self.last_asked_word
                         if word not in self.semantic_learner.word_embeddings:
                             self.semantic_learner.initialize_word(word)
-                        self.semantic_learner.observe_definition(word, text, structural_detector=self.reasoner.pattern_observer.detector)
-                        def_emb = self.semantic_learner.text_to_embedding(text)
+                        detector = getattr(getattr(self.reasoner, 'pattern_observer', None), 'detector', None)
+                        self.semantic_learner.observe_definition(word, text, structural_detector=detector)
+                        def_emb = self.semantic_learner.text_to_embedding(text, structural_detector=detector)
                         if def_emb is not None:
                             self.reasoner.store_definition(word, text, def_emb)
                             self.concept_model.register_definition_event(
@@ -764,7 +765,8 @@ class HeartProcessingMixin:
                 self._update_token_profile(token, context, bayes, igain, emb)
             # ---- Sentence-level reasoning (if all tokens known) ----
             if self._all_tokens_known(tokens):
-                sentence_emb = self.semantic_learner.text_to_embedding(text)
+                detector = getattr(getattr(self.reasoner, 'pattern_observer', None), 'detector', None)
+                sentence_emb = self.semantic_learner.text_to_embedding(text, structural_detector=detector)
                 if sentence_emb is not None:
                     self._process_sentence_reasoning(text, tokens, token_analyses, sentence_emb)
 

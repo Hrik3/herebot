@@ -1,3 +1,4 @@
+import hashlib
 from concepts.meta_learner import MetaCuriosityLearner
 from importglobal import Set,Dict,List,Any,Tuple, Optional, Counter, defaultdict, pickle, np, os, time, math
 from traits.traits_global import Expression, Variable
@@ -730,7 +731,7 @@ class ReasoningEngine:
         canon = phrase.strip().lower()
         if not canon:
             return
-        key = str(hash(canon))
+        key = hashlib.sha256(canon.encode('utf-8')).hexdigest()[:16]
         self.phrase_embeddings[key] = embedding
         meta = dict(metadata) if isinstance(metadata, dict) else {}
         meta.setdefault('phrase', canon)
@@ -763,6 +764,8 @@ class ReasoningEngine:
             'similarity': sim,
             'text': f"TPL.ASK.SYN word='{word}' candidate='{best_word}'?",
             'asked': False,
+            'provenance': 'definition_similarity',
+            'evidence_count': 1,
             # ---- metabolic ----
             'energy_cost': 0.5,
             'recent_usage': 0.0,
