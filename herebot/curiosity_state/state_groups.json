@@ -1,30 +1,34 @@
 {
   "group::bright curiosity||greetings": {
-    "head_label": "is zibber what",
+    "head_label": "zibber is cold",
     "child_labels": [
       "bright curiosity",
       "greetings"
     ],
     "centroid_vector": [
-      0.387615028092422,
-      0.08534777079994524,
-      0.3820393588195821,
-      0.39069366873358435,
-      0.006951189333549158,
-      0.18740906891627734,
-      0.031703401774898256,
-      0.25556081436163247,
-      0.3864726350203821,
-      0.5413194271911087,
+      0.38151021883450964,
+      0.08608639154657553,
+      0.38333803507772174,
+      0.3889214775047327,
+      0.007093021356197911,
+      0.1874968560465275,
+      0.030357566423513806,
+      0.2626661903402806,
+      0.386823754293993,
+      0.5422896025752248,
       0.0
     ],
     "dominant_tokens": [
-      "is",
       "zibber",
+      "is",
+      "cold",
+      "can",
+      "be",
+      "found",
       "what",
-      "bird",
-      "travel",
-      "hello"
+      "near",
+      "caves",
+      "warm"
     ],
     "dominant_phrases": [],
     "factor_signature": [
@@ -34,24 +38,24 @@
       },
       {
         "factor_index": 0,
-        "mean_delta": 0.20252088212449015
+        "mean_delta": 0.20252088212449024
       },
       {
         "factor_index": 2,
-        "mean_delta": 0.07003625374577943
+        "mean_delta": 0.07003625374577947
       },
       {
         "factor_index": 9,
-        "mean_delta": 0.06717099518586694
+        "mean_delta": 0.06717099518586699
       },
       {
         "factor_index": 6,
-        "mean_delta": 0.04776565095509506
+        "mean_delta": 0.047765650955095065
       }
     ],
     "probability": 1.0,
-    "reward_trace": 10.095641368165829,
-    "last_interaction": 8,
+    "reward_trace": 42.49162714959503,
+    "last_interaction": 20,
     "phase": "active",
     "first_interaction": 7
   }
