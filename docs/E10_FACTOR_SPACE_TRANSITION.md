@@ -113,4 +113,4 @@ known separate issue and is deliberately not addressed here.
 
 ## Commit
 
-Commit: pending final commit creation.
+Implementation commit: `5b2003cbacb3717ff69468e4a43c8ee45d3aa37a`.
