@@ -1,0 +1,24 @@
+{
+  "timestamp": 1789204357.485151,
+  "user_input": "are you fine",
+  "system_response": "TPL.RECALL.PHRASE phrase='are you fine'",
+  "factor_vector": {
+    "curiosity": 1.1524392265081016,
+    "threat": 0.12346359569954668,
+    "trust": 0.600163492018998,
+    "confidence": 0.8139772945501692,
+    "uncertainty": 0.0025572837629689524,
+    "energy": 0.37,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9445,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 1.27762818003581,
+  "metadata": {
+    "ci_confidence": 0.8139772945501692,
+    "generated_plugin_influence": null
+  }
+}

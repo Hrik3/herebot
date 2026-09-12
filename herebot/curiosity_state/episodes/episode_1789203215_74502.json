@@ -1,0 +1,24 @@
+{
+  "timestamp": 1789203215.2852366,
+  "user_input": "how are you",
+  "system_response": "TPL.ASK.CAT subject='how' object='you'?",
+  "factor_vector": {
+    "curiosity": 1.3903993924918538,
+    "threat": 0.13341640414649347,
+    "trust": 0.6010281327647904,
+    "confidence": 0.7916402314008678,
+    "uncertainty": 0.0026652043864705626,
+    "energy": 0.37,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9445,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.8829502940115578,
+  "metadata": {
+    "ci_confidence": 0.7916402314008678,
+    "generated_plugin_influence": null
+  }
+}

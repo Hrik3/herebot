@@ -1,0 +1,24 @@
+{
+  "timestamp": 1789202654.8743873,
+  "user_input": "are you who",
+  "system_response": "TPL.HYP.REL word='are' candidate='you'",
+  "factor_vector": {
+    "curiosity": 1.1827734213461498,
+    "threat": 0.1388809581107755,
+    "trust": 0.6003572658399379,
+    "confidence": 0.7889983564203543,
+    "uncertainty": 0.0027555502978831247,
+    "energy": 0.361,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.94585,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.8207926094690763,
+  "metadata": {
+    "ci_confidence": 0.7889983564203543,
+    "generated_plugin_influence": null
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "timestamp": 1789202784.1087267,
+  "user_input": "is flint like water",
+  "system_response": "TPL.PFX.CURIOUS | TPL.DEF.KNOWN word='is' value='is means means'",
+  "factor_vector": {
+    "curiosity": 1.329072029048937,
+    "threat": 0.10737162000061415,
+    "trust": 0.6216747370952188,
+    "confidence": 0.8367959216239599,
+    "uncertainty": 0.0026652043864705626,
+    "energy": 0.33299999999999996,
+    "attention": 0.2,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9334,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 1.5478481679963279,
+  "metadata": {
+    "ci_confidence": 0.8367959216239599,
+    "generated_plugin_influence": null
+  }
+}

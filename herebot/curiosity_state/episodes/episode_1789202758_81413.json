@@ -1,0 +1,24 @@
+{
+  "timestamp": 1789202758.426064,
+  "user_input": "what is flint",
+  "system_response": "TPL.DEF.REL word='what' value='what is a word' rel='unknown word'",
+  "factor_vector": {
+    "curiosity": 0.5236038788767033,
+    "threat": 0.15635984498277394,
+    "trust": 0.5809103128651553,
+    "confidence": 0.758741438658906,
+    "uncertainty": 0.002709624459581739,
+    "energy": 0.358,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9463,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 1.0869110231242884,
+  "metadata": {
+    "ci_confidence": 0.758741438658906,
+    "generated_plugin_influence": null
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "timestamp": 1789202772.4998417,
+  "user_input": "water is soft and flows",
+  "system_response": "TPL.DEF.REL word='water' value='water is a nature' rel='unknown nature'",
+  "factor_vector": {
+    "curiosity": 1.8068102466812934,
+    "threat": 0.11430505157055904,
+    "trust": 0.619005318099128,
+    "confidence": 0.8243247159679025,
+    "uncertainty": 0.0026652043864705626,
+    "energy": 0.367,
+    "attention": 0.25,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.90825,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 10.933471733056525,
+  "metadata": {
+    "ci_confidence": 0.8243247159679025,
+    "generated_plugin_influence": null
+  }
+}
