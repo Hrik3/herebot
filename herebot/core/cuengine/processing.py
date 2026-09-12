@@ -30,6 +30,33 @@ class HeartProcessingMixin:
         import re
         return set(re.findall(r"[a-z']+", (text or '').lower()))
 
+    def _record_turn_telemetry(self, trigger: str, token_analyses=None, factor_dict=None):
+        """
+        Record explicit turn telemetry: computed -> turn aggregate -> tracker snapshot.
+        Preserves provenance by attaching the trigger reason to the snapshot.
+        """
+        if not hasattr(self, 'tracker') or self.tracker is None:
+            return
+        if token_analyses:
+            self._last_token_analyses = token_analyses
+            self._last_turn_telemetry = {
+                'turn_gp_uncertainty': float(np.mean([ta.get('gp_uncertainty', 0.0) for ta in token_analyses])),
+                'turn_info_gain': float(np.mean([ta.get('igain', 0.0) for ta in token_analyses])),
+                'turn_bayesian_surprise': float(np.mean([ta.get('bayesian_surprise', 0.0) for ta in token_analyses])),
+                'turn_curiosity_score': float(np.mean([ta.get('curiosity_score', 0.0) for ta in token_analyses])),
+            }
+            total_ig = sum(ta.get('igain', 0.0) for ta in token_analyses)
+            self.total_info_gain = getattr(self, 'total_info_gain', 0.0) + total_ig
+        else:
+            self._last_token_analyses = []
+            self._last_turn_telemetry = {}
+        if factor_dict:
+            self._last_control_factors = dict(factor_dict)
+        try:
+            self.tracker.record(self, trigger=trigger)
+        except Exception as e:
+            print(f"[Tracker] Error recording {trigger}: {e}")
+
     def _backend_report_dict(self, report) -> Dict[str, Any]:
         if report is None:
             return {}
@@ -234,6 +261,7 @@ class HeartProcessingMixin:
             if len(self.interaction_history) > getattr(self, "_max_interaction_history", 200000):
                 self.interaction_history = self.interaction_history[-self._max_interaction_history:]
             # ----------------- expectation from last turn, compute prediction  -----------------
+            prediction_error = None
             if self._expected_next_state is not None and self.current_state_labels:
                 actual_state = self.current_state_labels[0]
                 if actual_state != self._expected_next_state:
@@ -241,7 +269,10 @@ class HeartProcessingMixin:
                     prediction_error = 1.0
                     # Could add a factor to meta-learner
                     print(f"   [Prediction Error] Expected {self._expected_next_state}, got {actual_state}")
+                else:
+                    prediction_error = 0.0
                 self._expected_next_state = None   # reset
+            self._last_prediction_error = prediction_error
             
             
             # ----------------- RESPONSE HANDLING -----------------
@@ -258,6 +289,7 @@ class HeartProcessingMixin:
                 else:
                     system_reply = "TPL.MODE.CHAT.OFF"
                 print(f" Herebot> {system_reply}")
+                self._record_turn_telemetry("chat_toggle")
                 return {
                     "ci_report": {},
                     "phon_score": 0,
@@ -285,6 +317,7 @@ class HeartProcessingMixin:
                     artifact = "Shadow differentiation link ignored."
                 self.expecting_shadow_diff_confirmation = False
                 self.pending_shadow_diff_key = None
+                self._record_turn_telemetry("shadow_diff_confirm")
                 return {
                     "ci_report": {},
                     "phon_score": 0,
@@ -343,6 +376,7 @@ class HeartProcessingMixin:
 
                 self.expecting_response_feedback = False
                 self.pending_feedback_context = None
+                self._record_turn_telemetry("response_feedback")
                 return {
                     "ci_report": {},
                     "phon_score": 0,
@@ -379,6 +413,7 @@ class HeartProcessingMixin:
 
                 self.expecting_rule_confirmation = False
                 self.pending_rule_id = None
+                self._record_turn_telemetry("rule_confirmation")
                 return {
                     "ci_report": {},
                     "phon_score": 0,
@@ -433,6 +468,7 @@ class HeartProcessingMixin:
 
                 self.expecting_logic_feedback = False
                 self.pending_logic_doubt = None
+                self._record_turn_telemetry("logic_feedback")
                 return {
                     "ci_report": {},
                     "phon_score": 0,
@@ -454,6 +490,7 @@ class HeartProcessingMixin:
                 print(f"📘 [Pattern Learning] '{self.last_asked_word}' categorized as '{label}'")
                 self.expecting_pattern_label = False
                 self.last_asked_word = None
+                self._record_turn_telemetry("pattern_label")
                 return {
                     "ci_report": {},
                     "phon_score": 0,
@@ -507,6 +544,7 @@ class HeartProcessingMixin:
                 self.feedback_attempt_word = None
                 self.feedback_attempt_response = None
                 self.feedback_timestamp = None
+                self._record_turn_telemetry("trust_feedback")
                 return {
                     "ci_report": {},
                     "phon_score": 0,
@@ -545,6 +583,7 @@ class HeartProcessingMixin:
                     # Safety: flag was set but state was lost — reset cleanly
                     print("🌑 [Word Conflict] Expected conflict state missing; resetting flag.")
                 self.expecting_word_conflict = False
+                self._record_turn_telemetry("word_conflict_resolve")
                 return {
                     "ci_report": {},
                     "phon_score": 0,
@@ -634,6 +673,7 @@ class HeartProcessingMixin:
                     self.expecting_procedure_steps = False
                     self.pending_problem_expr = None
                     self.recorded_steps = []
+                    self._record_turn_telemetry("procedure_finish")
                     return {
                         "ci_report": {},
                         "phon_score": 0,
@@ -647,6 +687,7 @@ class HeartProcessingMixin:
                     }
                 else:
                     # Continue expecting more steps
+                    self._record_turn_telemetry("procedure_step")
                     return {
                         "ci_report": {},
                         "phon_score": 0,
@@ -836,6 +877,7 @@ class HeartProcessingMixin:
                 teach_question = f"TPL.ASK.TEACH expr='{expr}'?"
                 print(f"\n [Teaching Request] {teach_question}")
                 print(f" Herebot> {teach_question}")
+                self._record_turn_telemetry("teaching_request", token_analyses=token_analyses)
                 return {
                     "ci_report": ci_report,
                     "phon_score": phon_score,
@@ -857,6 +899,7 @@ class HeartProcessingMixin:
                     print(f" Herebot> {query}")
                     self.expecting_logic_feedback = True
                     self.pending_logic_doubt = doubt
+                    self._record_turn_telemetry("logic_doubt", token_analyses=token_analyses)
                     return {
                         "ci_report": ci_report,
                         "phon_score": phon_score,
@@ -894,6 +937,7 @@ class HeartProcessingMixin:
                         system_reply = f"TPL.ASK.DEF target='{target}'?"
                         print(f"\n [Knowledge Gap] {system_reply}")
                         print(f" Herebot> {system_reply}")
+                        self._record_turn_telemetry("knowledge_gap", token_analyses=token_analyses)
                         return {
                             "ci_report": ci_report,
                             "phon_score": phon_score,
@@ -914,6 +958,7 @@ class HeartProcessingMixin:
                         self.expecting_pattern_label = True
                         print(f"\n [Pattern Discovery] {pattern_query}")
                         print(f" Herebot> {pattern_query}")
+                        self._record_turn_telemetry("pattern_discovery", token_analyses=token_analyses)
                         return {
                             "ci_report": ci_report,
                             "phon_score": phon_score,
@@ -1093,6 +1138,7 @@ class HeartProcessingMixin:
                     self.pending_rule_id = rule.rule_id
                     print(f"\n [Rule Hypothesis] {query}")
                     print(f" Herebot> {query}")
+                    self._record_turn_telemetry("rule_test", token_analyses=token_analyses, factor_dict=factor_dict)
                     return {
                         "ci_report": ci_report,
                         "phon_score": phon_score,
@@ -1238,6 +1284,7 @@ class HeartProcessingMixin:
                         print(f" Herebot> {question}")
                         self.expecting_word_conflict = True
                         self._pending_conflict = (token, label1, label2)
+                        self._record_turn_telemetry("word_conflict_detect", token_analyses=token_analyses, factor_dict=factor_dict)
                         return {
                             "ci_report": ci_report,
                             "phon_score": phon_score,
@@ -1294,7 +1341,7 @@ class HeartProcessingMixin:
             if self.interaction_counter % self.reconfigure_interval == 0:
                 self._maybe_reconfigure()
 
-            self.tracker.record(self)
+            self._record_turn_telemetry("interaction", token_analyses=token_analyses, factor_dict=safe_factor_dict)
 
             return {
                 'ci_report': ci_report,

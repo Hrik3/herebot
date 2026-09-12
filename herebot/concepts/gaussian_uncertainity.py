@@ -79,6 +79,11 @@ class GaussianProcessUncertainty:
         var = max(var, 1e-12)
         return mean, var
 
+    def predict_variance(self, x: np.ndarray) -> float:
+        """Return predictive variance for input features array."""
+        _, var = self.predict(x)
+        return float(var)
+
     def uncertainty(self, x: np.ndarray) -> float:
         """Return predictive standard deviation (uncertainty)."""
         _, var = self.predict(x)
