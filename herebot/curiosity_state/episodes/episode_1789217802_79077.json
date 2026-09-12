@@ -1,0 +1,52 @@
+{
+  "timestamp": 1789217802.9705746,
+  "user_input": "Is a zibber a crystal?",
+  "system_response": "TPL.HYP.REL word='crystal' candidate='zibber'",
+  "factor_vector": {
+    "curiosity": 1.7724580869152715,
+    "threat": 0.16986970469420062,
+    "trust": 0.6167528887083499,
+    "confidence": 0.8203996189456525,
+    "uncertainty": 0.0027813749434825196,
+    "energy": 0.3420000000000001,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9487,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.9530699683135964,
+  "metadata": {
+    "ci_confidence": 0.8203996189456525,
+    "generated_plugin_influence": null
+  },
+  "factor_space_id": "control",
+  "factor_space_version": 1,
+  "factor_names": [
+    "curiosity",
+    "threat",
+    "trust",
+    "confidence",
+    "uncertainty",
+    "energy",
+    "attention",
+    "comprehension",
+    "fluency",
+    "cognitive_load",
+    "conscience_active"
+  ],
+  "factor_statuses": {
+    "curiosity": "observed",
+    "threat": "observed",
+    "trust": "observed",
+    "confidence": "observed",
+    "uncertainty": "observed",
+    "energy": "observed",
+    "attention": "observed",
+    "comprehension": "observed",
+    "fluency": "observed",
+    "cognitive_load": "observed",
+    "conscience_active": "observed"
+  }
+}

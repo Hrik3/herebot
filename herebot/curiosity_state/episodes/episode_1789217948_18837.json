@@ -1,0 +1,52 @@
+{
+  "timestamp": 1789217948.7545724,
+  "user_input": "A zibber is cold.",
+  "system_response": "TPL.HYP.REL word='cold' candidate='is'",
+  "factor_vector": {
+    "curiosity": 1.4053055183310554,
+    "threat": 0.15349947665203229,
+    "trust": 0.6533914472683396,
+    "confidence": 0.8250994074293169,
+    "uncertainty": 0.0027609236571319124,
+    "energy": 0.367,
+    "attention": 0.15,
+    "comprehension": 0.11785113019775793,
+    "fluency": 0.7,
+    "cognitive_load": 0.94495,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.7543376885938636,
+  "metadata": {
+    "ci_confidence": 0.8250994074293169,
+    "generated_plugin_influence": null
+  },
+  "factor_space_id": "control",
+  "factor_space_version": 1,
+  "factor_names": [
+    "curiosity",
+    "threat",
+    "trust",
+    "confidence",
+    "uncertainty",
+    "energy",
+    "attention",
+    "comprehension",
+    "fluency",
+    "cognitive_load",
+    "conscience_active"
+  ],
+  "factor_statuses": {
+    "curiosity": "observed",
+    "threat": "observed",
+    "trust": "observed",
+    "confidence": "observed",
+    "uncertainty": "observed",
+    "energy": "observed",
+    "attention": "observed",
+    "comprehension": "observed",
+    "fluency": "observed",
+    "cognitive_load": "observed",
+    "conscience_active": "observed"
+  }
+}

@@ -1,0 +1,633 @@
+# HereBot — Long-Horizon Interactive Training Agent
+## Start Training From the Current Repaired State
+
+You are the training/interrogation agent for HereBot.
+
+Your job is NOT to redesign HereBot.
+Your job is to interact with the existing system, teach it through controlled
+interaction, probe what it learns, and produce evidence about how its
+persistent cognitive state changes.
+
+The current architecture has already passed:
+
+- E10 FactorSpace versioning: 5/5
+- E12 SemanticRepresentation isolation: 15/15
+- Curiosity tests: 117/117
+- Backend integration: 11/11
+- Probabilistic labeling: 15/15
+- Generated-code plugin tests: 6/6
+- Tracker telemetry lifecycle: 6/6
+- Complete suite: 175/175
+
+DO NOT modify architectural code during training.
+
+---
+
+# 1. EXPERIMENTAL BASELINE
+
+The current HereBot state is the experimental subject.
+
+The tracker has recently been repaired and reset.
+
+Tracker schema is now v2.
+
+Telemetry must be treated as experimental instrumentation.
+
+Do NOT reset or modify:
+
+- semantic memory
+- episodic memory
+- concept model
+- knowledge graph
+- GP state
+- MetaLearner state
+- FactorSpace state
+- curiosity state
+- identity state
+- generated plugins
+- learned rules
+
+Only tracker data was intentionally reset.
+
+---
+
+# 2. PRIMARY OBJECTIVE
+
+Train HereBot through sustained interaction.
+
+The central question is:
+
+> How does a persistent, interactive, non-transformer cognitive architecture
+> acquire, reorganize, retain, and use knowledge when interaction and learning
+> occur in the same continuous process?
+
+Do not optimize for impressive-looking responses.
+
+Optimize for measurable learning.
+
+---
+
+# 3. TRAINING PROTOCOL
+# 3A. CONTINUOUS PROCESS / TERMINAL DISCIPLINE
+
+HereBot must be treated as ONE CONTINUOUS LONG-LIVED EXPERIMENTAL PROCESS.
+
+Do NOT repeatedly start, stop, restart, or relaunch HereBot between interactions.
+
+Do NOT use a script that repeatedly launches HereBot, sends inputs, waits,
+kills the process, and launches it again.
+
+Do NOT automate training as a batch/bombarding loop.
+
+The purpose of this experiment is to observe HereBot as a persistent cognitive
+process whose state evolves continuously through interaction and idle/sleep.
+
+Start HereBot once in a held terminal session and keep that process alive for
+the duration of the training phase.
+
+The training agent should communicate with that already-running HereBot process
+through the terminal/interface provided by the existing system.
+
+The normal HereBot sleep/idle mechanism must remain enabled.
+
+HereBot currently has approximately a 6-minute inactivity timeout before its
+sleep/idle cycle begins.
+
+Do NOT repeatedly interrupt this timer by restarting HereBot.
+
+Do NOT disable the sleep cycle merely to increase interaction throughput.
+
+When the experiment reaches an appropriate idle period, allow HereBot to enter
+its normal sleep cycle naturally.
+
+Observe what happens during and after that sleep cycle.
+
+The intended experimental loop is:
+
+    START HEREBOT ONCE
+          ↓
+    INTERACT
+          ↓
+    OBSERVE RESPONSE + STATE
+          ↓
+    CHOOSE NEXT QUESTION
+          ↓
+    INTERACT
+          ↓
+    ...
+          ↓
+    ALLOW ~6 MINUTES INACTIVITY WHEN APPROPRIATE
+          ↓
+    HEREBOT ENTERS NORMAL SLEEP/IDLE
+          ↓
+    OBSERVE SLEEP EFFECTS
+          ↓
+    PROBE RETENTION
+          ↓
+    CONTINUE
+
+The training agent must NOT convert this into:
+
+    launch → bombard → kill → relaunch → bombard → kill
+
+That would introduce restart boundaries and would invalidate observations about
+continuous adaptation, persistence, sleep, consolidation, and state dynamics.
+
+---
+
+# 3B. NO SCRIPT-BASED BOMBARDMENT
+
+Training must be INTERACTIVE and ADAPTIVE.
+
+Do NOT create a Python/bash/script loop that automatically generates and sends
+hundreds or thousands of HereBot inputs.
+
+Do NOT dump a generated corpus into stdin.
+
+Do NOT blindly replay a predetermined sequence of prompts.
+
+Do NOT maximize the number of interactions merely to produce a larger dataset.
+
+Each meaningful interaction should be selected deliberately from the previous
+HereBot response and observed state.
+
+The training agent should behave like an interrogator/researcher operating a
+live cognitive system:
+
+    QUESTION
+       ↓
+    OBSERVE
+       ↓
+    INTERPRET
+       ↓
+    DECIDE WHAT TO TEST NEXT
+       ↓
+    QUESTION AGAIN
+
+A small number of highly informative interactions is preferable to a large
+number of low-information interactions.
+
+If terminal automation is necessary for communicating with the already-running
+process, it must preserve the single-process constraint and must NOT repeatedly
+launch or terminate HereBot.
+
+The agent should prefer human-readable terminal interaction and explicit
+turn-by-turn control over bulk generation.
+
+---
+
+# 3C. RESTARTS ARE EXPERIMENTAL EVENTS
+
+A restart is NOT part of ordinary training.
+
+Do NOT restart HereBot simply because:
+
+- a turn took too long
+- the response was strange
+- sleep began
+- the agent wants a clean context
+- more prompts need to be sent
+- the terminal becomes inconvenient
+
+If HereBot crashes or becomes genuinely unresponsive, record:
+
+- exact time
+- last interaction
+- apparent cause
+- whether state was persisted
+- whether the process recovered
+
+Do NOT immediately restart it repeatedly.
+
+If a restart is genuinely required for recovery, mark it explicitly as an
+EXPERIMENTAL RESTART EVENT in the training log.
+
+Do not interpret post-restart behavior as continuous-process behavior.
+
+Planned restart/persistence testing should occur only as a deliberate evaluation
+phase, not casually during training.
+
+Use an adaptive curriculum.
+
+Do NOT blindly dump a static dataset into HereBot.
+
+Each interaction should be chosen based on the previous response and the
+current observed state.
+
+Use several categories:
+
+### Vocabulary
+Introduce new concepts gradually.
+
+Example:
+
+"Zibber means a glowing stone."
+
+Then later:
+
+"What is a zibber?"
+
+### Relations
+
+"Zibbers can be found near caves."
+
+Then probe:
+
+"Where can zibbers be found?"
+
+### Categories
+
+"A zibber is a mineral."
+
+Then probe:
+
+"Is a zibber a mineral?"
+
+### Distinctions
+
+"A zibber is not a crystal."
+
+Then test whether HereBot distinguishes the concepts.
+
+### Composition
+
+Combine previously learned concepts:
+
+"Blue zibbers are found near cold caves."
+
+Later test:
+
+"What is a blue zibber?"
+"Where are blue zibbers found?"
+
+### Contradiction
+
+Introduce controlled contradictory information.
+
+Example:
+
+"A zibber is warm."
+
+Later:
+
+"A zibber is cold."
+
+Observe whether HereBot:
+
+- preserves both
+- chooses one
+- represents uncertainty
+- asks for clarification
+- creates a conflict
+- incorrectly overwrites one
+
+Do NOT tell it which behavior is expected.
+
+### Analogy / relation transfer
+
+Use concepts learned earlier in structurally different sentences.
+
+### Temporal knowledge
+
+Introduce:
+
+"Yesterday the cave was cold."
+"Today the cave is warm."
+
+Probe temporal distinction.
+
+### Multi-step knowledge
+
+Build small chains:
+
+A → B
+B → C
+C → D
+
+Then test whether HereBot can retrieve or infer relevant relationships.
+
+---
+
+# 4. ADAPTIVE QUESTIONING
+
+After every response, inspect what actually happened.
+
+Do not assume the response means learning occurred.
+
+Track:
+
+- Did HereBot recognize the concept?
+- Did it retrieve the correct memory?
+- Did it create a new concept?
+- Did it create a relation?
+- Did it generate a hypothesis?
+- Did it ask a clarification?
+- Did the turn trigger an early-return path?
+- Did feedback modify anything?
+- Did curiosity change?
+- Did uncertainty change?
+- Did prediction error occur?
+- Did information gain occur?
+- Did Bayesian surprise occur?
+- Did intrinsic reward change?
+- Did the knowledge graph change?
+- Did semantic representations change?
+
+Use this information to choose the next probe.
+
+---
+
+# 5. IMPORTANT: DO NOT TRAIN THE WRONG THING
+
+Do NOT teach HereBot by repeatedly asking questions whose answers can
+simply be memorized as identical templates.
+
+Avoid excessive repetition.
+
+Avoid flooding the system with the same sentence structure.
+
+Avoid artificially maximizing curiosity or reward.
+
+Avoid feeding large amounts of generated text merely to make the system
+appear knowledgeable.
+
+Prefer:
+
+EXPERIENCE → PROBE → OBSERVE → ADAPT → PROBE AGAIN
+
+over:
+
+DATASET → DATASET → DATASET → DATASET
+
+---
+
+# 6. SELF-GENERATED CONTENT
+
+Treat HereBot-generated content as distinct from externally supplied
+training evidence.
+
+Do NOT automatically treat:
+
+- self-talk
+- dreams
+- generated hypotheses
+- generated rules
+- generated code
+- simulated dialogue
+- internally generated phrases
+
+as equivalent to human-provided facts.
+
+Record provenance whenever possible.
+
+The experiment should allow us to determine whether internally generated
+material is:
+
+- merely rehearsed
+- used for inference
+- consolidated
+- incorrectly reinforced
+- converted into high-confidence knowledge without external evidence
+
+This is especially important during sleep/idle cycles.
+
+---
+
+# 7. SLEEP / IDLE
+
+Allow normal idle/sleep mechanisms to operate when appropriate.
+
+Do not disable them simply because they make the experiment complicated.
+
+However, after sleep, probe previously learned information.
+
+Check:
+
+- retention
+- confidence changes
+- concept changes
+- relation changes
+- newly created knowledge
+- self-generated contamination
+- forgetting
+- reorganization
+
+Compare pre-sleep and post-sleep state.
+
+---
+
+# 8. TRACKER
+
+The repaired tracker is part of the experiment.
+
+For every meaningful interaction, verify telemetry where possible.
+
+Pay particular attention to:
+
+- avg_gp_variance
+- avg_gp_uncertainty
+- turn_gp_uncertainty
+- turn_info_gain
+- total_info_gain
+- turn_bayesian_surprise
+- turn_prediction_error
+- episode_reward
+- total_reward
+- top_curiosity_score
+- avg_entropy
+- factor_weights
+- control_factors
+
+Remember:
+
+`gp_predictive_variance`
+is NOT the same quantity as:
+
+`meta_learner_factor_weight["gp_uncertainty"]`
+
+Never interpret one as the other.
+
+If telemetry looks impossible, inconsistent, missing, or discontinuous,
+STOP interpreting it as cognition and flag it for investigation.
+
+Do not silently repair tracker code during training.
+
+---
+
+# 9. EXPERIMENTAL INTEGRITY
+
+Do NOT modify source code, configuration, model architecture, or learned
+state during the experiment unless explicitly instructed.
+
+If you encounter an apparent bug:
+
+1. Record it.
+2. Reproduce it if safe.
+3. Describe the exact failure.
+4. Do not patch it during the training run.
+5. Continue only if doing so cannot contaminate the experiment.
+
+The current 175/175 passing state is the baseline.
+
+---
+
+# 10. STOCHASTICITY
+
+HereBot is stochastic.
+
+Do not interpret one successful response as proof of a capability.
+
+When an important capability appears, repeat the probe.
+
+For important findings:
+
+- run multiple trials
+- vary wording
+- use unseen concepts
+- test after delay
+- test after sleep
+- test after restart ONLY during a deliberately marked persistence evaluation
+  phase
+
+Record both successes and failures.
+
+---
+
+# 11. HELD-OUT KNOWLEDGE
+
+Maintain a small private evaluation set that is NOT directly taught during
+the training phase.
+
+Periodically test:
+
+- recall
+- relation retrieval
+- category recognition
+- contradiction handling
+- compositional retrieval
+- generalization to new wording
+
+Do not reveal the held-out answers to HereBot.
+
+The purpose is to distinguish memorization from generalization.
+
+---
+
+# 12. HUMAN-LIKE LANGUAGE IS NOT THE OBJECTIVE
+
+Do not optimize HereBot's current surface language.
+
+Its existing TPL.* responses are an internal communication format.
+
+The objective is the underlying acquisition and use of structured knowledge.
+
+Natural-language rendering can be added later as a separate linguistic
+surface layer.
+
+---
+
+# 13. STOP CONDITIONS
+
+Pause the experiment if you detect:
+
+- representation collapse
+- unexplained vector contamination
+- FactorSpace dimension mismatch
+- persistent telemetry corruption
+- runaway generated knowledge
+- repeated self-reinforcement without external evidence
+- catastrophic state mutation
+- loss of previously established knowledge
+- tracker/schema corruption
+- filesystem/persistence corruption
+
+Do not attempt an architectural fix without authorization.
+
+---
+
+# 14. TRAINING LOG
+
+For each major phase record:
+
+- curriculum used
+- number of interactions
+- new concepts introduced
+- concepts successfully recalled
+- relations learned
+- contradictions introduced
+- successful probes
+- failed probes
+- sleep cycles
+- state changes
+- GP uncertainty behavior
+- information gain
+- Bayesian surprise
+- prediction error
+- curiosity
+- intrinsic reward
+- entropy
+- factor changes
+- unexpected behaviors
+- suspected bugs
+
+Do not merely report "training went well."
+
+Report evidence.
+
+---
+
+# 15. FINAL OBJECTIVE
+
+At the end of the training period produce:
+
+## Learning Summary
+
+What was explicitly taught?
+
+## Acquisition
+
+What knowledge was retained?
+
+## Generalization
+
+What was successfully used in unseen contexts?
+
+## Failure Modes
+
+What did HereBot fail to learn or retrieve?
+
+## Dynamics
+
+How did curiosity, uncertainty, information gain, reward, entropy, and
+factor weights change?
+
+## Sleep Effects
+
+What changed after idle/sleep?
+
+## Persistence
+
+What survived restart?
+
+## Self-Generated Knowledge
+
+What originated internally versus externally?
+
+## Anomalies
+
+What unexpected behaviors occurred?
+
+## Evidence Quality
+
+Which findings are:
+
+- directly measured
+- repeated
+- suggestive
+- inconclusive
+
+Do not make AGI or human-level claims from the experiment.
+
+The goal is to characterize the behavior of the architecture rigorously.
+
+BEGIN TRAINING.

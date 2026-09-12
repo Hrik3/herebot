@@ -1,0 +1,52 @@
+{
+  "timestamp": 1789217680.9310422,
+  "user_input": "A zibber is a mineral.",
+  "system_response": "TPL.HYP.REL word='mineral' candidate='zibber'",
+  "factor_vector": {
+    "curiosity": 1.5909764578701104,
+    "threat": 0.14376612876882164,
+    "trust": 0.6331671190633672,
+    "confidence": 0.8601098114022983,
+    "uncertainty": 0.002823200130605565,
+    "energy": 0.347,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.94795,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 2.8206275031676835,
+  "metadata": {
+    "ci_confidence": 0.8601098114022983,
+    "generated_plugin_influence": null
+  },
+  "factor_space_id": "control",
+  "factor_space_version": 1,
+  "factor_names": [
+    "curiosity",
+    "threat",
+    "trust",
+    "confidence",
+    "uncertainty",
+    "energy",
+    "attention",
+    "comprehension",
+    "fluency",
+    "cognitive_load",
+    "conscience_active"
+  ],
+  "factor_statuses": {
+    "curiosity": "observed",
+    "threat": "observed",
+    "trust": "observed",
+    "confidence": "observed",
+    "uncertainty": "observed",
+    "energy": "observed",
+    "attention": "observed",
+    "comprehension": "observed",
+    "fluency": "observed",
+    "cognitive_load": "observed",
+    "conscience_active": "observed"
+  }
+}
