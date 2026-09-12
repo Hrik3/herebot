@@ -1,0 +1,18 @@
+{
+  "old": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.0,
+    "predictive_gain": 1.0,
+    "phase": "active",
+    "last_used": 1789212319.459075,
+    "confidence": 1.0,
+    "usage": 1.2000000000000002,
+    "reward_trace": 0.0,
+    "last_interaction": 0,
+    "last_decay_interaction": 0,
+    "probability": 1.0,
+    "tier": 4,
+    "activation": 0.6000000000000001,
+    "archive_pressure": 0.0
+  }
+}

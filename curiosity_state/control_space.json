@@ -1,0 +1,71 @@
+{
+  "base_factors": [
+    "curiosity",
+    "threat",
+    "trust",
+    "confidence",
+    "uncertainty",
+    "energy",
+    "attention",
+    "comprehension",
+    "fluency",
+    "cognitive_load",
+    "conscience_active"
+  ],
+  "dynamic_factors": [],
+  "factor_definitions": {},
+  "factor_space": {
+    "space_id": "control",
+    "version": 1,
+    "factor_metadata": {
+      "conscience_active": {
+        "source": "conscience"
+      }
+    },
+    "history": {
+      "0": {
+        "space_id": "control",
+        "version": 0,
+        "factor_names": [
+          "curiosity",
+          "threat",
+          "trust",
+          "confidence",
+          "uncertainty",
+          "energy",
+          "attention",
+          "comprehension",
+          "fluency",
+          "cognitive_load"
+        ],
+        "factor_metadata": {
+          "conscience_active": {
+            "source": "conscience"
+          }
+        }
+      },
+      "1": {
+        "space_id": "control",
+        "version": 1,
+        "factor_names": [
+          "curiosity",
+          "threat",
+          "trust",
+          "confidence",
+          "uncertainty",
+          "energy",
+          "attention",
+          "comprehension",
+          "fluency",
+          "cognitive_load",
+          "conscience_active"
+        ],
+        "factor_metadata": {
+          "conscience_active": {
+            "source": "conscience"
+          }
+        }
+      }
+    }
+  }
+}
