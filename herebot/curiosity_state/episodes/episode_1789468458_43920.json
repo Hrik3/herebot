@@ -1,0 +1,52 @@
+{
+  "timestamp": 1789468458.6346965,
+  "user_input": "Water is wet.",
+  "system_response": "TPL.HYP.REL word='wet' candidate='water'",
+  "factor_vector": {
+    "curiosity": 1.5895848963656254,
+    "threat": 0.142070373780409,
+    "trust": 0.6760615363714848,
+    "confidence": 0.7283688236502363,
+    "uncertainty": 0.002211412894071919,
+    "energy": 0.9,
+    "attention": 0.15,
+    "comprehension": 0.37639956967683835,
+    "fluency": 0.7,
+    "cognitive_load": 0.865,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.8835524092958545,
+  "metadata": {
+    "ci_confidence": 0.7283688236502363,
+    "generated_plugin_influence": null
+  },
+  "factor_space_id": "control",
+  "factor_space_version": 1,
+  "factor_names": [
+    "curiosity",
+    "threat",
+    "trust",
+    "confidence",
+    "uncertainty",
+    "energy",
+    "attention",
+    "comprehension",
+    "fluency",
+    "cognitive_load",
+    "conscience_active"
+  ],
+  "factor_statuses": {
+    "curiosity": "observed",
+    "threat": "observed",
+    "trust": "observed",
+    "confidence": "observed",
+    "uncertainty": "observed",
+    "energy": "observed",
+    "attention": "observed",
+    "comprehension": "observed",
+    "fluency": "observed",
+    "cognitive_load": "observed",
+    "conscience_active": "observed"
+  }
+}

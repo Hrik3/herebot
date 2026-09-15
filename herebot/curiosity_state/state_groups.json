@@ -1,34 +1,34 @@
 {
   "group::bright curiosity||greetings": {
-    "head_label": "zibber is cold",
+    "head_label": "zibber is to",
     "child_labels": [
       "bright curiosity",
       "greetings"
     ],
     "centroid_vector": [
-      0.38151021883450964,
-      0.08608639154657553,
-      0.38333803507772174,
-      0.3889214775047327,
-      0.007093021356197911,
-      0.1874968560465275,
-      0.030357566423513806,
-      0.2626661903402806,
-      0.386823754293993,
-      0.5422896025752248,
+      0.3870391477136063,
+      0.08541799039271827,
+      0.3821637760381311,
+      0.39052763788624445,
+      0.006964634285928794,
+      0.1874181436850639,
+      0.03157622507019873,
+      0.2562339866598366,
+      0.38650743787677483,
+      0.5414134254238844,
       0.0
     ],
     "dominant_tokens": [
       "zibber",
       "is",
-      "cold",
-      "can",
-      "be",
+      "to",
+      "means",
       "found",
-      "what",
       "near",
       "caves",
-      "warm"
+      "cold",
+      "can",
+      "be"
     ],
     "dominant_phrases": [],
     "factor_signature": [
@@ -38,7 +38,7 @@
       },
       {
         "factor_index": 0,
-        "mean_delta": 0.20252088212449024
+        "mean_delta": 0.20252088212449038
       },
       {
         "factor_index": 2,
@@ -50,12 +50,12 @@
       },
       {
         "factor_index": 6,
-        "mean_delta": 0.047765650955095065
+        "mean_delta": 0.04776565095509504
       }
     ],
     "probability": 1.0,
-    "reward_trace": 42.49162714959503,
-    "last_interaction": 20,
+    "reward_trace": 42.91312835733778,
+    "last_interaction": 22,
     "phase": "active",
     "first_interaction": 7
   }

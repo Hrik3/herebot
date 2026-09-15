@@ -1,0 +1,52 @@
+{
+  "timestamp": 1789467756.2090654,
+  "user_input": "To tell means to say something to someone.",
+  "system_response": "TPL.HYP.REL word='say' candidate='to'",
+  "factor_vector": {
+    "curiosity": 1.8632862591989572,
+    "threat": 0.12474157403691105,
+    "trust": 0.6727488638791832,
+    "confidence": 0.7738478930728637,
+    "uncertainty": 0.0022951807564971986,
+    "energy": 0.647,
+    "attention": 0.4,
+    "comprehension": 0.25157899326924227,
+    "fluency": 0.7,
+    "cognitive_load": 0.7412,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 6.710801261712973,
+  "metadata": {
+    "ci_confidence": 0.7738478930728637,
+    "generated_plugin_influence": null
+  },
+  "factor_space_id": "control",
+  "factor_space_version": 1,
+  "factor_names": [
+    "curiosity",
+    "threat",
+    "trust",
+    "confidence",
+    "uncertainty",
+    "energy",
+    "attention",
+    "comprehension",
+    "fluency",
+    "cognitive_load",
+    "conscience_active"
+  ],
+  "factor_statuses": {
+    "curiosity": "observed",
+    "threat": "observed",
+    "trust": "observed",
+    "confidence": "observed",
+    "uncertainty": "observed",
+    "energy": "observed",
+    "attention": "observed",
+    "comprehension": "observed",
+    "fluency": "observed",
+    "cognitive_load": "observed",
+    "conscience_active": "observed"
+  }
+}

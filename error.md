@@ -153,3 +153,38 @@ tests green), CONTAINED (system handled it, no fix needed), or OPEN
 - Cause: files named `*_test.py`, `unittest discover` defaults to `test*.py`.
   Workaround: `PYTHONPATH=herebot python3 herebot/tests/cor/<Name>_test.py`.
   All 149 green (117 + 11 + 15 + 6). Docs-only, no code impact.
+
+## E15 — WORD.CONFLICT resolution has no lasting effect on probabilities [OPEN]
+
+- Symptom: user answers WORD.CONFLICT with a label (e.g. "bright curiosity"),
+  system prints `✅ [Conflict Resolved] 'fire' is now primarily 'bright curiosity'`,
+  but `word_state.json` still shows both labels at 0.5/0.5.
+- Trace: `processing.py:564-597` handler #7 calls
+  `reasoner.word_state.break_bridge(word, label1, label2, keep, ...)`.
+  `break_bridge` (`learner.py:390-416`) does:
+    1. `add_association(word, keep_label, confidence=1.0)` → calls
+       `_normalize_word_labels` → `normalize_probability_field` → normalizes
+       all labels to probability = activation/total.
+    2. Manually halves rejected label: `rejected['usage'] *= 0.5`.
+    3. Calls `_normalize_word_labels` again with `touched_label=reject_label,
+       weight=0.0` → `normalize_probability_field` recalculates all probs.
+  Root cause: step 3 recalculates activation for ALL labels (not just the
+  rejected one). `update_probabilistic_stats` (`probabilistic_labeling.py:52`)
+  decays `usage` by `exp(-lambda * delta)` then sets
+  `activation = usage * reward_gate`. Since both labels started with equal
+  usage (2.1) and the manual halving in step 2 is applied BEFORE step 3's
+  decay, the decay can equalize them again. In practice both labels end up
+  with identical activation (~1.05) and probability (0.5).
+- Consequence: 104 words stuck in permanent 0.5/0.5 conflict between
+  'greetings' and 'bright curiosity'. Every sentence containing any of these
+  words triggers WORD.CONFLICT, consuming the response pipeline. The
+  conflict cascade blocks normal training throughput.
+- Also noted: `break_bridge` is called but `conflict_history` only shows
+  entries from the PREVIOUS session (Day 1, word='hello'). The Day 2
+  'fire' resolution was NOT recorded in conflict_history, suggesting the
+  history append (`learner.py:410-416`) may not execute or the state is
+  loaded from disk after the append.
+- Evidence: live session Sep 15, word='fire', labels='greetings|bright curiosity',
+  answer='bright curiosity', post-resolution `word_state.json` still 0.5/0.5.
+  104 conflicting words verified via script. Conflict cascade observed in
+  8+ consecutive turns blocking natural conversation.
