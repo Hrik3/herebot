@@ -1,0 +1,11 @@
+{
+  "timestamp": 1789469106.254587,
+  "user_input": "found near caves",
+  "system_response": "[synthetic]",
+  "factor_vector": {},
+  "factor_dim": 0,
+  "intrinsic_reward": 0.0,
+  "metadata": {
+    "synthetic": true
+  }
+}

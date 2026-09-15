@@ -1,0 +1,52 @@
+{
+  "timestamp": 1789467527.785438,
+  "user_input": "I was wondering if you remember what a zibber is?",
+  "system_response": "TPL.HYP.REL word='was' candidate='wondering'",
+  "factor_vector": {
+    "curiosity": 1.8122541325086097,
+    "threat": 0.1549372143109101,
+    "trust": 0.6643338960477915,
+    "confidence": 0.7810721104915633,
+    "uncertainty": 0.002534590538788179,
+    "energy": 0.787,
+    "attention": 0.4,
+    "comprehension": 0.19725822126136466,
+    "fluency": 0.7,
+    "cognitive_load": 0.6852,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 10.75696871743399,
+  "metadata": {
+    "ci_confidence": 0.7810721104915633,
+    "generated_plugin_influence": null
+  },
+  "factor_space_id": "control",
+  "factor_space_version": 1,
+  "factor_names": [
+    "curiosity",
+    "threat",
+    "trust",
+    "confidence",
+    "uncertainty",
+    "energy",
+    "attention",
+    "comprehension",
+    "fluency",
+    "cognitive_load",
+    "conscience_active"
+  ],
+  "factor_statuses": {
+    "curiosity": "observed",
+    "threat": "observed",
+    "trust": "observed",
+    "confidence": "observed",
+    "uncertainty": "observed",
+    "energy": "observed",
+    "attention": "observed",
+    "comprehension": "observed",
+    "fluency": "observed",
+    "cognitive_load": "observed",
+    "conscience_active": "observed"
+  }
+}

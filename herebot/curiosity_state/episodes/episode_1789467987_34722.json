@@ -1,0 +1,52 @@
+{
+  "timestamp": 1789467987.7106326,
+  "user_input": "The sun is bright today.",
+  "system_response": "TPL.HYP.REL word='bright' candidate='the'",
+  "factor_vector": {
+    "curiosity": 1.4733360613750666,
+    "threat": 0.12225702357972382,
+    "trust": 0.7745557925160083,
+    "confidence": 0.8062685391820489,
+    "uncertainty": 0.002224815396461446,
+    "energy": 0.908,
+    "attention": 0.25,
+    "comprehension": 0.540550675488869,
+    "fluency": 0.7,
+    "cognitive_load": 0.773,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 1.4149380055389238,
+  "metadata": {
+    "ci_confidence": 0.8062685391820489,
+    "generated_plugin_influence": null
+  },
+  "factor_space_id": "control",
+  "factor_space_version": 1,
+  "factor_names": [
+    "curiosity",
+    "threat",
+    "trust",
+    "confidence",
+    "uncertainty",
+    "energy",
+    "attention",
+    "comprehension",
+    "fluency",
+    "cognitive_load",
+    "conscience_active"
+  ],
+  "factor_statuses": {
+    "curiosity": "observed",
+    "threat": "observed",
+    "trust": "observed",
+    "confidence": "observed",
+    "uncertainty": "observed",
+    "energy": "observed",
+    "attention": "observed",
+    "comprehension": "observed",
+    "fluency": "observed",
+    "cognitive_load": "observed",
+    "conscience_active": "observed"
+  }
+}
