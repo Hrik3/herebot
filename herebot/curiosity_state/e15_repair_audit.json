@@ -1,0 +1,1329 @@
+{
+  "repair_pass_id": "e15_repair_1789548628",
+  "e15_repair_version": 1,
+  "timestamp": 1789548628.7812345,
+  "dry_run": false,
+  "summary": {
+    "UNRESOLVED_SPURIOUS_E15_CLEARED": 107,
+    "PRESERVED_UNLABELED": 5,
+    "REPAIRED_USER_CONFIRMED": 2,
+    "PRESERVED_CLEAN_ASSOCIATION": 6
+  },
+  "entries": [
+    {
+      "token": "*",
+      "old_state": {
+        "greetings": 0.3911771800237352,
+        "bright curiosity": 0.6088228199762649
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "3",
+      "old_state": {
+        "greetings": 0.3911771800237352,
+        "bright curiosity": 0.6088228199762649
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "4",
+      "old_state": {
+        "greetings": 0.3911771800237352,
+        "bright curiosity": 0.6088228199762649
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "about",
+      "old_state": {
+        "greetings": 0.37270947001883076,
+        "bright curiosity": 0.6272905299811693
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "am",
+      "old_state": {},
+      "decision": "PRESERVED_UNLABELED",
+      "new_state": {},
+      "reason": "Word was unlabeled in original state",
+      "safety_gate_passed": "EMPTY_PRESERVATION"
+    },
+    {
+      "token": "an",
+      "old_state": {
+        "greetings": 0.3911771800237352,
+        "bright curiosity": 0.6088228199762649
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "and",
+      "old_state": {
+        "greetings": 0.35278601141353544,
+        "bright curiosity": 0.6472139885864645
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "animal",
+      "old_state": {
+        "greetings": 0.46318436379026134,
+        "bright curiosity": 0.5368156362097385
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "are",
+      "old_state": {
+        "greetings": 0.33204813775696723,
+        "bright curiosity": 0.6679518622430327
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "be",
+      "old_state": {
+        "greetings": 0.3212569956222939,
+        "bright curiosity": 0.6787430043777061
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "bird",
+      "old_state": {
+        "greetings": 0.3911771800237352,
+        "bright curiosity": 0.6088228199762649
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "blue",
+      "old_state": {
+        "greetings": 0.2645197333869632,
+        "bright curiosity": 0.7354802666130369
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "bright",
+      "old_state": {
+        "greetings": 0.321256995622294,
+        "bright curiosity": 0.6787430043777061
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "calm",
+      "old_state": {
+        "greetings": 0.36471745847330744,
+        "bright curiosity": 0.6352825415266926
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "can",
+      "old_state": {
+        "greetings": 0.3212569956222939,
+        "bright curiosity": 0.6787430043777061
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "car",
+      "old_state": {
+        "greetings": 0.3911771800237352,
+        "bright curiosity": 0.6088228199762649
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "cat",
+      "old_state": {
+        "greetings": 0.5,
+        "bright curiosity": 0.5
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "caves",
+      "old_state": {
+        "greetings": 0.27254201673238787,
+        "bright curiosity": 0.7274579832676121
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "ccar",
+      "old_state": {},
+      "decision": "PRESERVED_UNLABELED",
+      "new_state": {},
+      "reason": "Word was unlabeled in original state",
+      "safety_gate_passed": "EMPTY_PRESERVATION"
+    },
+    {
+      "token": "child",
+      "old_state": {
+        "greetings": 0.5,
+        "bright curiosity": 0.5
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "cold",
+      "old_state": {
+        "greetings": 0.32125699562229393,
+        "bright curiosity": 0.678743004377706
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "color",
+      "old_state": {
+        "greetings": 0.3911771800237352,
+        "bright curiosity": 0.6088228199762649
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "colors",
+      "old_state": {
+        "greetings": 0.3911771800237352,
+        "bright curiosity": 0.6088228199762649
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "crow",
+      "old_state": {
+        "greetings": 0.36471745847330744,
+        "bright curiosity": 0.6352825415266926
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "crow fly over water",
+      "old_state": {},
+      "decision": "PRESERVED_UNLABELED",
+      "new_state": {},
+      "reason": "Word was unlabeled in original state",
+      "safety_gate_passed": "EMPTY_PRESERVATION"
+    },
+    {
+      "token": "crystal",
+      "old_state": {
+        "greetings": 0.36471745847330744,
+        "bright curiosity": 0.6352825415266926
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "do",
+      "old_state": {
+        "greetings": 0.35278601141353544,
+        "bright curiosity": 0.6472139885864645
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "dog",
+      "old_state": {
+        "greetings": 0.5,
+        "bright curiosity": 0.5
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "feeling",
+      "old_state": {
+        "greetings": 0.35278601141353544,
+        "bright curiosity": 0.6472139885864645
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "fine",
+      "old_state": {
+        "greetings": 0.34599464452682216,
+        "bright curiosity": 0.6540053554731778
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "fire",
+      "old_state": {
+        "greetings": 0.0015695833235572487,
+        "bright curiosity": 0.9984304166764427
+      },
+      "decision": "REPAIRED_USER_CONFIRMED",
+      "new_state": {
+        "bright curiosity": 1.0
+      },
+      "reason": "User explicitly confirmed \"bright curiosity\" in interaction 22",
+      "safety_gate_passed": "USER_CONFIRMED_EXCEPTION"
+    },
+    {
+      "token": "fish",
+      "old_state": {
+        "greetings": 0.4217764483641054,
+        "bright curiosity": 0.5782235516358945
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "flint",
+      "old_state": {
+        "greetings": 0.34161049077143707,
+        "bright curiosity": 0.658389509228563
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "flows",
+      "old_state": {
+        "greetings": 0.3911771800237352,
+        "bright curiosity": 0.6088228199762649
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "food",
+      "old_state": {
+        "greetings": 0.3911771800237352,
+        "bright curiosity": 0.6088228199762649
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "for",
+      "old_state": {
+        "bright curiosity": 1.0
+      },
+      "decision": "PRESERVED_CLEAN_ASSOCIATION",
+      "new_state": {
+        "bright curiosity": 1.0
+      },
+      "reason": "Word had specific non-E15 association",
+      "safety_gate_passed": "CLEAN_PRESERVATION"
+    },
+    {
+      "token": "found",
+      "old_state": {
+        "greetings": 0.28705137842827305,
+        "bright curiosity": 0.712948621571727
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "friend",
+      "old_state": {
+        "greetings": 0.3527860114135355,
+        "bright curiosity": 0.6472139885864645
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "gain",
+      "old_state": {
+        "greetings": 0.3911771800237352,
+        "bright curiosity": 0.6088228199762649
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "glowing",
+      "old_state": {
+        "greetings": 0.35278601141353544,
+        "bright curiosity": 0.6472139885864645
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "good",
+      "old_state": {
+        "greetings": 0.33854636547550676,
+        "bright curiosity": 0.6614536345244931
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "goodbye",
+      "old_state": {
+        "greetings": 0.3911771800237352,
+        "bright curiosity": 0.6088228199762649
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "goodnight",
+      "old_state": {
+        "greetings": 0.3980430237425809,
+        "bright curiosity": 0.6019569762574192
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "green",
+      "old_state": {
+        "greetings": 0.3911771800237352,
+        "bright curiosity": 0.6088228199762649
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "greeting",
+      "old_state": {
+        "greetings": 0.3911771800237352,
+        "bright curiosity": 0.6088228199762649
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "hard",
+      "old_state": {
+        "greetings": 0.3911771800237352,
+        "bright curiosity": 0.6088228199762649
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "hello",
+      "old_state": {
+        "greetings": 0.997336237012398,
+        "bright curiosity": 0.0026637629876019465
+      },
+      "decision": "REPAIRED_USER_CONFIRMED",
+      "new_state": {
+        "greetings": 1.0
+      },
+      "reason": "User explicitly confirmed \"greetings\" in interaction 7",
+      "safety_gate_passed": "USER_CONFIRMED_EXCEPTION"
+    },
+    {
+      "token": "herebot",
+      "old_state": {
+        "greetings": 0.3911771800237352,
+        "bright curiosity": 0.6088228199762649
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "hi",
+      "old_state": {},
+      "decision": "PRESERVED_UNLABELED",
+      "new_state": {},
+      "reason": "Word was unlabeled in original state",
+      "safety_gate_passed": "EMPTY_PRESERVATION"
+    },
+    {
+      "token": "hot",
+      "old_state": {
+        "greetings": 0.3911771800237352,
+        "bright curiosity": 0.6088228199762649
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "how",
+      "old_state": {
+        "greetings": 0.34599464452682216,
+        "bright curiosity": 0.6540053554731778
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "hrishi",
+      "old_state": {},
+      "decision": "PRESERVED_UNLABELED",
+      "new_state": {},
+      "reason": "Word was unlabeled in original state",
+      "safety_gate_passed": "EMPTY_PRESERVATION"
+    },
+    {
+      "token": "if",
+      "old_state": {
+        "bright curiosity": 1.0
+      },
+      "decision": "PRESERVED_CLEAN_ASSOCIATION",
+      "new_state": {
+        "bright curiosity": 1.0
+      },
+      "reason": "Word had specific non-E15 association",
+      "safety_gate_passed": "CLEAN_PRESERVATION"
+    },
+    {
+      "token": "in",
+      "old_state": {
+        "greetings": 0.3911771800237352,
+        "bright curiosity": 0.6088228199762649
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "is",
+      "old_state": {
+        "greetings": 0.3335937291512717,
+        "bright curiosity": 0.6664062708487283
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "know",
+      "old_state": {
+        "greetings": 0.3980430237425809,
+        "bright curiosity": 0.6019569762574192
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "knowledge",
+      "old_state": {
+        "greetings": 0.3911771800237352,
+        "bright curiosity": 0.6088228199762649
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "knows",
+      "old_state": {
+        "greetings": 0.28705137842827305,
+        "bright curiosity": 0.712948621571727
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "learns",
+      "old_state": {
+        "greetings": 0.36471745847330744,
+        "bright curiosity": 0.6352825415266926
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "light",
+      "old_state": {
+        "greetings": 0.3911771800237352,
+        "bright curiosity": 0.6088228199762649
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "like",
+      "old_state": {
+        "greetings": 0.34599464452682216,
+        "bright curiosity": 0.6540053554731778
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "love",
+      "old_state": {
+        "greetings": 0.3911771800237352,
+        "bright curiosity": 0.6088228199762649
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "man",
+      "old_state": {
+        "greetings": 0.5,
+        "bright curiosity": 0.5
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "me",
+      "old_state": {
+        "greetings": 0.37270947001883076,
+        "bright curiosity": 0.6272905299811693
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "mean",
+      "old_state": {
+        "bright curiosity": 0.5,
+        "greetings": 0.5
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "means",
+      "old_state": {
+        "greetings": 0.32125699562229404,
+        "bright curiosity": 0.678743004377706
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "mineral",
+      "old_state": {
+        "greetings": 0.36471745847330744,
+        "bright curiosity": 0.6352825415266926
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "moon",
+      "old_state": {
+        "greetings": 0.36471745847330744,
+        "bright curiosity": 0.6352825415266926
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "morning",
+      "old_state": {
+        "greetings": 0.34599464452682216,
+        "bright curiosity": 0.6540053554731778
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "mountain",
+      "old_state": {
+        "greetings": 0.3911771800237352,
+        "bright curiosity": 0.6088228199762649
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "nature",
+      "old_state": {
+        "greetings": 0.3362841033621473,
+        "bright curiosity": 0.6637158966378527
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "near",
+      "old_state": {
+        "greetings": 0.4864028360943475,
+        "bright curiosity": 0.5135971639056526
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "not",
+      "old_state": {
+        "greetings": 0.3911771800237352,
+        "bright curiosity": 0.6088228199762649
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "nothing",
+      "old_state": {
+        "greetings": 0.3911771800237352,
+        "bright curiosity": 0.6088228199762649
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "object",
+      "old_state": {
+        "greetings": 0.3911771800237352,
+        "bright curiosity": 0.6088228199762649
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "person",
+      "old_state": {
+        "greetings": 0.5,
+        "bright curiosity": 0.5
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "positive",
+      "old_state": {
+        "greetings": 0.3980430237425809,
+        "bright curiosity": 0.6019569762574192
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "rain",
+      "old_state": {
+        "greetings": 0.3911771800237352,
+        "bright curiosity": 0.6088228199762649
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "red",
+      "old_state": {
+        "greetings": 0.3911771800237352,
+        "bright curiosity": 0.6088228199762649
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "remember",
+      "old_state": {
+        "bright curiosity": 0.4300238787015118,
+        "greetings": 0.5699761212984881
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "river",
+      "old_state": {
+        "greetings": 0.36471745847330744,
+        "bright curiosity": 0.6352825415266926
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "rose",
+      "old_state": {
+        "greetings": 0.3911771800237352,
+        "bright curiosity": 0.6088228199762649
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "say",
+      "old_state": {
+        "bright curiosity": 0.34747121749395793,
+        "greetings": 0.6525287825060421
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "see",
+      "old_state": {
+        "greetings": 0.3980430237425809,
+        "bright curiosity": 0.6019569762574192
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "shining",
+      "old_state": {
+        "greetings": 0.3911771800237352,
+        "bright curiosity": 0.6088228199762649
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "sky",
+      "old_state": {
+        "greetings": 0.28705137842827305,
+        "bright curiosity": 0.7129486215717269
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "soft",
+      "old_state": {
+        "greetings": 0.36471745847330744,
+        "bright curiosity": 0.6352825415266926
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "someone",
+      "old_state": {
+        "bright curiosity": 0.36696621061238777,
+        "greetings": 0.6330337893876121
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "something",
+      "old_state": {
+        "bright curiosity": 1.0
+      },
+      "decision": "PRESERVED_CLEAN_ASSOCIATION",
+      "new_state": {
+        "bright curiosity": 1.0
+      },
+      "reason": "Word had specific non-E15 association",
+      "safety_gate_passed": "CLEAN_PRESERVATION"
+    },
+    {
+      "token": "sorry",
+      "old_state": {
+        "greetings": 0.5,
+        "bright curiosity": 0.5
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "stone",
+      "old_state": {
+        "greetings": 0.35278601141353544,
+        "bright curiosity": 0.6472139885864645
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "sun",
+      "old_state": {
+        "greetings": 0.32125699562229404,
+        "bright curiosity": 0.678743004377706
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "swim",
+      "old_state": {
+        "greetings": 0.3911771800237352,
+        "bright curiosity": 0.6088228199762649
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "tell",
+      "old_state": {
+        "greetings": 0.3306241471087818,
+        "bright curiosity": 0.6693758528912181
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "the",
+      "old_state": {
+        "greetings": 0.2983984384547174,
+        "bright curiosity": 0.7016015615452826
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "there",
+      "old_state": {
+        "greetings": 0.36471745847330744,
+        "bright curiosity": 0.6352825415266926
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "they",
+      "old_state": {
+        "greetings": 0.5,
+        "bright curiosity": 0.5
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "thing",
+      "old_state": {
+        "greetings": 0.36471745847330744,
+        "bright curiosity": 0.6352825415266926
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "to",
+      "old_state": {
+        "greetings": 0.2366558428965562,
+        "bright curiosity": 0.7633441571034438
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "today",
+      "old_state": {
+        "greetings": 0.321256995622294,
+        "bright curiosity": 0.6787430043777061
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "toval",
+      "old_state": {
+        "greetings": 0.3911771800237352,
+        "bright curiosity": 0.6088228199762649
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "transport",
+      "old_state": {
+        "greetings": 0.3911771800237352,
+        "bright curiosity": 0.6088228199762649
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "travel",
+      "old_state": {
+        "greetings": 0.3911771800237352,
+        "bright curiosity": 0.6088228199762649
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "tree",
+      "old_state": {
+        "greetings": 0.3911771800237352,
+        "bright curiosity": 0.6088228199762649
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "warm",
+      "old_state": {
+        "greetings": 0.3212569956222939,
+        "bright curiosity": 0.6787430043777061
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "was",
+      "old_state": {
+        "bright curiosity": 1.0
+      },
+      "decision": "PRESERVED_CLEAN_ASSOCIATION",
+      "new_state": {
+        "bright curiosity": 1.0
+      },
+      "reason": "Word had specific non-E15 association",
+      "safety_gate_passed": "CLEAN_PRESERVATION"
+    },
+    {
+      "token": "water",
+      "old_state": {
+        "greetings": 0.321256995622294,
+        "bright curiosity": 0.678743004377706
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "wet",
+      "old_state": {
+        "bright curiosity": 1.0
+      },
+      "decision": "PRESERVED_CLEAN_ASSOCIATION",
+      "new_state": {
+        "bright curiosity": 1.0
+      },
+      "reason": "Word had specific non-E15 association",
+      "safety_gate_passed": "CLEAN_PRESERVATION"
+    },
+    {
+      "token": "what",
+      "old_state": {
+        "greetings": 0.3137788913880271,
+        "bright curiosity": 0.6862211086119728
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "where",
+      "old_state": {
+        "greetings": 0.321256995622294,
+        "bright curiosity": 0.6787430043777061
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "who",
+      "old_state": {
+        "greetings": 0.36471745847330744,
+        "bright curiosity": 0.6352825415266926
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "why",
+      "old_state": {
+        "greetings": 0.3911771800237352,
+        "bright curiosity": 0.6088228199762649
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "wings",
+      "old_state": {
+        "greetings": 0.3911771800237352,
+        "bright curiosity": 0.6088228199762649
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "winter",
+      "old_state": {
+        "greetings": 0.3911771800237352,
+        "bright curiosity": 0.6088228199762649
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "with",
+      "old_state": {
+        "greetings": 0.36471745847330744,
+        "bright curiosity": 0.6352825415266926
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "wondering",
+      "old_state": {
+        "bright curiosity": 1.0
+      },
+      "decision": "PRESERVED_CLEAN_ASSOCIATION",
+      "new_state": {
+        "bright curiosity": 1.0
+      },
+      "reason": "Word had specific non-E15 association",
+      "safety_gate_passed": "CLEAN_PRESERVATION"
+    },
+    {
+      "token": "word",
+      "old_state": {
+        "greetings": 0.4217764483641054,
+        "bright curiosity": 0.5782235516358945
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "yes",
+      "old_state": {
+        "greetings": 0.5,
+        "bright curiosity": 0.5
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "you",
+      "old_state": {
+        "greetings": 0.32125699562229404,
+        "bright curiosity": 0.678743004377706
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    },
+    {
+      "token": "zibber",
+      "old_state": {
+        "greetings": 0.29761413160935285,
+        "bright curiosity": 0.7023858683906472
+      },
+      "decision": "UNRESOLVED_SPURIOUS_E15_CLEARED",
+      "new_state": {},
+      "reason": "Corrupted by E15 blanket cross-modal alignment without discriminating grounded evidence; cleared to allow clean future learning",
+      "safety_gate_passed": "SAFETY_GATE_5_UNRESOLVED_SYMMETRIC_EVIDENCE"
+    }
+  ]
+}

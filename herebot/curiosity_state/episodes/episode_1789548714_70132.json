@@ -1,0 +1,17 @@
+{
+  "id": "ep_fcd381f8edf2",
+  "timestamp": 1789548714.2675138,
+  "user_input": "stone is hard",
+  "system_response": "",
+  "factor_vector": {
+    "curiosity": 0.9,
+    "threat": 0.1,
+    "energy": 0.8
+  },
+  "factor_dim": 3,
+  "intrinsic_reward": 1.0,
+  "metadata": {},
+  "active_states_at_time": [],
+  "provenance": "OBSERVED",
+  "global_broadcast_state": null
+}

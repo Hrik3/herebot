@@ -1,0 +1,2967 @@
+[
+  {
+    "token": "*",
+    "old_label_distribution": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [],
+    "observed_episode_count": 0,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "3",
+    "old_label_distribution": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789064617_94249"
+    ],
+    "observed_episode_count": 1,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "4",
+    "old_label_distribution": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789064617_94249"
+    ],
+    "observed_episode_count": 1,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "about",
+    "old_label_distribution": {
+      "greetings": 0.37270947001883076,
+      "bright curiosity": 0.6272905299811693
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789063946_5023",
+      "ep_legacy_episode_1789064033_27073"
+    ],
+    "observed_episode_count": 2,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "am",
+    "old_label_distribution": {},
+    "candidate_labels": [],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1781029906_8884",
+      "ep_legacy_episode_1789062793_35158"
+    ],
+    "observed_episode_count": 2,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 2,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": false,
+    "diagnosis": "UNLABELED",
+    "confidence": "N/A"
+  },
+  {
+    "token": "an",
+    "old_label_distribution": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789063908_84917"
+    ],
+    "observed_episode_count": 1,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "and",
+    "old_label_distribution": {
+      "greetings": 0.35278601141353544,
+      "bright curiosity": 0.6472139885864645
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789062885_6857",
+      "ep_legacy_episode_1789064165_31457",
+      "ep_legacy_episode_1789202772_85610",
+      "ep_legacy_episode_1789204256_28234"
+    ],
+    "observed_episode_count": 4,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "animal",
+    "old_label_distribution": {
+      "greetings": 0.46318436379026134,
+      "bright curiosity": 0.5368156362097385
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789062729_42383",
+      "ep_legacy_episode_1789063124_31061",
+      "ep_legacy_episode_1789063133_18327",
+      "ep_legacy_episode_1789063142_27385",
+      "ep_legacy_episode_1789063151_64620",
+      "ep_legacy_episode_1789063166_7573",
+      "ep_legacy_episode_1789063908_84917"
+    ],
+    "observed_episode_count": 7,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "are",
+    "old_label_distribution": {
+      "greetings": 0.33204813775696723,
+      "bright curiosity": 0.6679518622430327
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1781030021_52018",
+      "ep_legacy_episode_1789062791_22355",
+      "ep_legacy_episode_1789063771_90626",
+      "ep_legacy_episode_1789063933_6339",
+      "ep_legacy_episode_1789064313_26046",
+      "ep_legacy_episode_1789202654_83065",
+      "ep_legacy_episode_1789203215_74502",
+      "ep_legacy_episode_1789204132_89399",
+      "ep_legacy_episode_1789204357_18310",
+      "ep_legacy_episode_1789204400_47862",
+      "ep_legacy_episode_1789205568_23604"
+    ],
+    "observed_episode_count": 11,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 1,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "be",
+    "old_label_distribution": {
+      "greetings": 0.3212569956222939,
+      "bright curiosity": 0.6787430043777061
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789062799_2543",
+      "ep_legacy_episode_1789217577_47832",
+      "ep_legacy_episode_1789217637_76867",
+      "ep_legacy_episode_1789466449_19436"
+    ],
+    "observed_episode_count": 4,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "bird",
+    "old_label_distribution": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789063133_18327",
+      "ep_legacy_episode_1789063908_84917",
+      "ep_legacy_episode_1789064607_5360"
+    ],
+    "observed_episode_count": 3,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "blue",
+    "old_label_distribution": {
+      "greetings": 0.2645197333869632,
+      "bright curiosity": 0.7354802666130369
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789064353_68254",
+      "ep_legacy_episode_1789218096_99701",
+      "ep_legacy_episode_1789218151_74198",
+      "ep_legacy_episode_1789467008_98891",
+      "ep_legacy_episode_1789468321_91804"
+    ],
+    "observed_episode_count": 5,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 3,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "bright",
+    "old_label_distribution": {
+      "greetings": 0.321256995622294,
+      "bright curiosity": 0.6787430043777061
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789064165_31457",
+      "ep_legacy_episode_1789064340_87313",
+      "ep_legacy_episode_1789216163_31124",
+      "ep_legacy_episode_1789467987_34722"
+    ],
+    "observed_episode_count": 4,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "calm",
+    "old_label_distribution": {
+      "greetings": 0.36471745847330744,
+      "bright curiosity": 0.6352825415266926
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789063914_15445",
+      "ep_legacy_episode_1789204256_28234"
+    ],
+    "observed_episode_count": 2,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "can",
+    "old_label_distribution": {
+      "greetings": 0.3212569956222939,
+      "bright curiosity": 0.6787430043777061
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789062825_57203",
+      "ep_legacy_episode_1789217577_47832",
+      "ep_legacy_episode_1789217637_76867",
+      "ep_legacy_episode_1789466449_19436"
+    ],
+    "observed_episode_count": 4,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "car",
+    "old_label_distribution": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1781027997_91012",
+      "ep_legacy_episode_1781028627_97838",
+      "ep_legacy_episode_1781028639_8973",
+      "ep_legacy_episode_1781028989_76110",
+      "ep_legacy_episode_1781028999_95560",
+      "ep_legacy_episode_1781029033_44860",
+      "ep_legacy_episode_1781029955_33568"
+    ],
+    "observed_episode_count": 7,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 3,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "cat",
+    "old_label_distribution": {
+      "greetings": 0.5,
+      "bright curiosity": 0.5
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789063151_64620"
+    ],
+    "observed_episode_count": 1,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "caves",
+    "old_label_distribution": {
+      "greetings": 0.27254201673238787,
+      "bright curiosity": 0.7274579832676121
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789217577_47832",
+      "ep_legacy_episode_1789467008_98891"
+    ],
+    "observed_episode_count": 2,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 1,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "ccar",
+    "old_label_distribution": {},
+    "candidate_labels": [],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1781028989_76110"
+    ],
+    "observed_episode_count": 1,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 2,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": false,
+    "diagnosis": "UNLABELED",
+    "confidence": "N/A"
+  },
+  {
+    "token": "child",
+    "old_label_distribution": {
+      "greetings": 0.5,
+      "bright curiosity": 0.5
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789063085_18419"
+    ],
+    "observed_episode_count": 1,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "cold",
+    "old_label_distribution": {
+      "greetings": 0.32125699562229393,
+      "bright curiosity": 0.678743004377706
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789064187_39032",
+      "ep_legacy_episode_1789217891_90344",
+      "ep_legacy_episode_1789217948_18837",
+      "ep_legacy_episode_1789218009_67504",
+      "ep_legacy_episode_1789218096_99701"
+    ],
+    "observed_episode_count": 5,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 2,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "color",
+    "old_label_distribution": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789062768_55407",
+      "ep_legacy_episode_1789218096_99701"
+    ],
+    "observed_episode_count": 2,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "colors",
+    "old_label_distribution": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1781027643_31920",
+      "ep_legacy_episode_1781027752_83732",
+      "ep_legacy_episode_1781027820_23397",
+      "ep_legacy_episode_1781027848_73444",
+      "ep_legacy_episode_1781028655_10879",
+      "ep_legacy_episode_1781028692_4614",
+      "ep_legacy_episode_1781028721_86279"
+    ],
+    "observed_episode_count": 7,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 7,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "crow",
+    "old_label_distribution": {
+      "greetings": 0.36471745847330744,
+      "bright curiosity": 0.6352825415266926
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789063124_31061",
+      "ep_legacy_episode_1789064240_45353"
+    ],
+    "observed_episode_count": 2,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 1,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "crow fly over water",
+    "old_label_distribution": {},
+    "candidate_labels": [],
+    "supporting_observed_episodes": [],
+    "observed_episode_count": 0,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": false,
+    "diagnosis": "UNLABELED",
+    "confidence": "N/A"
+  },
+  {
+    "token": "crystal",
+    "old_label_distribution": {
+      "greetings": 0.36471745847330744,
+      "bright curiosity": 0.6352825415266926
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789217771_83905",
+      "ep_legacy_episode_1789217802_79077"
+    ],
+    "observed_episode_count": 2,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "do",
+    "old_label_distribution": {
+      "greetings": 0.35278601141353544,
+      "bright curiosity": 0.6472139885864645
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789062806_19883",
+      "ep_legacy_episode_1789064015_74068",
+      "ep_legacy_episode_1789064251_38833",
+      "ep_legacy_episode_1789064328_86316"
+    ],
+    "observed_episode_count": 4,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "dog",
+    "old_label_distribution": {
+      "greetings": 0.5,
+      "bright curiosity": 0.5
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789063142_27385"
+    ],
+    "observed_episode_count": 1,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "feeling",
+    "old_label_distribution": {
+      "greetings": 0.35278601141353544,
+      "bright curiosity": 0.6472139885864645
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789062762_94217",
+      "ep_legacy_episode_1789204132_89399",
+      "ep_legacy_episode_1789204256_28234"
+    ],
+    "observed_episode_count": 3,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 1,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "fine",
+    "old_label_distribution": {
+      "greetings": 0.34599464452682216,
+      "bright curiosity": 0.6540053554731778
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789204256_28234",
+      "ep_legacy_episode_1789204357_18310",
+      "ep_legacy_episode_1789204755_80795",
+      "ep_legacy_episode_1789205568_23604"
+    ],
+    "observed_episode_count": 4,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "fire",
+    "old_label_distribution": {
+      "greetings": 0.0015695833235572487,
+      "bright curiosity": 0.9984304166764427
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789063268_86039",
+      "ep_legacy_episode_1789064577_87039"
+    ],
+    "observed_episode_count": 2,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": true,
+    "user_confirmed_label": "bright curiosity",
+    "e15_contaminated": false,
+    "diagnosis": "LEGITIMATE_USER_CONFIRMED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "fish",
+    "old_label_distribution": {
+      "greetings": 0.4217764483641054,
+      "bright curiosity": 0.5782235516358945
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789063166_7573",
+      "ep_legacy_episode_1789063925_9583"
+    ],
+    "observed_episode_count": 2,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "flint",
+    "old_label_distribution": {
+      "greetings": 0.34161049077143707,
+      "bright curiosity": 0.658389509228563
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789202686_61628",
+      "ep_legacy_episode_1789202710_41130",
+      "ep_legacy_episode_1789202758_81413",
+      "ep_legacy_episode_1789202784_15362",
+      "ep_legacy_episode_1789202849_37135"
+    ],
+    "observed_episode_count": 5,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "flows",
+    "old_label_distribution": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789202772_85610"
+    ],
+    "observed_episode_count": 1,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "food",
+    "old_label_distribution": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789062751_75730"
+    ],
+    "observed_episode_count": 1,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 1,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "for",
+    "old_label_distribution": {
+      "bright curiosity": 1.0
+    },
+    "candidate_labels": [
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789062899_79542"
+    ],
+    "observed_episode_count": 1,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 1,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": false,
+    "diagnosis": "OTHER_ASSOCIATION",
+    "confidence": "MEDIUM"
+  },
+  {
+    "token": "found",
+    "old_label_distribution": {
+      "greetings": 0.28705137842827305,
+      "bright curiosity": 0.712948621571727
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789217577_47832",
+      "ep_legacy_episode_1789217637_76867",
+      "ep_legacy_episode_1789466449_19436"
+    ],
+    "observed_episode_count": 3,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 1,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "friend",
+    "old_label_distribution": {
+      "greetings": 0.3527860114135355,
+      "bright curiosity": 0.6472139885864645
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789063115_27567",
+      "ep_legacy_episode_1789063771_90626",
+      "ep_legacy_episode_1789063996_82109",
+      "ep_legacy_episode_1789064023_85334",
+      "ep_legacy_episode_1789064360_53865"
+    ],
+    "observed_episode_count": 5,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 2,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "gain",
+    "old_label_distribution": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789203347_6081"
+    ],
+    "observed_episode_count": 1,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "glowing",
+    "old_label_distribution": {
+      "greetings": 0.35278601141353544,
+      "bright curiosity": 0.6472139885864645
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789064518_73888",
+      "ep_legacy_episode_1789217426_165",
+      "ep_legacy_episode_1789217470_89501"
+    ],
+    "observed_episode_count": 3,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "good",
+    "old_label_distribution": {
+      "greetings": 0.33854636547550676,
+      "bright curiosity": 0.6614536345244931
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789063996_82109",
+      "ep_legacy_episode_1789204047_97736",
+      "ep_legacy_episode_1789204256_28234",
+      "ep_legacy_episode_1789204400_47862"
+    ],
+    "observed_episode_count": 4,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 2,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "goodbye",
+    "old_label_distribution": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789064360_53865"
+    ],
+    "observed_episode_count": 1,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "goodnight",
+    "old_label_distribution": {
+      "greetings": 0.3980430237425809,
+      "bright curiosity": 0.6019569762574192
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789064193_28271"
+    ],
+    "observed_episode_count": 1,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "green",
+    "old_label_distribution": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1781028655_10879"
+    ],
+    "observed_episode_count": 1,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 1,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "greeting",
+    "old_label_distribution": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789062718_5197",
+      "ep_legacy_episode_1789062954_34497",
+      "ep_legacy_episode_1789063760_99147"
+    ],
+    "observed_episode_count": 3,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "hard",
+    "old_label_distribution": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789202686_61628",
+      "ep_7d03b27bb5e2"
+    ],
+    "observed_episode_count": 2,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "hello",
+    "old_label_distribution": {
+      "greetings": 0.997336237012398,
+      "bright curiosity": 0.0026637629876019465
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1781030253_66006",
+      "ep_legacy_episode_1789062947_63027",
+      "ep_legacy_episode_1789063752_33952",
+      "ep_legacy_episode_1789063760_99147",
+      "ep_legacy_episode_1789063771_90626",
+      "ep_legacy_episode_1789064313_26046",
+      "ep_legacy_episode_1789202548_99446",
+      "ep_legacy_episode_1789202602_75177",
+      "ep_legacy_episode_1789203169_53325"
+    ],
+    "observed_episode_count": 9,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": true,
+    "user_confirmed_label": "greetings",
+    "e15_contaminated": false,
+    "diagnosis": "LEGITIMATE_USER_CONFIRMED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "herebot",
+    "old_label_distribution": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1781030021_52018"
+    ],
+    "observed_episode_count": 1,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 1,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "hi",
+    "old_label_distribution": {},
+    "candidate_labels": [],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1781027345_64700",
+      "ep_legacy_episode_1781028535_34744",
+      "ep_legacy_episode_1781028721_86279",
+      "ep_legacy_episode_1781029568_30895",
+      "ep_legacy_episode_1781029906_8884",
+      "ep_legacy_episode_1781030816_62862"
+    ],
+    "observed_episode_count": 6,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 2,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": false,
+    "diagnosis": "UNLABELED",
+    "confidence": "N/A"
+  },
+  {
+    "token": "hot",
+    "old_label_distribution": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789064165_31457"
+    ],
+    "observed_episode_count": 1,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "how",
+    "old_label_distribution": {
+      "greetings": 0.34599464452682216,
+      "bright curiosity": 0.6540053554731778
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789062938_73717",
+      "ep_legacy_episode_1789063771_90626",
+      "ep_legacy_episode_1789064313_26046",
+      "ep_legacy_episode_1789203215_74502",
+      "ep_legacy_episode_1789204132_89399"
+    ],
+    "observed_episode_count": 5,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "hrishi",
+    "old_label_distribution": {},
+    "candidate_labels": [],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1781029906_8884"
+    ],
+    "observed_episode_count": 1,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 2,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": false,
+    "diagnosis": "UNLABELED",
+    "confidence": "N/A"
+  },
+  {
+    "token": "if",
+    "old_label_distribution": {
+      "bright curiosity": 1.0
+    },
+    "candidate_labels": [
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789467527_25358"
+    ],
+    "observed_episode_count": 1,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 1,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": false,
+    "diagnosis": "OTHER_ASSOCIATION",
+    "confidence": "MEDIUM"
+  },
+  {
+    "token": "in",
+    "old_label_distribution": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789063925_9583"
+    ],
+    "observed_episode_count": 1,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "is",
+    "old_label_distribution": {
+      "greetings": 0.3335937291512717,
+      "bright curiosity": 0.6664062708487283
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1781027935_40588",
+      "ep_legacy_episode_1781027943_20557",
+      "ep_legacy_episode_1781027997_91012",
+      "ep_legacy_episode_1781028655_10879",
+      "ep_legacy_episode_1781028692_4614",
+      "ep_legacy_episode_1781028791_33863",
+      "ep_legacy_episode_1781028999_95560",
+      "ep_legacy_episode_1781029955_33568",
+      "ep_legacy_episode_1789062718_5197",
+      "ep_legacy_episode_1789062724_30429",
+      "ep_legacy_episode_1789062729_42383",
+      "ep_legacy_episode_1789062735_33323",
+      "ep_legacy_episode_1789062740_50553",
+      "ep_legacy_episode_1789062751_75730",
+      "ep_legacy_episode_1789062757_4112",
+      "ep_legacy_episode_1789062762_94217",
+      "ep_legacy_episode_1789062768_55407",
+      "ep_legacy_episode_1789062774_1821",
+      "ep_legacy_episode_1789062789_75795",
+      "ep_legacy_episode_1789062799_2543",
+      "ep_legacy_episode_1789062806_19883",
+      "ep_legacy_episode_1789062818_50183",
+      "ep_legacy_episode_1789062825_57203",
+      "ep_legacy_episode_1789062832_57146",
+      "ep_legacy_episode_1789062841_6211",
+      "ep_legacy_episode_1789062885_6857",
+      "ep_legacy_episode_1789062892_71031",
+      "ep_legacy_episode_1789062899_79542",
+      "ep_legacy_episode_1789062905_45015",
+      "ep_legacy_episode_1789062912_2912",
+      "ep_legacy_episode_1789062931_41799",
+      "ep_legacy_episode_1789062938_73717",
+      "ep_legacy_episode_1789062945_60349",
+      "ep_legacy_episode_1789062954_34497",
+      "ep_legacy_episode_1789062973_41958",
+      "ep_legacy_episode_1789062990_47991",
+      "ep_legacy_episode_1789062998_91595",
+      "ep_legacy_episode_1789063006_42570",
+      "ep_legacy_episode_1789063014_74278",
+      "ep_legacy_episode_1789063034_85174",
+      "ep_legacy_episode_1789063053_85235",
+      "ep_legacy_episode_1789063069_62393",
+      "ep_legacy_episode_1789063085_18419",
+      "ep_legacy_episode_1789063115_27567",
+      "ep_legacy_episode_1789063124_31061",
+      "ep_legacy_episode_1789063133_18327",
+      "ep_legacy_episode_1789063142_27385",
+      "ep_legacy_episode_1789063151_64620",
+      "ep_legacy_episode_1789063166_7573",
+      "ep_legacy_episode_1789063193_48842",
+      "ep_legacy_episode_1789063202_61304",
+      "ep_legacy_episode_1789063211_82560",
+      "ep_legacy_episode_1789063221_15340",
+      "ep_legacy_episode_1789063235_71399",
+      "ep_legacy_episode_1789063268_86039",
+      "ep_legacy_episode_1789063298_85333",
+      "ep_legacy_episode_1789063778_43805",
+      "ep_legacy_episode_1789063908_84917",
+      "ep_legacy_episode_1789064023_85334",
+      "ep_legacy_episode_1789064165_31457",
+      "ep_legacy_episode_1789064187_39032",
+      "ep_legacy_episode_1789064328_86316",
+      "ep_legacy_episode_1789064353_68254",
+      "ep_legacy_episode_1789064528_4042",
+      "ep_legacy_episode_1789064564_77268",
+      "ep_legacy_episode_1789064577_87039",
+      "ep_legacy_episode_1789064607_5360",
+      "ep_legacy_episode_1789202686_61628",
+      "ep_legacy_episode_1789202710_41130",
+      "ep_legacy_episode_1789202758_81413",
+      "ep_legacy_episode_1789202772_85610",
+      "ep_legacy_episode_1789202784_15362",
+      "ep_legacy_episode_1789202849_37135",
+      "ep_legacy_episode_1789203456_27779",
+      "ep_legacy_episode_1789203542_95729",
+      "ep_legacy_episode_1789204755_80795",
+      "ep_legacy_episode_1789216163_31124",
+      "ep_legacy_episode_1789217680_57862",
+      "ep_legacy_episode_1789217711_88954",
+      "ep_legacy_episode_1789217771_83905",
+      "ep_legacy_episode_1789217802_79077",
+      "ep_legacy_episode_1789217860_74736",
+      "ep_legacy_episode_1789217891_90344",
+      "ep_legacy_episode_1789217948_18837",
+      "ep_legacy_episode_1789217979_2664",
+      "ep_legacy_episode_1789218009_67504",
+      "ep_legacy_episode_1789218151_74198",
+      "ep_legacy_episode_1789218184_229",
+      "ep_legacy_episode_1789466315_20110",
+      "ep_legacy_episode_1789467527_25358",
+      "ep_legacy_episode_1789467987_34722",
+      "ep_legacy_episode_1789468321_91804",
+      "ep_legacy_episode_1789468458_43920",
+      "ep_7d03b27bb5e2"
+    ],
+    "observed_episode_count": 94,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 10,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "know",
+    "old_label_distribution": {
+      "greetings": 0.3980430237425809,
+      "bright curiosity": 0.6019569762574192
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789064328_86316"
+    ],
+    "observed_episode_count": 1,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "knowledge",
+    "old_label_distribution": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789203347_6081"
+    ],
+    "observed_episode_count": 1,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "knows",
+    "old_label_distribution": {
+      "greetings": 0.28705137842827305,
+      "bright curiosity": 0.712948621571727
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789064240_45353",
+      "ep_legacy_episode_1789064340_87313"
+    ],
+    "observed_episode_count": 2,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 2,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "learns",
+    "old_label_distribution": {
+      "greetings": 0.36471745847330744,
+      "bright curiosity": 0.6352825415266926
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789203347_6081",
+      "ep_legacy_episode_1789203456_27779"
+    ],
+    "observed_episode_count": 2,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "light",
+    "old_label_distribution": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789217470_89501"
+    ],
+    "observed_episode_count": 1,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "like",
+    "old_label_distribution": {
+      "greetings": 0.34599464452682216,
+      "bright curiosity": 0.6540053554731778
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789064015_74068",
+      "ep_legacy_episode_1789064577_87039",
+      "ep_legacy_episode_1789202784_15362",
+      "ep_legacy_episode_1789218096_99701"
+    ],
+    "observed_episode_count": 4,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "love",
+    "old_label_distribution": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789064004_47123"
+    ],
+    "observed_episode_count": 1,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "man",
+    "old_label_distribution": {
+      "greetings": 0.5,
+      "bright curiosity": 0.5
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789063069_62393"
+    ],
+    "observed_episode_count": 1,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "me",
+    "old_label_distribution": {
+      "greetings": 0.37270947001883076,
+      "bright curiosity": 0.6272905299811693
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789063946_5023",
+      "ep_legacy_episode_1789064033_27073"
+    ],
+    "observed_episode_count": 2,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "mean",
+    "old_label_distribution": {
+      "bright curiosity": 0.5,
+      "greetings": 0.5
+    },
+    "candidate_labels": [
+      "bright curiosity",
+      "greetings"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1781027466_77279"
+    ],
+    "observed_episode_count": 1,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "means",
+    "old_label_distribution": {
+      "greetings": 0.32125699562229404,
+      "bright curiosity": 0.678743004377706
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1781027466_77279",
+      "ep_legacy_episode_1781027643_31920",
+      "ep_legacy_episode_1781027752_83732",
+      "ep_legacy_episode_1781027820_23397",
+      "ep_legacy_episode_1781027848_73444",
+      "ep_legacy_episode_1781027894_43802",
+      "ep_legacy_episode_1781027905_45007",
+      "ep_legacy_episode_1781027935_40588",
+      "ep_legacy_episode_1781028749_48428",
+      "ep_legacy_episode_1781028886_94248",
+      "ep_legacy_episode_1781028989_76110",
+      "ep_legacy_episode_1789063760_99147",
+      "ep_legacy_episode_1789064518_73888",
+      "ep_legacy_episode_1789203347_6081",
+      "ep_legacy_episode_1789204256_28234",
+      "ep_legacy_episode_1789217426_165",
+      "ep_legacy_episode_1789217470_89501",
+      "ep_legacy_episode_1789218096_99701",
+      "ep_legacy_episode_1789467756_83188"
+    ],
+    "observed_episode_count": 19,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 11,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "mineral",
+    "old_label_distribution": {
+      "greetings": 0.36471745847330744,
+      "bright curiosity": 0.6352825415266926
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789217680_57862",
+      "ep_legacy_episode_1789217711_88954"
+    ],
+    "observed_episode_count": 2,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "moon",
+    "old_label_distribution": {
+      "greetings": 0.36471745847330744,
+      "bright curiosity": 0.6352825415266926
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789063211_82560",
+      "ep_legacy_episode_1789064193_28271"
+    ],
+    "observed_episode_count": 2,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "morning",
+    "old_label_distribution": {
+      "greetings": 0.34599464452682216,
+      "bright curiosity": 0.6540053554731778
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789062973_41958",
+      "ep_legacy_episode_1789063996_82109",
+      "ep_legacy_episode_1789204047_97736"
+    ],
+    "observed_episode_count": 3,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 2,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "mountain",
+    "old_label_distribution": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789063298_85333"
+    ],
+    "observed_episode_count": 1,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "nature",
+    "old_label_distribution": {
+      "greetings": 0.3362841033621473,
+      "bright curiosity": 0.6637158966378527
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789062740_50553",
+      "ep_legacy_episode_1789063193_48842",
+      "ep_legacy_episode_1789063202_61304",
+      "ep_legacy_episode_1789063211_82560",
+      "ep_legacy_episode_1789063221_15340",
+      "ep_legacy_episode_1789063235_71399",
+      "ep_legacy_episode_1789063268_86039",
+      "ep_legacy_episode_1789063298_85333"
+    ],
+    "observed_episode_count": 8,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "near",
+    "old_label_distribution": {
+      "greetings": 0.4864028360943475,
+      "bright curiosity": 0.5135971639056526
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789217577_47832",
+      "ep_legacy_episode_1789467008_98891"
+    ],
+    "observed_episode_count": 2,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 1,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "not",
+    "old_label_distribution": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789217771_83905"
+    ],
+    "observed_episode_count": 1,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "nothing",
+    "old_label_distribution": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789064340_87313"
+    ],
+    "observed_episode_count": 1,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "object",
+    "old_label_distribution": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789062735_33323"
+    ],
+    "observed_episode_count": 1,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 1,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "person",
+    "old_label_distribution": {
+      "greetings": 0.5,
+      "bright curiosity": 0.5
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789062724_30429",
+      "ep_legacy_episode_1789063034_85174",
+      "ep_legacy_episode_1789063053_85235",
+      "ep_legacy_episode_1789063069_62393",
+      "ep_legacy_episode_1789063085_18419",
+      "ep_legacy_episode_1789063115_27567"
+    ],
+    "observed_episode_count": 6,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "positive",
+    "old_label_distribution": {
+      "greetings": 0.3980430237425809,
+      "bright curiosity": 0.6019569762574192
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789064256_76130"
+    ],
+    "observed_episode_count": 1,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "rain",
+    "old_label_distribution": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789063235_71399"
+    ],
+    "observed_episode_count": 1,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "red",
+    "old_label_distribution": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1781027820_23397",
+      "ep_legacy_episode_1781027943_20557",
+      "ep_legacy_episode_1781027997_91012",
+      "ep_legacy_episode_1781028639_8973",
+      "ep_legacy_episode_1781028721_86279"
+    ],
+    "observed_episode_count": 5,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 3,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "remember",
+    "old_label_distribution": {
+      "bright curiosity": 0.4300238787015118,
+      "greetings": 0.5699761212984881
+    },
+    "candidate_labels": [
+      "bright curiosity",
+      "greetings"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789467527_25358"
+    ],
+    "observed_episode_count": 1,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 1,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "river",
+    "old_label_distribution": {
+      "greetings": 0.36471745847330744,
+      "bright curiosity": 0.6352825415266926
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789063925_9583",
+      "ep_legacy_episode_1789064004_47123"
+    ],
+    "observed_episode_count": 2,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "rose",
+    "old_label_distribution": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1781027894_43802",
+      "ep_legacy_episode_1781027943_20557"
+    ],
+    "observed_episode_count": 2,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 3,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "say",
+    "old_label_distribution": {
+      "bright curiosity": 0.34747121749395793,
+      "greetings": 0.6525287825060421
+    },
+    "candidate_labels": [
+      "bright curiosity",
+      "greetings"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789467756_83188"
+    ],
+    "observed_episode_count": 1,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "see",
+    "old_label_distribution": {
+      "greetings": 0.3980430237425809,
+      "bright curiosity": 0.6019569762574192
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789064251_38833"
+    ],
+    "observed_episode_count": 1,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "shining",
+    "old_label_distribution": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789217470_89501"
+    ],
+    "observed_episode_count": 1,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "sky",
+    "old_label_distribution": {
+      "greetings": 0.28705137842827305,
+      "bright curiosity": 0.7129486215717269
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789063221_15340",
+      "ep_legacy_episode_1789064240_45353",
+      "ep_legacy_episode_1789064353_68254",
+      "ep_legacy_episode_1789218096_99701",
+      "ep_legacy_episode_1789468321_91804"
+    ],
+    "observed_episode_count": 5,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 3,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "soft",
+    "old_label_distribution": {
+      "greetings": 0.36471745847330744,
+      "bright curiosity": 0.6352825415266926
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789202772_85610",
+      "ep_legacy_episode_1789217470_89501"
+    ],
+    "observed_episode_count": 2,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "someone",
+    "old_label_distribution": {
+      "bright curiosity": 0.36696621061238777,
+      "greetings": 0.6330337893876121
+    },
+    "candidate_labels": [
+      "bright curiosity",
+      "greetings"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789467756_83188"
+    ],
+    "observed_episode_count": 1,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "something",
+    "old_label_distribution": {
+      "bright curiosity": 1.0
+    },
+    "candidate_labels": [
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789467756_83188"
+    ],
+    "observed_episode_count": 1,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": false,
+    "diagnosis": "OTHER_ASSOCIATION",
+    "confidence": "MEDIUM"
+  },
+  {
+    "token": "sorry",
+    "old_label_distribution": {
+      "greetings": 0.5,
+      "bright curiosity": 0.5
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789063006_42570"
+    ],
+    "observed_episode_count": 1,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "stone",
+    "old_label_distribution": {
+      "greetings": 0.35278601141353544,
+      "bright curiosity": 0.6472139885864645
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789064518_73888",
+      "ep_legacy_episode_1789202686_61628",
+      "ep_legacy_episode_1789217426_165",
+      "ep_7d03b27bb5e2"
+    ],
+    "observed_episode_count": 4,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "sun",
+    "old_label_distribution": {
+      "greetings": 0.32125699562229404,
+      "bright curiosity": 0.678743004377706
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789063202_61304",
+      "ep_legacy_episode_1789063946_5023",
+      "ep_legacy_episode_1789064015_74068",
+      "ep_legacy_episode_1789064165_31457",
+      "ep_legacy_episode_1789064340_87313",
+      "ep_legacy_episode_1789064577_87039",
+      "ep_legacy_episode_1789216163_31124",
+      "ep_legacy_episode_1789467987_34722"
+    ],
+    "observed_episode_count": 8,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "swim",
+    "old_label_distribution": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789063925_9583"
+    ],
+    "observed_episode_count": 1,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "tell",
+    "old_label_distribution": {
+      "greetings": 0.3306241471087818,
+      "bright curiosity": 0.6693758528912181
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789063946_5023",
+      "ep_legacy_episode_1789064033_27073",
+      "ep_legacy_episode_1789467756_83188"
+    ],
+    "observed_episode_count": 3,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "the",
+    "old_label_distribution": {
+      "greetings": 0.2983984384547174,
+      "bright curiosity": 0.7016015615452826
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789062841_6211",
+      "ep_legacy_episode_1789063946_5023",
+      "ep_legacy_episode_1789064004_47123",
+      "ep_legacy_episode_1789064015_74068",
+      "ep_legacy_episode_1789064165_31457",
+      "ep_legacy_episode_1789064187_39032",
+      "ep_legacy_episode_1789064240_45353",
+      "ep_legacy_episode_1789064340_87313",
+      "ep_legacy_episode_1789064353_68254",
+      "ep_legacy_episode_1789064577_87039",
+      "ep_legacy_episode_1789216163_31124",
+      "ep_legacy_episode_1789467987_34722",
+      "ep_legacy_episode_1789468321_91804"
+    ],
+    "observed_episode_count": 13,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 4,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "there",
+    "old_label_distribution": {
+      "greetings": 0.36471745847330744,
+      "bright curiosity": 0.6352825415266926
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789202548_99446",
+      "ep_legacy_episode_1789202602_75177"
+    ],
+    "observed_episode_count": 2,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "they",
+    "old_label_distribution": {
+      "greetings": 0.5,
+      "bright curiosity": 0.5
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789063053_85235"
+    ],
+    "observed_episode_count": 1,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "thing",
+    "old_label_distribution": {
+      "greetings": 0.36471745847330744,
+      "bright curiosity": 0.6352825415266926
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789062718_5197",
+      "ep_legacy_episode_1789062724_30429",
+      "ep_legacy_episode_1789062729_42383",
+      "ep_legacy_episode_1789062735_33323",
+      "ep_legacy_episode_1789062740_50553",
+      "ep_legacy_episode_1789062751_75730",
+      "ep_legacy_episode_1789062757_4112",
+      "ep_legacy_episode_1789062762_94217",
+      "ep_legacy_episode_1789062768_55407",
+      "ep_legacy_episode_1789062774_1821",
+      "ep_legacy_episode_1789062789_75795"
+    ],
+    "observed_episode_count": 11,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 2,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "to",
+    "old_label_distribution": {
+      "greetings": 0.2366558428965562,
+      "bright curiosity": 0.7633441571034438
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789203347_6081",
+      "ep_legacy_episode_1789467756_83188"
+    ],
+    "observed_episode_count": 2,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "today",
+    "old_label_distribution": {
+      "greetings": 0.321256995622294,
+      "bright curiosity": 0.6787430043777061
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789064313_26046",
+      "ep_legacy_episode_1789204132_89399",
+      "ep_legacy_episode_1789467987_34722"
+    ],
+    "observed_episode_count": 3,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 1,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "toval",
+    "old_label_distribution": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789218184_229"
+    ],
+    "observed_episode_count": 1,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "transport",
+    "old_label_distribution": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1781028886_94248",
+      "ep_legacy_episode_1781028999_95560",
+      "ep_legacy_episode_1781029033_44860"
+    ],
+    "observed_episode_count": 3,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 1,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "travel",
+    "old_label_distribution": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1781029955_33568",
+      "ep_legacy_episode_1789203542_95729"
+    ],
+    "observed_episode_count": 2,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "tree",
+    "old_label_distribution": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789063193_48842"
+    ],
+    "observed_episode_count": 1,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "warm",
+    "old_label_distribution": {
+      "greetings": 0.3212569956222939,
+      "bright curiosity": 0.6787430043777061
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789217860_74736",
+      "ep_legacy_episode_1789217979_2664",
+      "ep_legacy_episode_1789466315_20110"
+    ],
+    "observed_episode_count": 3,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "was",
+    "old_label_distribution": {
+      "bright curiosity": 1.0
+    },
+    "candidate_labels": [
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789467527_25358"
+    ],
+    "observed_episode_count": 1,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": false,
+    "diagnosis": "OTHER_ASSOCIATION",
+    "confidence": "MEDIUM"
+  },
+  {
+    "token": "water",
+    "old_label_distribution": {
+      "greetings": 0.321256995622294,
+      "bright curiosity": 0.678743004377706
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789063778_43805",
+      "ep_legacy_episode_1789063914_15445",
+      "ep_legacy_episode_1789064033_27073",
+      "ep_legacy_episode_1789064187_39032",
+      "ep_legacy_episode_1789064328_86316",
+      "ep_legacy_episode_1789202772_85610",
+      "ep_legacy_episode_1789202784_15362",
+      "ep_legacy_episode_1789468458_43920",
+      "ep_c684aedf89f1",
+      "ep_3e2e345f13f6"
+    ],
+    "observed_episode_count": 10,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 1,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "wet",
+    "old_label_distribution": {
+      "bright curiosity": 1.0
+    },
+    "candidate_labels": [
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789468458_43920"
+    ],
+    "observed_episode_count": 1,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": false,
+    "diagnosis": "OTHER_ASSOCIATION",
+    "confidence": "MEDIUM"
+  },
+  {
+    "token": "what",
+    "old_label_distribution": {
+      "greetings": 0.3137788913880271,
+      "bright curiosity": 0.6862211086119728
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789062905_45015",
+      "ep_legacy_episode_1789063778_43805",
+      "ep_legacy_episode_1789064023_85334",
+      "ep_legacy_episode_1789064251_38833",
+      "ep_legacy_episode_1789064328_86316",
+      "ep_legacy_episode_1789064528_4042",
+      "ep_legacy_episode_1789064564_77268",
+      "ep_legacy_episode_1789202710_41130",
+      "ep_legacy_episode_1789202758_81413",
+      "ep_legacy_episode_1789202849_37135",
+      "ep_legacy_episode_1789203456_27779",
+      "ep_legacy_episode_1789203542_95729",
+      "ep_legacy_episode_1789204755_80795",
+      "ep_legacy_episode_1789218151_74198",
+      "ep_legacy_episode_1789218184_229",
+      "ep_legacy_episode_1789467527_25358"
+    ],
+    "observed_episode_count": 16,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 1,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "where",
+    "old_label_distribution": {
+      "greetings": 0.321256995622294,
+      "bright curiosity": 0.6787430043777061
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789217637_76867",
+      "ep_legacy_episode_1789466449_19436"
+    ],
+    "observed_episode_count": 2,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "who",
+    "old_label_distribution": {
+      "greetings": 0.36471745847330744,
+      "bright curiosity": 0.6352825415266926
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789062912_2912",
+      "ep_legacy_episode_1789063933_6339",
+      "ep_legacy_episode_1789202654_83065"
+    ],
+    "observed_episode_count": 3,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "why",
+    "old_label_distribution": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789062945_60349",
+      "ep_legacy_episode_1789064353_68254"
+    ],
+    "observed_episode_count": 2,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "wings",
+    "old_label_distribution": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789063908_84917"
+    ],
+    "observed_episode_count": 1,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "winter",
+    "old_label_distribution": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789218096_99701"
+    ],
+    "observed_episode_count": 1,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "with",
+    "old_label_distribution": {
+      "greetings": 0.36471745847330744,
+      "bright curiosity": 0.6352825415266926
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789062892_71031",
+      "ep_legacy_episode_1789063908_84917",
+      "ep_legacy_episode_1789217470_89501"
+    ],
+    "observed_episode_count": 3,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "wondering",
+    "old_label_distribution": {
+      "bright curiosity": 1.0
+    },
+    "candidate_labels": [
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789467527_25358"
+    ],
+    "observed_episode_count": 1,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 1,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": false,
+    "diagnosis": "OTHER_ASSOCIATION",
+    "confidence": "MEDIUM"
+  },
+  {
+    "token": "word",
+    "old_label_distribution": {
+      "greetings": 0.4217764483641054,
+      "bright curiosity": 0.5782235516358945
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789062799_2543",
+      "ep_legacy_episode_1789062806_19883",
+      "ep_legacy_episode_1789062818_50183",
+      "ep_legacy_episode_1789062825_57203",
+      "ep_legacy_episode_1789062832_57146",
+      "ep_legacy_episode_1789062841_6211",
+      "ep_legacy_episode_1789062885_6857",
+      "ep_legacy_episode_1789062892_71031",
+      "ep_legacy_episode_1789062899_79542",
+      "ep_legacy_episode_1789062905_45015",
+      "ep_legacy_episode_1789062912_2912",
+      "ep_legacy_episode_1789062931_41799",
+      "ep_legacy_episode_1789062938_73717",
+      "ep_legacy_episode_1789062945_60349",
+      "ep_legacy_episode_1789062990_47991",
+      "ep_legacy_episode_1789062998_91595",
+      "ep_legacy_episode_1789063006_42570",
+      "ep_legacy_episode_1789063014_74278"
+    ],
+    "observed_episode_count": 18,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 1,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "yes",
+    "old_label_distribution": {
+      "greetings": 0.5,
+      "bright curiosity": 0.5
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789063014_74278"
+    ],
+    "observed_episode_count": 1,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 0,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "you",
+    "old_label_distribution": {
+      "greetings": 0.32125699562229404,
+      "bright curiosity": 0.678743004377706
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1781030021_52018",
+      "ep_legacy_episode_1789063037_71411",
+      "ep_legacy_episode_1789063771_90626",
+      "ep_legacy_episode_1789063933_6339",
+      "ep_legacy_episode_1789064015_74068",
+      "ep_legacy_episode_1789064251_38833",
+      "ep_legacy_episode_1789064313_26046",
+      "ep_legacy_episode_1789064328_86316",
+      "ep_legacy_episode_1789202654_83065",
+      "ep_legacy_episode_1789203215_74502",
+      "ep_legacy_episode_1789204132_89399",
+      "ep_legacy_episode_1789204357_18310",
+      "ep_legacy_episode_1789204400_47862",
+      "ep_legacy_episode_1789205568_23604",
+      "ep_legacy_episode_1789467527_25358"
+    ],
+    "observed_episode_count": 15,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 3,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  },
+  {
+    "token": "zibber",
+    "old_label_distribution": {
+      "greetings": 0.29761413160935285,
+      "bright curiosity": 0.7023858683906472
+    },
+    "candidate_labels": [
+      "greetings",
+      "bright curiosity"
+    ],
+    "supporting_observed_episodes": [
+      "ep_legacy_episode_1789064518_73888",
+      "ep_legacy_episode_1789064528_4042",
+      "ep_legacy_episode_1789064564_77268",
+      "ep_legacy_episode_1789064607_5360",
+      "ep_legacy_episode_1789217426_165",
+      "ep_legacy_episode_1789217577_47832",
+      "ep_legacy_episode_1789217637_76867",
+      "ep_legacy_episode_1789217680_57862",
+      "ep_legacy_episode_1789217711_88954",
+      "ep_legacy_episode_1789217771_83905",
+      "ep_legacy_episode_1789217802_79077",
+      "ep_legacy_episode_1789217860_74736",
+      "ep_legacy_episode_1789217891_90344",
+      "ep_legacy_episode_1789217948_18837",
+      "ep_legacy_episode_1789217979_2664",
+      "ep_legacy_episode_1789218009_67504",
+      "ep_legacy_episode_1789218151_74198",
+      "ep_legacy_episode_1789466315_20110",
+      "ep_legacy_episode_1789466449_19436",
+      "ep_legacy_episode_1789467008_98891",
+      "ep_legacy_episode_1789467527_25358"
+    ],
+    "observed_episode_count": 21,
+    "observed_state_breakdown": {},
+    "dreamed_episode_count": 1,
+    "is_user_confirmed": false,
+    "user_confirmed_label": null,
+    "e15_contaminated": true,
+    "diagnosis": "E15_CROSS_MODAL_CONTAMINATED",
+    "confidence": "HIGH"
+  }
+]
