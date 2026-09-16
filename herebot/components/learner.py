@@ -277,6 +277,7 @@ class WordStateAssociator:
         self.word_label_stats: Dict[str, Dict[str, dict]] = defaultdict(dict)
         self.conflict_resolution_threshold = 0.3   # minimum confidence difference to auto-resolve
         self.conflict_history = []                  # list of resolved conflicts
+        self.conflict_cooldown: Dict[str, int] = {}   # word -> interaction_index until which conflicts are suppressed
 
     def _ensure_word_stats(self, word: str, interaction_index: int = 0):
         stats = self.word_label_stats[word]
@@ -372,20 +373,45 @@ class WordStateAssociator:
         similar.discard(word)
         return list(similar)
 
-    def detect_conflicts(self, word: str) -> List[Tuple[str, str]]:
+    def detect_conflicts(self, word: str, interaction_index: int = 0) -> List[Tuple[str, str]]:
         """
         Return pairs of labels for the same word that have similar confidence,
         indicating possible ambiguity that should be clarified.
+        Respects conflict_cooldown to avoid prompting on every turn for dismissed conflicts.
         """
         if word not in self.word_to_labels:
             return []
-        labels = list(self.get_label_probabilities(word).items())
+        if self.conflict_cooldown.get(word, 0) > int(interaction_index or 0):
+            return []
+        labels = list(self.get_label_probabilities(word, interaction_index=interaction_index).items())
         conflicts = []
         for i, (l1, c1) in enumerate(labels):
             for l2, c2 in labels[i+1:]:
                 if abs(c1 - c2) < self.conflict_resolution_threshold:
                     conflicts.append((l1, l2))
         return conflicts
+
+    def mark_unresolved(self, word: str, labels: List[str], interaction_index: int = 0, cooldown_turns: int = 20):
+        """
+        Handle a conflict where neither label was confirmed (NEITHER / UNRESOLVED).
+        Applies a small symmetric penalty to both labels, normalizes,
+        sets a cooldown backoff, and records the event in conflict_history.
+        """
+        for lab in labels:
+            stats = self.word_label_stats.get(word, {}).get(lab)
+            if stats:
+                stats['reward_trace'] = float(stats.get('reward_trace', 0.0)) - 0.5  # small symmetric penalty
+        self._normalize_word_labels(word, interaction_index=interaction_index)
+        self.conflict_cooldown[word] = int(interaction_index or 0) + cooldown_turns
+        self.conflict_history.append({
+            'word': word,
+            'labels': list(labels),
+            'kept': None,
+            'outcome': 'NEITHER',
+            'cooldown_until_interaction': int(interaction_index or 0) + cooldown_turns,
+            'interaction_index': int(interaction_index or 0),
+            'timestamp': time.time(),
+        })
 
     def break_bridge(self, word: str, label1: str, label2: str, keep_label: str, interaction_index: int = 0, reward: float = -1.0):
         """
@@ -422,6 +448,7 @@ class WordStateAssociator:
             'label_to_words': {lab: list(words) for lab, words in self.label_to_words.items()},
             'word_label_stats': {w: labs for w, labs in self.word_label_stats.items()},
             'conflict_history': self.conflict_history,
+            'conflict_cooldown': self.conflict_cooldown,
         }
         with open(path, 'w') as f:
             json.dump(data, f, indent=2)
@@ -436,6 +463,7 @@ class WordStateAssociator:
             for word in list(self.word_to_labels.keys()):
                 self._ensure_word_stats(word, interaction_index=0)
             self.conflict_history = data.get('conflict_history', [])
+            self.conflict_cooldown = data.get('conflict_cooldown', {})
 # ------------------------------------------------------------
 # Knowledge Graph – maps relationships between words, phrases, states
 # ------------------------------------------------------------

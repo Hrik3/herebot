@@ -1,3 +1,4 @@
+import uuid
 from importglobal import Optional,np,os,json,Dict,time,List
 from .directory_handler import STATE_DIR
 from .config_manager import ConfigManager
@@ -46,6 +47,8 @@ class EpisodicMemory:
                 try:
                     with open(path, 'r') as f:
                         ep = json.load(f)
+                    if "id" not in ep or not ep["id"]:
+                        ep["id"] = f"ep_legacy_{fname.replace('.json', '')}"
                     self.episodes.append(ep)
                 except Exception as e:
                     print(f"Could not load episode {fname}: {e}")
@@ -55,12 +58,16 @@ class EpisodicMemory:
 
     def add_episode(self, user_input: str, system_response: str,
                     factor_vector: Dict, intrinsic_reward: float,
-                    metadata: dict = None, factor_space=None, factor_statuses: dict = None):
+                    metadata: dict = None, factor_space=None, factor_statuses: dict = None,
+                    active_states_at_time: list = None, provenance: str = "OBSERVED",
+                    episode_id: str = None):
 
         if not isinstance(factor_vector, dict):
             factor_vector = {}
 
+        ep_id = episode_id or f"ep_{uuid.uuid4().hex[:12]}"
         episode = {
+            "id": ep_id,
             "timestamp": time.time(),
             "user_input": user_input,
             "system_response": system_response,
@@ -68,6 +75,9 @@ class EpisodicMemory:
             "factor_dim": len(factor_vector),
             "intrinsic_reward": float(intrinsic_reward),
             "metadata": metadata or {},
+            "active_states_at_time": list(active_states_at_time or []),
+            "provenance": provenance or "OBSERVED",
+            "global_broadcast_state": None,
         }
         if factor_space is not None:
             snapshot = factor_space.snapshot() if hasattr(factor_space, 'snapshot') else factor_space

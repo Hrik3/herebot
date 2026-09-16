@@ -338,3 +338,18 @@ Implement **Fixes 1, 2, 3, 4, and 5 together**. They directly address each link 
 ### Experimental Integrity
 - **Should existing experiment remain frozen?** Yes. Historical data (`reports.md` and `tracker_data.json`) must remain frozen.
 - **Can the fix be applied without rewriting historical data?** Yes. Historical episodes and tracker records remain completely intact. Semantic state can be migrated cleanly by initializing newly learned words with the new prior and allowing lifelong learning to differentiate existing vocabulary without destroying the session logs.
+
+---
+
+# E15 — Persistence & Learning-Integrity Repair Plan: Candidate Ledger & Provenance Gating
+
+## Overview
+This repair resolves issue E15 (unpersisted waiting-state word conflicts and the 104-word indiscriminate cross-modal contamination cascade) through architectural evidence gating:
+1. **Candidate Association Ledger**: Staging pre-knowledge associations outside `word_state.json` (`curiosity_state/candidate_associations.json`).
+2. **Episode Provenance Tagging & Stable IDs**: Every episode receives a stable ID (`ep_...`) and explicit provenance (`OBSERVED`, `DREAMED`, `INFERRED`, etc.).
+3. **Episode-Level PMI Specificity**: Candidates must show positive point-wise mutual information on the episode level to prevent ubiquitous states from contaminating all vocabulary.
+4. **Hard Grounded-Evidence Gate**: Internally generated data (`DREAMED`, `REHEARSED`, `COUNTERFACTUAL`) cannot commit alone without $\ge 2$ distinct grounded (`OBSERVED` / `USER_CONFIRMED`) episodes and $\ge 15\%$ grounded evidence fraction.
+5. **Targeted Immediate Persistence**: Waiting-state conflict resolutions immediately flush `word_state.json` via targeted subsystem persistence rather than relying on rate-limited global checkpoints.
+6. **NEITHER & Conflict Cooldown**: Explicit handling for rejected/ambiguous conflicts with cooldown turns to eliminate deadlock loops.
+7. **`main.py` Finally Guard**: Guaranteeing `engine._save_state()` is called on process exit.
+

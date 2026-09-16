@@ -1,6 +1,14 @@
 from ..curioimport import *
 
 class HeartProcessingMixin:
+    def save_word_state_immediately(self):
+        """Targeted immediate persistence for word-state mutations without 20s checkpoint throttle."""
+        if hasattr(self, 'reasoner') and hasattr(self.reasoner, 'word_state') and self.reasoner.word_state:
+            try:
+                self.reasoner.word_state.save(os.path.join(STATE_DIR, 'word_state.json'))
+            except Exception as e:
+                print(f"[WARN] Failed immediate word-state save: {e}")
+
     def _feedback_reward_magnitude(self, entry=None) -> float:
         """Return the feedback reward magnitude saved for the rated turn."""
         magnitude = None
@@ -290,6 +298,7 @@ class HeartProcessingMixin:
                     system_reply = "TPL.MODE.CHAT.OFF"
                 print(f" Herebot> {system_reply}")
                 self._record_turn_telemetry("chat_toggle")
+                self._save_state()
                 return {
                     "ci_report": {},
                     "phon_score": 0,
@@ -318,6 +327,7 @@ class HeartProcessingMixin:
                 self.expecting_shadow_diff_confirmation = False
                 self.pending_shadow_diff_key = None
                 self._record_turn_telemetry("shadow_diff_confirm")
+                self._save_state()
                 return {
                     "ci_report": {},
                     "phon_score": 0,
@@ -377,6 +387,7 @@ class HeartProcessingMixin:
                 self.expecting_response_feedback = False
                 self.pending_feedback_context = None
                 self._record_turn_telemetry("response_feedback")
+                self._save_state()
                 return {
                     "ci_report": {},
                     "phon_score": 0,
@@ -414,6 +425,7 @@ class HeartProcessingMixin:
                 self.expecting_rule_confirmation = False
                 self.pending_rule_id = None
                 self._record_turn_telemetry("rule_confirmation")
+                self._save_state()
                 return {
                     "ci_report": {},
                     "phon_score": 0,
@@ -469,6 +481,7 @@ class HeartProcessingMixin:
                 self.expecting_logic_feedback = False
                 self.pending_logic_doubt = None
                 self._record_turn_telemetry("logic_feedback")
+                self._save_state()
                 return {
                     "ci_report": {},
                     "phon_score": 0,
@@ -491,6 +504,7 @@ class HeartProcessingMixin:
                 self.expecting_pattern_label = False
                 self.last_asked_word = None
                 self._record_turn_telemetry("pattern_label")
+                self._save_state()
                 return {
                     "ci_report": {},
                     "phon_score": 0,
@@ -545,6 +559,7 @@ class HeartProcessingMixin:
                 self.feedback_attempt_response = None
                 self.feedback_timestamp = None
                 self._record_turn_telemetry("trust_feedback")
+                self._save_state()
                 return {
                     "ci_report": {},
                     "phon_score": 0,
@@ -563,9 +578,15 @@ class HeartProcessingMixin:
             # alongside all other waiting-state handlers.
             if not self.chat_mode_active and getattr(self, "expecting_word_conflict", False):
                 feedback_lower = text.lower()
+                NEITHER_PHRASES = {"neither", "neither fits", "none", "none of these", "i don't know", "not sure", "no idea"}
                 if hasattr(self, '_pending_conflict'):
                     word, label1, label2 = self._pending_conflict
-                    if label1.lower() in feedback_lower or label2.lower() in feedback_lower:
+                    if feedback_lower.strip() in NEITHER_PHRASES:
+                        self.reasoner.word_state.mark_unresolved(
+                            word, [label1, label2], interaction_index=self.interaction_counter
+                        )
+                        print(f"🌑 [Conflict Dismissed] '{word}' — neither label confirmed; cooling down.")
+                    elif label1.lower() in feedback_lower or label2.lower() in feedback_lower:
                         keep = label1 if label1.lower() in feedback_lower else label2
                         self.reasoner.word_state.break_bridge(
                             word,
@@ -577,13 +598,18 @@ class HeartProcessingMixin:
                         )
                         print(f"✅ [Conflict Resolved] '{word}' is now primarily '{keep}'.")
                     else:
-                        print(f"🌑 No clear label chosen for '{word}'. Conflict remains.")
+                        # unrecognized but not an explicit "neither" — same treatment, don't loop forever
+                        self.reasoner.word_state.mark_unresolved(
+                            word, [label1, label2], interaction_index=self.interaction_counter, cooldown_turns=5
+                        )
+                        print(f"🌑 No clear label chosen for '{word}'. Cooling down briefly.")
                     del self._pending_conflict
                 else:
                     # Safety: flag was set but state was lost — reset cleanly
                     print("🌑 [Word Conflict] Expected conflict state missing; resetting flag.")
                 self.expecting_word_conflict = False
                 self._record_turn_telemetry("word_conflict_resolve")
+                self.save_word_state_immediately()
                 return {
                     "ci_report": {},
                     "phon_score": 0,
@@ -674,6 +700,7 @@ class HeartProcessingMixin:
                     self.pending_problem_expr = None
                     self.recorded_steps = []
                     self._record_turn_telemetry("procedure_finish")
+                    self._save_state()
                     return {
                         "ci_report": {},
                         "phon_score": 0,
@@ -688,6 +715,7 @@ class HeartProcessingMixin:
                 else:
                     # Continue expecting more steps
                     self._record_turn_telemetry("procedure_step")
+                    self._save_state()
                     return {
                         "ci_report": {},
                         "phon_score": 0,
@@ -878,6 +906,7 @@ class HeartProcessingMixin:
                 print(f"\n [Teaching Request] {teach_question}")
                 print(f" Herebot> {teach_question}")
                 self._record_turn_telemetry("teaching_request", token_analyses=token_analyses)
+                self._save_state()
                 return {
                     "ci_report": ci_report,
                     "phon_score": phon_score,
@@ -900,6 +929,7 @@ class HeartProcessingMixin:
                     self.expecting_logic_feedback = True
                     self.pending_logic_doubt = doubt
                     self._record_turn_telemetry("logic_doubt", token_analyses=token_analyses)
+                    self._save_state()
                     return {
                         "ci_report": ci_report,
                         "phon_score": phon_score,
@@ -938,6 +968,7 @@ class HeartProcessingMixin:
                         print(f"\n [Knowledge Gap] {system_reply}")
                         print(f" Herebot> {system_reply}")
                         self._record_turn_telemetry("knowledge_gap", token_analyses=token_analyses)
+                        self._save_state()
                         return {
                             "ci_report": ci_report,
                             "phon_score": phon_score,
@@ -1276,7 +1307,7 @@ class HeartProcessingMixin:
                 getattr(self, 'expecting_word_conflict', False),
             ]):
                 for token in tokens:
-                    conflicts = self.reasoner.word_state.detect_conflicts(token)
+                    conflicts = self.reasoner.word_state.detect_conflicts(token, interaction_index=self.interaction_counter)
                     if conflicts:
                         label1, label2 = conflicts[0]
                         question = f"TPL.ASK.WORD.CONFLICT token='{token}' labels='{label1}|{label2}'?"
@@ -1319,6 +1350,8 @@ class HeartProcessingMixin:
                 factor_space=self.control_space.factor_space,
                 factor_statuses={name: 'observed' if name in factor_dict else 'unavailable'
                                  for name in control_names},
+                active_states_at_time=list(getattr(self, "current_state_labels", []) or []),
+                provenance="OBSERVED",
             )
             if getattr(self, '_last_generated_plugin_influence', None):
                 try:

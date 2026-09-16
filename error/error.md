@@ -89,7 +89,7 @@ tests green), CONTAINED (system handled it, no fix needed), or OPEN
 - Evidence: same sentence now trains normally; `Curiosity_test.py` 117/117
   (includes whole-word `negative` case).
 
-## E10 — World-model transition dimension crash [OPEN — Level 2, training paused]
+## E10 — World-model transition dimension crash [CLOSED]
 
 - Symptom (deep-idle session): `[ERROR in build_world_model_transitions]`
   `ValueError: shapes (13,) and (11,) not aligned` at
@@ -128,7 +128,7 @@ tests green), CONTAINED (system handled it, no fix needed), or OPEN
   literal) — a generator-template bug, but the failure is evidence the
   sandbox works. Left for the human to decide (template fix vs prompt fix).
 
-## E12 — Phrase-similarity collapse 1.00 (anomaly, no crash) [OPEN]
+## E12 — Phrase-similarity collapse 1.00 (anomaly, no crash) [CLOSED]
 
 - Symptom (idle mining): every definition pair scores sim 1.00/0.98
   (`what is a word` ↔ everything, incl. `zibber means a glowing stone`).

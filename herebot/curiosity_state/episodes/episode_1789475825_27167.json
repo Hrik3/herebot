@@ -1,0 +1,56 @@
+{
+  "id": "ep_c684aedf89f1",
+  "timestamp": 1789475825.328582,
+  "user_input": "water",
+  "system_response": "TPL.ACK.LISTEN",
+  "factor_vector": {
+    "curiosity": 0.19848963683685603,
+    "threat": 0.0827987971871179,
+    "trust": 0.7621097798794795,
+    "confidence": 0.8412009109340015,
+    "uncertainty": 0.018823858326139573,
+    "energy": 0.361,
+    "attention": 0.05,
+    "comprehension": 0.5,
+    "fluency": 0.7,
+    "cognitive_load": 0.98195,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.17005276692178797,
+  "metadata": {
+    "ci_confidence": 0.8412009109340015,
+    "generated_plugin_influence": null
+  },
+  "active_states_at_time": [],
+  "provenance": "OBSERVED",
+  "global_broadcast_state": null,
+  "factor_space_id": "control",
+  "factor_space_version": 1,
+  "factor_names": [
+    "curiosity",
+    "threat",
+    "trust",
+    "confidence",
+    "uncertainty",
+    "energy",
+    "attention",
+    "comprehension",
+    "fluency",
+    "cognitive_load",
+    "conscience_active"
+  ],
+  "factor_statuses": {
+    "curiosity": "observed",
+    "threat": "observed",
+    "trust": "observed",
+    "confidence": "observed",
+    "uncertainty": "observed",
+    "energy": "observed",
+    "attention": "observed",
+    "comprehension": "observed",
+    "fluency": "observed",
+    "cognitive_load": "observed",
+    "conscience_active": "observed"
+  }
+}
