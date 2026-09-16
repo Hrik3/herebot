@@ -1,7 +1,3416 @@
 {
-  "word_to_labels": {},
-  "label_to_words": {},
-  "word_label_stats": {},
-  "conflict_history": [],
-  "conflict_cooldown": {}
+  "word_to_labels": {
+    "hi": {},
+    "am": {},
+    "hrishi": {},
+    "car": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "is": {
+      "greetings": 0.3335937291512717,
+      "bright curiosity": 0.6664062708487283
+    },
+    "travel": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "you": {
+      "greetings": 0.32125699562229404,
+      "bright curiosity": 0.678743004377706
+    },
+    "are": {
+      "greetings": 0.33204813775696723,
+      "bright curiosity": 0.6679518622430327
+    },
+    "herebot": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "hello": {
+      "greetings": 0.997336237012398,
+      "bright curiosity": 0.0026637629876019465
+    },
+    "ccar": {},
+    "means": {
+      "greetings": 0.32125699562229404,
+      "bright curiosity": 0.678743004377706
+    },
+    "friend": {
+      "greetings": 0.3527860114135355,
+      "bright curiosity": 0.6472139885864645
+    },
+    "how": {
+      "greetings": 0.34599464452682216,
+      "bright curiosity": 0.6540053554731778
+    },
+    "what": {
+      "greetings": 0.3137788913880271,
+      "bright curiosity": 0.6862211086119728
+    },
+    "water": {
+      "greetings": 0.321256995622294,
+      "bright curiosity": 0.678743004377706
+    },
+    "who": {
+      "greetings": 0.36471745847330744,
+      "bright curiosity": 0.6352825415266926
+    },
+    "do": {
+      "greetings": 0.35278601141353544,
+      "bright curiosity": 0.6472139885864645
+    },
+    "like": {
+      "greetings": 0.34599464452682216,
+      "bright curiosity": 0.6540053554731778
+    },
+    "the": {
+      "greetings": 0.2983984384547174,
+      "bright curiosity": 0.7016015615452826
+    },
+    "sun": {
+      "greetings": 0.32125699562229404,
+      "bright curiosity": 0.678743004377706
+    },
+    "cold": {
+      "greetings": 0.32125699562229393,
+      "bright curiosity": 0.678743004377706
+    },
+    "today": {
+      "greetings": 0.321256995622294,
+      "bright curiosity": 0.6787430043777061
+    },
+    "know": {
+      "greetings": 0.3980430237425809,
+      "bright curiosity": 0.6019569762574192
+    },
+    "bright": {
+      "greetings": 0.321256995622294,
+      "bright curiosity": 0.6787430043777061
+    },
+    "knows": {
+      "greetings": 0.28705137842827305,
+      "bright curiosity": 0.712948621571727
+    },
+    "nothing": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "zibber": {
+      "greetings": 0.29761413160935285,
+      "bright curiosity": 0.7023858683906472
+    },
+    "flint": {
+      "greetings": 0.34161049077143707,
+      "bright curiosity": 0.658389509228563
+    },
+    "soft": {
+      "greetings": 0.36471745847330744,
+      "bright curiosity": 0.6352825415266926
+    },
+    "and": {
+      "greetings": 0.35278601141353544,
+      "bright curiosity": 0.6472139885864645
+    },
+    "flows": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "feeling": {
+      "greetings": 0.35278601141353544,
+      "bright curiosity": 0.6472139885864645
+    },
+    "fine": {
+      "greetings": 0.34599464452682216,
+      "bright curiosity": 0.6540053554731778
+    },
+    "good": {
+      "greetings": 0.33854636547550676,
+      "bright curiosity": 0.6614536345244931
+    },
+    "crow fly over water": {},
+    "learns": {
+      "greetings": 0.36471745847330744,
+      "bright curiosity": 0.6352825415266926
+    },
+    "sorry": {
+      "greetings": 0.5,
+      "bright curiosity": 0.5
+    },
+    "word": {
+      "greetings": 0.4217764483641054,
+      "bright curiosity": 0.5782235516358945
+    },
+    "yes": {
+      "greetings": 0.5,
+      "bright curiosity": 0.5
+    },
+    "person": {
+      "greetings": 0.5,
+      "bright curiosity": 0.5
+    },
+    "they": {
+      "greetings": 0.5,
+      "bright curiosity": 0.5
+    },
+    "man": {
+      "greetings": 0.5,
+      "bright curiosity": 0.5
+    },
+    "child": {
+      "greetings": 0.5,
+      "bright curiosity": 0.5
+    },
+    "crow": {
+      "greetings": 0.36471745847330744,
+      "bright curiosity": 0.6352825415266926
+    },
+    "animal": {
+      "greetings": 0.46318436379026134,
+      "bright curiosity": 0.5368156362097385
+    },
+    "bird": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "dog": {
+      "greetings": 0.5,
+      "bright curiosity": 0.5
+    },
+    "cat": {
+      "greetings": 0.5,
+      "bright curiosity": 0.5
+    },
+    "fish": {
+      "greetings": 0.4217764483641054,
+      "bright curiosity": 0.5782235516358945
+    },
+    "tree": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "nature": {
+      "greetings": 0.3362841033621473,
+      "bright curiosity": 0.6637158966378527
+    },
+    "moon": {
+      "greetings": 0.36471745847330744,
+      "bright curiosity": 0.6352825415266926
+    },
+    "sky": {
+      "greetings": 0.28705137842827305,
+      "bright curiosity": 0.7129486215717269
+    },
+    "rain": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "fire": {
+      "greetings": 0.0015695833235572487,
+      "bright curiosity": 0.9984304166764427
+    },
+    "mountain": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "greeting": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "an": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "with": {
+      "greetings": 0.36471745847330744,
+      "bright curiosity": 0.6352825415266926
+    },
+    "wings": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "calm": {
+      "greetings": 0.36471745847330744,
+      "bright curiosity": 0.6352825415266926
+    },
+    "swim": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "in": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "river": {
+      "greetings": 0.36471745847330744,
+      "bright curiosity": 0.6352825415266926
+    },
+    "tell": {
+      "greetings": 0.3306241471087818,
+      "bright curiosity": 0.6693758528912181
+    },
+    "me": {
+      "greetings": 0.37270947001883076,
+      "bright curiosity": 0.6272905299811693
+    },
+    "about": {
+      "greetings": 0.37270947001883076,
+      "bright curiosity": 0.6272905299811693
+    },
+    "morning": {
+      "greetings": 0.34599464452682216,
+      "bright curiosity": 0.6540053554731778
+    },
+    "love": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "hot": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "goodnight": {
+      "greetings": 0.3980430237425809,
+      "bright curiosity": 0.6019569762574192
+    },
+    "see": {
+      "greetings": 0.3980430237425809,
+      "bright curiosity": 0.6019569762574192
+    },
+    "positive": {
+      "greetings": 0.3980430237425809,
+      "bright curiosity": 0.6019569762574192
+    },
+    "why": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "blue": {
+      "greetings": 0.2645197333869632,
+      "bright curiosity": 0.7354802666130369
+    },
+    "goodbye": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "glowing": {
+      "greetings": 0.35278601141353544,
+      "bright curiosity": 0.6472139885864645
+    },
+    "stone": {
+      "greetings": 0.35278601141353544,
+      "bright curiosity": 0.6472139885864645
+    },
+    "3": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "*": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "4": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "there": {
+      "greetings": 0.36471745847330744,
+      "bright curiosity": 0.6352825415266926
+    },
+    "hard": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "to": {
+      "greetings": 0.2366558428965562,
+      "bright curiosity": 0.7633441571034438
+    },
+    "gain": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "knowledge": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "green": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "colors": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "food": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "thing": {
+      "greetings": 0.36471745847330744,
+      "bright curiosity": 0.6352825415266926
+    },
+    "object": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "shining": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "light": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "can": {
+      "greetings": 0.3212569956222939,
+      "bright curiosity": 0.6787430043777061
+    },
+    "be": {
+      "greetings": 0.3212569956222939,
+      "bright curiosity": 0.6787430043777061
+    },
+    "found": {
+      "greetings": 0.28705137842827305,
+      "bright curiosity": 0.712948621571727
+    },
+    "near": {
+      "greetings": 0.4864028360943475,
+      "bright curiosity": 0.5135971639056526
+    },
+    "caves": {
+      "greetings": 0.27254201673238787,
+      "bright curiosity": 0.7274579832676121
+    },
+    "where": {
+      "greetings": 0.321256995622294,
+      "bright curiosity": 0.6787430043777061
+    },
+    "mineral": {
+      "greetings": 0.36471745847330744,
+      "bright curiosity": 0.6352825415266926
+    },
+    "not": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "crystal": {
+      "greetings": 0.36471745847330744,
+      "bright curiosity": 0.6352825415266926
+    },
+    "warm": {
+      "greetings": 0.3212569956222939,
+      "bright curiosity": 0.6787430043777061
+    },
+    "color": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "winter": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "toval": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "rose": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "red": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "transport": {
+      "greetings": 0.3911771800237352,
+      "bright curiosity": 0.6088228199762649
+    },
+    "was": {
+      "bright curiosity": 1.0
+    },
+    "wondering": {
+      "bright curiosity": 1.0
+    },
+    "if": {
+      "bright curiosity": 1.0
+    },
+    "remember": {
+      "bright curiosity": 0.4300238787015118,
+      "greetings": 0.5699761212984881
+    },
+    "say": {
+      "bright curiosity": 0.34747121749395793,
+      "greetings": 0.6525287825060421
+    },
+    "something": {
+      "bright curiosity": 1.0
+    },
+    "someone": {
+      "bright curiosity": 0.36696621061238777,
+      "greetings": 0.6330337893876121
+    },
+    "wet": {
+      "bright curiosity": 1.0
+    },
+    "for": {
+      "bright curiosity": 1.0
+    },
+    "mean": {
+      "bright curiosity": 0.5,
+      "greetings": 0.5
+    }
+  },
+  "label_to_words": {
+    "greetings": [
+      "are",
+      "is",
+      "dog",
+      "mountain",
+      "green",
+      "fish",
+      "caves",
+      "goodnight",
+      "you",
+      "how",
+      "mineral",
+      "about",
+      "gain",
+      "like",
+      "to",
+      "food",
+      "greeting",
+      "nature",
+      "wings",
+      "love",
+      "fine",
+      "someone",
+      "water",
+      "river",
+      "be",
+      "bird",
+      "stone",
+      "3",
+      "soft",
+      "and",
+      "red",
+      "toval",
+      "nothing",
+      "calm",
+      "word",
+      "person",
+      "they",
+      "know",
+      "warm",
+      "cat",
+      "child",
+      "travel",
+      "the",
+      "object",
+      "thing",
+      "glowing",
+      "knowledge",
+      "colors",
+      "crow",
+      "say",
+      "swim",
+      "in",
+      "mean",
+      "not",
+      "winter",
+      "where",
+      "rain",
+      "hello",
+      "remember",
+      "fire",
+      "found",
+      "4",
+      "me",
+      "friend",
+      "light",
+      "there",
+      "transport",
+      "flows",
+      "do",
+      "yes",
+      "bright",
+      "with",
+      "man",
+      "sun",
+      "why",
+      "near",
+      "zibber",
+      "rose",
+      "crystal",
+      "sorry",
+      "cold",
+      "good",
+      "sky",
+      "hot",
+      "an",
+      "morning",
+      "today",
+      "color",
+      "knows",
+      "who",
+      "herebot",
+      "animal",
+      "tree",
+      "feeling",
+      "shining",
+      "blue",
+      "see",
+      "tell",
+      "flint",
+      "goodbye",
+      "*",
+      "what",
+      "hard",
+      "can",
+      "learns",
+      "car",
+      "means",
+      "moon",
+      "positive"
+    ],
+    "bright curiosity": [
+      "are",
+      "is",
+      "dog",
+      "mountain",
+      "green",
+      "fish",
+      "caves",
+      "goodnight",
+      "you",
+      "how",
+      "mineral",
+      "about",
+      "gain",
+      "like",
+      "to",
+      "food",
+      "greeting",
+      "nature",
+      "wings",
+      "love",
+      "fine",
+      "wet",
+      "someone",
+      "water",
+      "river",
+      "for",
+      "be",
+      "bird",
+      "stone",
+      "3",
+      "soft",
+      "and",
+      "red",
+      "toval",
+      "nothing",
+      "calm",
+      "word",
+      "person",
+      "they",
+      "know",
+      "warm",
+      "was",
+      "cat",
+      "child",
+      "travel",
+      "the",
+      "object",
+      "thing",
+      "glowing",
+      "knowledge",
+      "colors",
+      "crow",
+      "say",
+      "swim",
+      "in",
+      "mean",
+      "not",
+      "winter",
+      "where",
+      "rain",
+      "wondering",
+      "hello",
+      "remember",
+      "fire",
+      "found",
+      "4",
+      "me",
+      "friend",
+      "light",
+      "there",
+      "transport",
+      "flows",
+      "do",
+      "yes",
+      "bright",
+      "with",
+      "man",
+      "something",
+      "sun",
+      "why",
+      "near",
+      "zibber",
+      "rose",
+      "crystal",
+      "sorry",
+      "cold",
+      "good",
+      "sky",
+      "if",
+      "hot",
+      "an",
+      "morning",
+      "today",
+      "color",
+      "knows",
+      "who",
+      "herebot",
+      "animal",
+      "tree",
+      "feeling",
+      "shining",
+      "blue",
+      "see",
+      "tell",
+      "flint",
+      "goodbye",
+      "*",
+      "what",
+      "hard",
+      "can",
+      "learns",
+      "car",
+      "means",
+      "moon",
+      "positive"
+    ]
+  },
+  "word_label_stats": {
+    "hi": {},
+    "am": {},
+    "hrishi": {},
+    "car": {
+      "greetings": {
+        "usage": 1.2581185916535607,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.3911771800237352,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.6290592958267803,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 1.9581185916535606,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6088228199762649,
+        "tier": 3,
+        "phase": "active",
+        "activation": 0.9790592958267803,
+        "archive_pressure": 0.0
+      }
+    },
+    "is": {
+      "greetings": {
+        "usage": 36.48543915795327,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.3335937291512717,
+        "tier": 1,
+        "phase": "active",
+        "activation": 18.242719578976637,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 72.88543915795341,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6664062708487283,
+        "tier": 3,
+        "phase": "active",
+        "activation": 36.44271957897671,
+        "archive_pressure": 0.0
+      }
+    },
+    "travel": {
+      "greetings": {
+        "usage": 1.2581185916535607,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.3911771800237352,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.6290592958267803,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 1.9581185916535606,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6088228199762649,
+        "tier": 3,
+        "phase": "active",
+        "activation": 0.9790592958267803,
+        "archive_pressure": 0.0
+      }
+    },
+    "you": {
+      "greetings": {
+        "usage": 10.064948733228483,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.32125699562229404,
+        "tier": 1,
+        "phase": "active",
+        "activation": 5.032474366614242,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 21.264948733228472,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.678743004377706,
+        "tier": 3,
+        "phase": "active",
+        "activation": 10.632474366614236,
+        "archive_pressure": 0.0
+      }
+    },
+    "are": {
+      "greetings": {
+        "usage": 6.919652254094585,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.33204813775696723,
+        "tier": 1,
+        "phase": "active",
+        "activation": 3.4598261270472923,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 13.91965225409458,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6679518622430327,
+        "tier": 3,
+        "phase": "active",
+        "activation": 6.95982612704729,
+        "archive_pressure": 0.0
+      }
+    },
+    "herebot": {
+      "greetings": {
+        "usage": 1.2581185916535607,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.3911771800237352,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.6290592958267803,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 1.9581185916535606,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6088228199762649,
+        "tier": 3,
+        "phase": "active",
+        "activation": 0.9790592958267803,
+        "archive_pressure": 0.0
+      }
+    },
+    "hello": {
+      "greetings": {
+        "usage": 6.0992917319310935,
+        "reward_trace": 0.9540561374926925,
+        "last_interaction": 7,
+        "last_decay_interaction": 0,
+        "probability": 0.997336237012398,
+        "tier": 4,
+        "phase": "active",
+        "activation": 5.311305466809287,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 7.312104714247778,
+        "reward_trace": -3.1215498734903178,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.0026637629876019465,
+        "tier": 0,
+        "phase": "active",
+        "activation": 0.014185846651592768,
+        "archive_pressure": 0.0
+      }
+    },
+    "ccar": {},
+    "means": {
+      "greetings": {
+        "usage": 5.0324743666142435,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.32125699562229404,
+        "tier": 1,
+        "phase": "active",
+        "activation": 2.5162371833071218,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 10.632474366614241,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.678743004377706,
+        "tier": 3,
+        "phase": "active",
+        "activation": 5.316237183307121,
+        "archive_pressure": 0.0
+      }
+    },
+    "friend": {
+      "greetings": {
+        "usage": 5.0324743666142435,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.3527860114135355,
+        "tier": 1,
+        "phase": "active",
+        "activation": 2.5162371833071218,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 9.232474366614243,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6472139885864645,
+        "tier": 3,
+        "phase": "active",
+        "activation": 4.616237183307121,
+        "archive_pressure": 0.0
+      }
+    },
+    "how": {
+      "greetings": {
+        "usage": 3.1452964791339015,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.34599464452682216,
+        "tier": 1,
+        "phase": "active",
+        "activation": 1.5726482395669508,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 5.945296479133902,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6540053554731778,
+        "tier": 3,
+        "phase": "active",
+        "activation": 2.972648239566951,
+        "archive_pressure": 0.0
+      }
+    },
+    "what": {
+      "greetings": {
+        "usage": 9.435889437401704,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.3137788913880271,
+        "tier": 1,
+        "phase": "active",
+        "activation": 4.717944718700852,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 20.635889437401694,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6862211086119728,
+        "tier": 3,
+        "phase": "active",
+        "activation": 10.317944718700847,
+        "archive_pressure": 0.0
+      }
+    },
+    "water": {
+      "greetings": {
+        "usage": 5.661533662441023,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.321256995622294,
+        "tier": 1,
+        "phase": "active",
+        "activation": 2.8307668312205116,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 11.96153366244102,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.678743004377706,
+        "tier": 3,
+        "phase": "active",
+        "activation": 5.98076683122051,
+        "archive_pressure": 0.0
+      }
+    },
+    "who": {
+      "greetings": {
+        "usage": 1.8871778874803407,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.36471745847330744,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.9435889437401703,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 3.2871778874803406,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6352825415266926,
+        "tier": 3,
+        "phase": "active",
+        "activation": 1.6435889437401703,
+        "archive_pressure": 0.0
+      }
+    },
+    "do": {
+      "greetings": {
+        "usage": 2.5162371833071213,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.35278601141353544,
+        "tier": 1,
+        "phase": "active",
+        "activation": 1.2581185916535607,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 4.616237183307121,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6472139885864645,
+        "tier": 3,
+        "phase": "active",
+        "activation": 2.3081185916535607,
+        "archive_pressure": 0.0
+      }
+    },
+    "like": {
+      "greetings": {
+        "usage": 3.1452964791339015,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.34599464452682216,
+        "tier": 1,
+        "phase": "active",
+        "activation": 1.5726482395669508,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 5.945296479133902,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6540053554731778,
+        "tier": 3,
+        "phase": "active",
+        "activation": 2.972648239566951,
+        "archive_pressure": 0.0
+      }
+    },
+    "the": {
+      "greetings": {
+        "usage": 8.806830141574924,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.2983984384547174,
+        "tier": 1,
+        "phase": "active",
+        "activation": 4.403415070787462,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 20.706830141574912,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.7016015615452826,
+        "tier": 3,
+        "phase": "active",
+        "activation": 10.353415070787456,
+        "archive_pressure": 0.0
+      }
+    },
+    "sun": {
+      "greetings": {
+        "usage": 5.0324743666142435,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.32125699562229404,
+        "tier": 1,
+        "phase": "active",
+        "activation": 2.5162371833071218,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 10.632474366614241,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.678743004377706,
+        "tier": 3,
+        "phase": "active",
+        "activation": 5.316237183307121,
+        "archive_pressure": 0.0
+      }
+    },
+    "cold": {
+      "greetings": {
+        "usage": 4.403415070787463,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.32125699562229393,
+        "tier": 1,
+        "phase": "active",
+        "activation": 2.2017075353937314,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 9.303415070787462,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.678743004377706,
+        "tier": 3,
+        "phase": "active",
+        "activation": 4.651707535393731,
+        "archive_pressure": 0.0
+      }
+    },
+    "today": {
+      "greetings": {
+        "usage": 2.5162371833071213,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.321256995622294,
+        "tier": 1,
+        "phase": "active",
+        "activation": 1.2581185916535607,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 5.316237183307122,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6787430043777061,
+        "tier": 3,
+        "phase": "active",
+        "activation": 2.658118591653561,
+        "archive_pressure": 0.0
+      }
+    },
+    "know": {
+      "greetings": {
+        "usage": 1.3664102587562341,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 22,
+        "probability": 0.3980430237425809,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.6832051293781171,
+        "archive_pressure": 0.021081608796139312
+      },
+      "bright curiosity": {
+        "usage": 2.066410258756234,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 22,
+        "probability": 0.6019569762574192,
+        "tier": 3,
+        "phase": "active",
+        "activation": 1.033205129378117,
+        "archive_pressure": 0.0
+      }
+    },
+    "bright": {
+      "greetings": {
+        "usage": 2.5162371833071213,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.321256995622294,
+        "tier": 1,
+        "phase": "active",
+        "activation": 1.2581185916535607,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 5.316237183307122,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6787430043777061,
+        "tier": 3,
+        "phase": "active",
+        "activation": 2.658118591653561,
+        "archive_pressure": 0.0
+      }
+    },
+    "knows": {
+      "greetings": {
+        "usage": 1.8871778874803407,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.28705137842827305,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.9435889437401703,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 4.687177887480341,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.712948621571727,
+        "tier": 3,
+        "phase": "active",
+        "activation": 2.3435889437401705,
+        "archive_pressure": 0.0
+      }
+    },
+    "nothing": {
+      "greetings": {
+        "usage": 1.2581185916535607,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.3911771800237352,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.6290592958267803,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 1.9581185916535606,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6088228199762649,
+        "tier": 3,
+        "phase": "active",
+        "activation": 0.9790592958267803,
+        "archive_pressure": 0.0
+      }
+    },
+    "zibber": {
+      "greetings": {
+        "usage": 11.323067324882043,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.29761413160935285,
+        "tier": 1,
+        "phase": "active",
+        "activation": 5.6615336624410215,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 26.723067324882027,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.7023858683906472,
+        "tier": 3,
+        "phase": "active",
+        "activation": 13.361533662441014,
+        "archive_pressure": 0.0
+      }
+    },
+    "flint": {
+      "greetings": {
+        "usage": 3.774355774960682,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.34161049077143707,
+        "tier": 1,
+        "phase": "active",
+        "activation": 1.887177887480341,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 7.274355774960683,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.658389509228563,
+        "tier": 3,
+        "phase": "active",
+        "activation": 3.6371778874803415,
+        "archive_pressure": 0.0
+      }
+    },
+    "soft": {
+      "greetings": {
+        "usage": 1.8871778874803407,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.36471745847330744,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.9435889437401703,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 3.2871778874803406,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6352825415266926,
+        "tier": 3,
+        "phase": "active",
+        "activation": 1.6435889437401703,
+        "archive_pressure": 0.0
+      }
+    },
+    "and": {
+      "greetings": {
+        "usage": 2.5162371833071213,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.35278601141353544,
+        "tier": 1,
+        "phase": "active",
+        "activation": 1.2581185916535607,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 4.616237183307121,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6472139885864645,
+        "tier": 3,
+        "phase": "active",
+        "activation": 2.3081185916535607,
+        "archive_pressure": 0.0
+      }
+    },
+    "flows": {
+      "greetings": {
+        "usage": 1.2581185916535607,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.3911771800237352,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.6290592958267803,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 1.9581185916535606,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6088228199762649,
+        "tier": 3,
+        "phase": "active",
+        "activation": 0.9790592958267803,
+        "archive_pressure": 0.0
+      }
+    },
+    "feeling": {
+      "greetings": {
+        "usage": 2.5162371833071213,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.35278601141353544,
+        "tier": 1,
+        "phase": "active",
+        "activation": 1.2581185916535607,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 4.616237183307121,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6472139885864645,
+        "tier": 3,
+        "phase": "active",
+        "activation": 2.3081185916535607,
+        "archive_pressure": 0.0
+      }
+    },
+    "fine": {
+      "greetings": {
+        "usage": 3.1452964791339015,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.34599464452682216,
+        "tier": 1,
+        "phase": "active",
+        "activation": 1.5726482395669508,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 5.945296479133902,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6540053554731778,
+        "tier": 3,
+        "phase": "active",
+        "activation": 2.972648239566951,
+        "archive_pressure": 0.0
+      }
+    },
+    "good": {
+      "greetings": {
+        "usage": 4.403415070787463,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.33854636547550676,
+        "tier": 1,
+        "phase": "active",
+        "activation": 2.2017075353937314,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 8.603415070787463,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6614536345244931,
+        "tier": 3,
+        "phase": "active",
+        "activation": 4.3017075353937315,
+        "archive_pressure": 0.0
+      }
+    },
+    "crow fly over water": {},
+    "learns": {
+      "greetings": {
+        "usage": 1.8871778874803407,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.36471745847330744,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.9435889437401703,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 3.2871778874803406,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6352825415266926,
+        "tier": 3,
+        "phase": "active",
+        "activation": 1.6435889437401703,
+        "archive_pressure": 0.0
+      }
+    },
+    "sorry": {
+      "greetings": {
+        "usage": 1.4,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.5,
+        "tier": 2,
+        "phase": "active",
+        "activation": 0.7,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 1.4,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.5,
+        "tier": 2,
+        "phase": "active",
+        "activation": 0.7,
+        "archive_pressure": 0.0
+      }
+    },
+    "word": {
+      "greetings": {
+        "usage": 1.8871778874803407,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.4217764483641054,
+        "tier": 2,
+        "phase": "active",
+        "activation": 0.9435889437401703,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 2.5871778874803404,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.5782235516358945,
+        "tier": 2,
+        "phase": "active",
+        "activation": 1.2935889437401702,
+        "archive_pressure": 0.0
+      }
+    },
+    "yes": {
+      "greetings": {
+        "usage": 1.4,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.5,
+        "tier": 2,
+        "phase": "active",
+        "activation": 0.7,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 1.4,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.5,
+        "tier": 2,
+        "phase": "active",
+        "activation": 0.7,
+        "archive_pressure": 0.0
+      }
+    },
+    "person": {
+      "greetings": {
+        "usage": 4.2,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.5,
+        "tier": 2,
+        "phase": "active",
+        "activation": 2.1,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 4.2,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.5,
+        "tier": 2,
+        "phase": "active",
+        "activation": 2.1,
+        "archive_pressure": 0.0
+      }
+    },
+    "they": {
+      "greetings": {
+        "usage": 1.4,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.5,
+        "tier": 2,
+        "phase": "active",
+        "activation": 0.7,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 1.4,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.5,
+        "tier": 2,
+        "phase": "active",
+        "activation": 0.7,
+        "archive_pressure": 0.0
+      }
+    },
+    "man": {
+      "greetings": {
+        "usage": 1.4,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.5,
+        "tier": 2,
+        "phase": "active",
+        "activation": 0.7,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 1.4,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.5,
+        "tier": 2,
+        "phase": "active",
+        "activation": 0.7,
+        "archive_pressure": 0.0
+      }
+    },
+    "child": {
+      "greetings": {
+        "usage": 1.4,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.5,
+        "tier": 2,
+        "phase": "active",
+        "activation": 0.7,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 1.4,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.5,
+        "tier": 2,
+        "phase": "active",
+        "activation": 0.7,
+        "archive_pressure": 0.0
+      }
+    },
+    "crow": {
+      "greetings": {
+        "usage": 1.8871778874803407,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.36471745847330744,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.9435889437401703,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 3.2871778874803406,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6352825415266926,
+        "tier": 3,
+        "phase": "active",
+        "activation": 1.6435889437401703,
+        "archive_pressure": 0.0
+      }
+    },
+    "animal": {
+      "greetings": {
+        "usage": 4.403415070787463,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.46318436379026134,
+        "tier": 2,
+        "phase": "active",
+        "activation": 2.2017075353937314,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 5.103415070787463,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.5368156362097385,
+        "tier": 2,
+        "phase": "active",
+        "activation": 2.5517075353937315,
+        "archive_pressure": 0.0
+      }
+    },
+    "bird": {
+      "greetings": {
+        "usage": 2.5162371833071213,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.3911771800237352,
+        "tier": 1,
+        "phase": "active",
+        "activation": 1.2581185916535607,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 3.9162371833071212,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6088228199762649,
+        "tier": 3,
+        "phase": "active",
+        "activation": 1.9581185916535606,
+        "archive_pressure": 0.0
+      }
+    },
+    "dog": {
+      "greetings": {
+        "usage": 1.4,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.5,
+        "tier": 2,
+        "phase": "active",
+        "activation": 0.7,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 1.4,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.5,
+        "tier": 2,
+        "phase": "active",
+        "activation": 0.7,
+        "archive_pressure": 0.0
+      }
+    },
+    "cat": {
+      "greetings": {
+        "usage": 1.4,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.5,
+        "tier": 2,
+        "phase": "active",
+        "activation": 0.7,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 1.4,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.5,
+        "tier": 2,
+        "phase": "active",
+        "activation": 0.7,
+        "archive_pressure": 0.0
+      }
+    },
+    "fish": {
+      "greetings": {
+        "usage": 1.8871778874803407,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.4217764483641054,
+        "tier": 2,
+        "phase": "active",
+        "activation": 0.9435889437401703,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 2.5871778874803404,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.5782235516358945,
+        "tier": 2,
+        "phase": "active",
+        "activation": 1.2935889437401702,
+        "archive_pressure": 0.0
+      }
+    },
+    "tree": {
+      "greetings": {
+        "usage": 1.2581185916535607,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.3911771800237352,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.6290592958267803,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 1.9581185916535606,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6088228199762649,
+        "tier": 3,
+        "phase": "active",
+        "activation": 0.9790592958267803,
+        "archive_pressure": 0.0
+      }
+    },
+    "nature": {
+      "greetings": {
+        "usage": 5.0324743666142435,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.3362841033621473,
+        "tier": 1,
+        "phase": "active",
+        "activation": 2.5162371833071218,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 9.932474366614242,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6637158966378527,
+        "tier": 3,
+        "phase": "active",
+        "activation": 4.966237183307121,
+        "archive_pressure": 0.0
+      }
+    },
+    "moon": {
+      "greetings": {
+        "usage": 1.8871778874803407,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.36471745847330744,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.9435889437401703,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 3.2871778874803406,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6352825415266926,
+        "tier": 3,
+        "phase": "active",
+        "activation": 1.6435889437401703,
+        "archive_pressure": 0.0
+      }
+    },
+    "sky": {
+      "greetings": {
+        "usage": 3.774355774960682,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.28705137842827305,
+        "tier": 1,
+        "phase": "active",
+        "activation": 1.887177887480341,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 9.374355774960682,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.7129486215717269,
+        "tier": 3,
+        "phase": "active",
+        "activation": 4.687177887480341,
+        "archive_pressure": 0.0
+      }
+    },
+    "rain": {
+      "greetings": {
+        "usage": 1.2581185916535607,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.3911771800237352,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.6290592958267803,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 1.9581185916535606,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6088228199762649,
+        "tier": 3,
+        "phase": "active",
+        "activation": 0.9790592958267803,
+        "archive_pressure": 0.0
+      }
+    },
+    "fire": {
+      "greetings": {
+        "usage": 0.9435889437401703,
+        "reward_trace": -2.5326704672080527,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.0015695833235572487,
+        "tier": 0,
+        "phase": "active",
+        "activation": 0.005918350468731658,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 4.287177887480341,
+        "reward_trace": 0.9874556595687256,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.9984304166764427,
+        "tier": 4,
+        "phase": "active",
+        "activation": 3.7647323565727495,
+        "archive_pressure": 0.0
+      }
+    },
+    "mountain": {
+      "greetings": {
+        "usage": 1.2581185916535607,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.3911771800237352,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.6290592958267803,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 1.9581185916535606,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6088228199762649,
+        "tier": 3,
+        "phase": "active",
+        "activation": 0.9790592958267803,
+        "archive_pressure": 0.0
+      }
+    },
+    "greeting": {
+      "greetings": {
+        "usage": 1.2581185916535607,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.3911771800237352,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.6290592958267803,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 1.9581185916535606,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6088228199762649,
+        "tier": 3,
+        "phase": "active",
+        "activation": 0.9790592958267803,
+        "archive_pressure": 0.0
+      }
+    },
+    "an": {
+      "greetings": {
+        "usage": 1.2581185916535607,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.3911771800237352,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.6290592958267803,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 1.9581185916535606,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6088228199762649,
+        "tier": 3,
+        "phase": "active",
+        "activation": 0.9790592958267803,
+        "archive_pressure": 0.0
+      }
+    },
+    "with": {
+      "greetings": {
+        "usage": 1.8871778874803407,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.36471745847330744,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.9435889437401703,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 3.2871778874803406,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6352825415266926,
+        "tier": 3,
+        "phase": "active",
+        "activation": 1.6435889437401703,
+        "archive_pressure": 0.0
+      }
+    },
+    "wings": {
+      "greetings": {
+        "usage": 1.2581185916535607,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.3911771800237352,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.6290592958267803,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 1.9581185916535606,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6088228199762649,
+        "tier": 3,
+        "phase": "active",
+        "activation": 0.9790592958267803,
+        "archive_pressure": 0.0
+      }
+    },
+    "calm": {
+      "greetings": {
+        "usage": 1.8871778874803407,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.36471745847330744,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.9435889437401703,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 3.2871778874803406,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6352825415266926,
+        "tier": 3,
+        "phase": "active",
+        "activation": 1.6435889437401703,
+        "archive_pressure": 0.0
+      }
+    },
+    "swim": {
+      "greetings": {
+        "usage": 1.2581185916535607,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.3911771800237352,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.6290592958267803,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 1.9581185916535606,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6088228199762649,
+        "tier": 3,
+        "phase": "active",
+        "activation": 0.9790592958267803,
+        "archive_pressure": 0.0
+      }
+    },
+    "in": {
+      "greetings": {
+        "usage": 1.2581185916535607,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.3911771800237352,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.6290592958267803,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 1.9581185916535606,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6088228199762649,
+        "tier": 3,
+        "phase": "active",
+        "activation": 0.9790592958267803,
+        "archive_pressure": 0.0
+      }
+    },
+    "river": {
+      "greetings": {
+        "usage": 1.8871778874803407,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.36471745847330744,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.9435889437401703,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 3.2871778874803406,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6352825415266926,
+        "tier": 3,
+        "phase": "active",
+        "activation": 1.6435889437401703,
+        "archive_pressure": 0.0
+      }
+    },
+    "tell": {
+      "greetings": {
+        "usage": 2.049615388134351,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.3306241471087818,
+        "tier": 1,
+        "phase": "active",
+        "activation": 1.0248076940671755,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 4.149615388134351,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6693758528912181,
+        "tier": 3,
+        "phase": "active",
+        "activation": 2.0748076940671756,
+        "archive_pressure": 0.0
+      }
+    },
+    "me": {
+      "greetings": {
+        "usage": 2.049615388134351,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 22,
+        "probability": 0.37270947001883076,
+        "tier": 1,
+        "phase": "active",
+        "activation": 1.0248076940671755,
+        "archive_pressure": 0.021968835109788167
+      },
+      "bright curiosity": {
+        "usage": 3.449615388134351,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 22,
+        "probability": 0.6272905299811693,
+        "tier": 3,
+        "phase": "active",
+        "activation": 1.7248076940671755,
+        "archive_pressure": 0.0
+      }
+    },
+    "about": {
+      "greetings": {
+        "usage": 2.049615388134351,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 22,
+        "probability": 0.37270947001883076,
+        "tier": 1,
+        "phase": "active",
+        "activation": 1.0248076940671755,
+        "archive_pressure": 0.021968835109788167
+      },
+      "bright curiosity": {
+        "usage": 3.449615388134351,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 22,
+        "probability": 0.6272905299811693,
+        "tier": 3,
+        "phase": "active",
+        "activation": 1.7248076940671755,
+        "archive_pressure": 0.0
+      }
+    },
+    "morning": {
+      "greetings": {
+        "usage": 3.1452964791339015,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.34599464452682216,
+        "tier": 1,
+        "phase": "active",
+        "activation": 1.5726482395669508,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 5.945296479133902,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6540053554731778,
+        "tier": 3,
+        "phase": "active",
+        "activation": 2.972648239566951,
+        "archive_pressure": 0.0
+      }
+    },
+    "love": {
+      "greetings": {
+        "usage": 1.2581185916535607,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.3911771800237352,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.6290592958267803,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 1.9581185916535606,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6088228199762649,
+        "tier": 3,
+        "phase": "active",
+        "activation": 0.9790592958267803,
+        "archive_pressure": 0.0
+      }
+    },
+    "hot": {
+      "greetings": {
+        "usage": 1.2581185916535607,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.3911771800237352,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.6290592958267803,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 1.9581185916535606,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6088228199762649,
+        "tier": 3,
+        "phase": "active",
+        "activation": 0.9790592958267803,
+        "archive_pressure": 0.0
+      }
+    },
+    "goodnight": {
+      "greetings": {
+        "usage": 1.3664102587562341,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 22,
+        "probability": 0.3980430237425809,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.6832051293781171,
+        "archive_pressure": 0.021081608796139312
+      },
+      "bright curiosity": {
+        "usage": 2.066410258756234,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 22,
+        "probability": 0.6019569762574192,
+        "tier": 3,
+        "phase": "active",
+        "activation": 1.033205129378117,
+        "archive_pressure": 0.0
+      }
+    },
+    "see": {
+      "greetings": {
+        "usage": 1.3664102587562341,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 22,
+        "probability": 0.3980430237425809,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.6832051293781171,
+        "archive_pressure": 0.021081608796139312
+      },
+      "bright curiosity": {
+        "usage": 2.066410258756234,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 22,
+        "probability": 0.6019569762574192,
+        "tier": 3,
+        "phase": "active",
+        "activation": 1.033205129378117,
+        "archive_pressure": 0.0
+      }
+    },
+    "positive": {
+      "greetings": {
+        "usage": 1.3664102587562341,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 22,
+        "probability": 0.3980430237425809,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.6832051293781171,
+        "archive_pressure": 0.021081608796139312
+      },
+      "bright curiosity": {
+        "usage": 2.066410258756234,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 22,
+        "probability": 0.6019569762574192,
+        "tier": 3,
+        "phase": "active",
+        "activation": 1.033205129378117,
+        "archive_pressure": 0.0
+      }
+    },
+    "why": {
+      "greetings": {
+        "usage": 1.2581185916535607,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.3911771800237352,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.6290592958267803,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 1.9581185916535606,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6088228199762649,
+        "tier": 3,
+        "phase": "active",
+        "activation": 0.9790592958267803,
+        "archive_pressure": 0.0
+      }
+    },
+    "blue": {
+      "greetings": {
+        "usage": 3.1452964791339015,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.2645197333869632,
+        "tier": 1,
+        "phase": "active",
+        "activation": 1.5726482395669508,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 8.745296479133902,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.7354802666130369,
+        "tier": 3,
+        "phase": "active",
+        "activation": 4.372648239566951,
+        "archive_pressure": 0.0
+      }
+    },
+    "goodbye": {
+      "greetings": {
+        "usage": 1.2581185916535607,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.3911771800237352,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.6290592958267803,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 1.9581185916535606,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6088228199762649,
+        "tier": 3,
+        "phase": "active",
+        "activation": 0.9790592958267803,
+        "archive_pressure": 0.0
+      }
+    },
+    "glowing": {
+      "greetings": {
+        "usage": 2.5162371833071213,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.35278601141353544,
+        "tier": 1,
+        "phase": "active",
+        "activation": 1.2581185916535607,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 4.616237183307121,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6472139885864645,
+        "tier": 3,
+        "phase": "active",
+        "activation": 2.3081185916535607,
+        "archive_pressure": 0.0
+      }
+    },
+    "stone": {
+      "greetings": {
+        "usage": 2.5162371833071213,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.35278601141353544,
+        "tier": 1,
+        "phase": "active",
+        "activation": 1.2581185916535607,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 4.616237183307121,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6472139885864645,
+        "tier": 3,
+        "phase": "active",
+        "activation": 2.3081185916535607,
+        "archive_pressure": 0.0
+      }
+    },
+    "3": {
+      "greetings": {
+        "usage": 1.2581185916535607,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.3911771800237352,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.6290592958267803,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 1.9581185916535606,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6088228199762649,
+        "tier": 3,
+        "phase": "active",
+        "activation": 0.9790592958267803,
+        "archive_pressure": 0.0
+      }
+    },
+    "*": {
+      "greetings": {
+        "usage": 1.2581185916535607,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.3911771800237352,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.6290592958267803,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 1.9581185916535606,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6088228199762649,
+        "tier": 3,
+        "phase": "active",
+        "activation": 0.9790592958267803,
+        "archive_pressure": 0.0
+      }
+    },
+    "4": {
+      "greetings": {
+        "usage": 1.2581185916535607,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.3911771800237352,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.6290592958267803,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 1.9581185916535606,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6088228199762649,
+        "tier": 3,
+        "phase": "active",
+        "activation": 0.9790592958267803,
+        "archive_pressure": 0.0
+      }
+    },
+    "there": {
+      "greetings": {
+        "usage": 1.8871778874803407,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.36471745847330744,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.9435889437401703,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 3.2871778874803406,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6352825415266926,
+        "tier": 3,
+        "phase": "active",
+        "activation": 1.6435889437401703,
+        "archive_pressure": 0.0
+      }
+    },
+    "hard": {
+      "greetings": {
+        "usage": 1.2581185916535607,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.3911771800237352,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.6290592958267803,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 1.9581185916535606,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6088228199762649,
+        "tier": 3,
+        "phase": "active",
+        "activation": 0.9790592958267803,
+        "archive_pressure": 0.0
+      }
+    },
+    "to": {
+      "greetings": {
+        "usage": 1.2581185916535607,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.2366558428965562,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.6290592958267803,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 4.058118591653561,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.7633441571034438,
+        "tier": 3,
+        "phase": "active",
+        "activation": 2.0290592958267806,
+        "archive_pressure": 0.0
+      }
+    },
+    "gain": {
+      "greetings": {
+        "usage": 1.2581185916535607,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.3911771800237352,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.6290592958267803,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 1.9581185916535606,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6088228199762649,
+        "tier": 3,
+        "phase": "active",
+        "activation": 0.9790592958267803,
+        "archive_pressure": 0.0
+      }
+    },
+    "knowledge": {
+      "greetings": {
+        "usage": 1.2581185916535607,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.3911771800237352,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.6290592958267803,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 1.9581185916535606,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6088228199762649,
+        "tier": 3,
+        "phase": "active",
+        "activation": 0.9790592958267803,
+        "archive_pressure": 0.0
+      }
+    },
+    "green": {
+      "greetings": {
+        "usage": 1.2581185916535607,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.3911771800237352,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.6290592958267803,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 1.9581185916535606,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6088228199762649,
+        "tier": 3,
+        "phase": "active",
+        "activation": 0.9790592958267803,
+        "archive_pressure": 0.0
+      }
+    },
+    "colors": {
+      "greetings": {
+        "usage": 1.2581185916535607,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.3911771800237352,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.6290592958267803,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 1.9581185916535606,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6088228199762649,
+        "tier": 3,
+        "phase": "active",
+        "activation": 0.9790592958267803,
+        "archive_pressure": 0.0
+      }
+    },
+    "food": {
+      "greetings": {
+        "usage": 1.2581185916535607,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.3911771800237352,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.6290592958267803,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 1.9581185916535606,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6088228199762649,
+        "tier": 3,
+        "phase": "active",
+        "activation": 0.9790592958267803,
+        "archive_pressure": 0.0
+      }
+    },
+    "thing": {
+      "greetings": {
+        "usage": 1.8871778874803407,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.36471745847330744,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.9435889437401703,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 3.2871778874803406,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6352825415266926,
+        "tier": 3,
+        "phase": "active",
+        "activation": 1.6435889437401703,
+        "archive_pressure": 0.0
+      }
+    },
+    "object": {
+      "greetings": {
+        "usage": 1.2581185916535607,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.3911771800237352,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.6290592958267803,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 1.9581185916535606,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6088228199762649,
+        "tier": 3,
+        "phase": "active",
+        "activation": 0.9790592958267803,
+        "archive_pressure": 0.0
+      }
+    },
+    "shining": {
+      "greetings": {
+        "usage": 1.2581185916535607,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.3911771800237352,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.6290592958267803,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 1.9581185916535606,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6088228199762649,
+        "tier": 3,
+        "phase": "active",
+        "activation": 0.9790592958267803,
+        "archive_pressure": 0.0
+      }
+    },
+    "light": {
+      "greetings": {
+        "usage": 1.2581185916535607,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.3911771800237352,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.6290592958267803,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 1.9581185916535606,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6088228199762649,
+        "tier": 3,
+        "phase": "active",
+        "activation": 0.9790592958267803,
+        "archive_pressure": 0.0
+      }
+    },
+    "can": {
+      "greetings": {
+        "usage": 1.8871778874803407,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.3212569956222939,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.9435889437401703,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 3.9871778874803407,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6787430043777061,
+        "tier": 3,
+        "phase": "active",
+        "activation": 1.9935889437401704,
+        "archive_pressure": 0.0
+      }
+    },
+    "be": {
+      "greetings": {
+        "usage": 1.8871778874803407,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.3212569956222939,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.9435889437401703,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 3.9871778874803407,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6787430043777061,
+        "tier": 3,
+        "phase": "active",
+        "activation": 1.9935889437401704,
+        "archive_pressure": 0.0
+      }
+    },
+    "found": {
+      "greetings": {
+        "usage": 1.8871778874803407,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.28705137842827305,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.9435889437401703,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 4.687177887480341,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.712948621571727,
+        "tier": 3,
+        "phase": "active",
+        "activation": 2.3435889437401705,
+        "archive_pressure": 0.0
+      }
+    },
+    "near": {
+      "greetings": {
+        "usage": 1.8057127846464225,
+        "reward_trace": 0.6666281473404386,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.4864028360943475,
+        "tier": 2,
+        "phase": "active",
+        "activation": 1.4290027335945097,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 3.017793880812012,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.5135971639056526,
+        "tier": 2,
+        "phase": "active",
+        "activation": 1.508896940406006,
+        "archive_pressure": 0.0
+      }
+    },
+    "caves": {
+      "greetings": {
+        "usage": 1.2581185916535607,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.27254201673238787,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.6290592958267803,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 3.358118591653561,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.7274579832676121,
+        "tier": 3,
+        "phase": "active",
+        "activation": 1.6790592958267805,
+        "archive_pressure": 0.0
+      }
+    },
+    "where": {
+      "greetings": {
+        "usage": 1.2581185916535607,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.321256995622294,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.6290592958267803,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 2.658118591653561,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6787430043777061,
+        "tier": 3,
+        "phase": "active",
+        "activation": 1.3290592958267804,
+        "archive_pressure": 0.0
+      }
+    },
+    "mineral": {
+      "greetings": {
+        "usage": 1.8871778874803407,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.36471745847330744,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.9435889437401703,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 3.2871778874803406,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6352825415266926,
+        "tier": 3,
+        "phase": "active",
+        "activation": 1.6435889437401703,
+        "archive_pressure": 0.0
+      }
+    },
+    "not": {
+      "greetings": {
+        "usage": 1.2581185916535607,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.3911771800237352,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.6290592958267803,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 1.9581185916535606,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6088228199762649,
+        "tier": 3,
+        "phase": "active",
+        "activation": 0.9790592958267803,
+        "archive_pressure": 0.0
+      }
+    },
+    "crystal": {
+      "greetings": {
+        "usage": 1.8871778874803407,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.36471745847330744,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.9435889437401703,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 3.2871778874803406,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6352825415266926,
+        "tier": 3,
+        "phase": "active",
+        "activation": 1.6435889437401703,
+        "archive_pressure": 0.0
+      }
+    },
+    "warm": {
+      "greetings": {
+        "usage": 1.8871778874803407,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.3212569956222939,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.9435889437401703,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 3.9871778874803407,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6787430043777061,
+        "tier": 3,
+        "phase": "active",
+        "activation": 1.9935889437401704,
+        "archive_pressure": 0.0
+      }
+    },
+    "color": {
+      "greetings": {
+        "usage": 1.2581185916535607,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.3911771800237352,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.6290592958267803,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 1.9581185916535606,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6088228199762649,
+        "tier": 3,
+        "phase": "active",
+        "activation": 0.9790592958267803,
+        "archive_pressure": 0.0
+      }
+    },
+    "winter": {
+      "greetings": {
+        "usage": 1.2581185916535607,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.3911771800237352,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.6290592958267803,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 1.9581185916535606,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6088228199762649,
+        "tier": 3,
+        "phase": "active",
+        "activation": 0.9790592958267803,
+        "archive_pressure": 0.0
+      }
+    },
+    "toval": {
+      "greetings": {
+        "usage": 1.2581185916535607,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.3911771800237352,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.6290592958267803,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 1.9581185916535606,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6088228199762649,
+        "tier": 3,
+        "phase": "active",
+        "activation": 0.9790592958267803,
+        "archive_pressure": 0.0
+      }
+    },
+    "rose": {
+      "greetings": {
+        "usage": 1.2581185916535607,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.3911771800237352,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.6290592958267803,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 1.9581185916535606,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6088228199762649,
+        "tier": 3,
+        "phase": "active",
+        "activation": 0.9790592958267803,
+        "archive_pressure": 0.0
+      }
+    },
+    "red": {
+      "greetings": {
+        "usage": 1.2581185916535607,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.3911771800237352,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.6290592958267803,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 1.9581185916535606,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6088228199762649,
+        "tier": 3,
+        "phase": "active",
+        "activation": 0.9790592958267803,
+        "archive_pressure": 0.0
+      }
+    },
+    "transport": {
+      "greetings": {
+        "usage": 1.2581185916535607,
+        "reward_trace": 0.0,
+        "last_interaction": 17,
+        "last_decay_interaction": 0,
+        "probability": 0.3911771800237352,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.6290592958267803,
+        "archive_pressure": 0.0
+      },
+      "bright curiosity": {
+        "usage": 1.9581185916535606,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6088228199762649,
+        "tier": 3,
+        "phase": "active",
+        "activation": 0.9790592958267803,
+        "archive_pressure": 0.0
+      }
+    },
+    "was": {
+      "bright curiosity": {
+        "usage": 1.4,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 1.0,
+        "tier": 4,
+        "phase": "active",
+        "activation": 0.7,
+        "archive_pressure": 0.0
+      }
+    },
+    "wondering": {
+      "bright curiosity": {
+        "usage": 2.0999999999999996,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 1.0,
+        "tier": 4,
+        "phase": "active",
+        "activation": 1.0499999999999998,
+        "archive_pressure": 0.0
+      }
+    },
+    "if": {
+      "bright curiosity": {
+        "usage": 2.0999999999999996,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 1.0,
+        "tier": 4,
+        "phase": "active",
+        "activation": 1.0499999999999998,
+        "archive_pressure": 0.0
+      }
+    },
+    "remember": {
+      "bright curiosity": {
+        "usage": 1.8871778874803407,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.4300238787015118,
+        "tier": 2,
+        "phase": "active",
+        "activation": 0.9435889437401703,
+        "archive_pressure": 0.0
+      },
+      "greetings": {
+        "usage": 1.5274447726597897,
+        "reward_trace": 0.7541419927207874,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.5699761212984881,
+        "tier": 2,
+        "phase": "active",
+        "activation": 1.250682096717874,
+        "archive_pressure": 0.0
+      }
+    },
+    "say": {
+      "bright curiosity": {
+        "usage": 1.2581185916535607,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.34747121749395793,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.6290592958267803,
+        "archive_pressure": 0.0
+      },
+      "greetings": {
+        "usage": 1.4605898690974497,
+        "reward_trace": 0.7211338662745104,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6525287825060421,
+        "tier": 3,
+        "phase": "active",
+        "activation": 1.181333232117549,
+        "archive_pressure": 0.0
+      }
+    },
+    "something": {
+      "bright curiosity": {
+        "usage": 1.4,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 1.0,
+        "tier": 4,
+        "phase": "active",
+        "activation": 0.7,
+        "archive_pressure": 0.0
+      }
+    },
+    "someone": {
+      "bright curiosity": {
+        "usage": 1.2581185916535607,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.36696621061238777,
+        "tier": 1,
+        "phase": "active",
+        "activation": 0.6290592958267803,
+        "archive_pressure": 0.0
+      },
+      "greetings": {
+        "usage": 1.3666200708894825,
+        "reward_trace": 0.6747383617400162,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.6330337893876121,
+        "tier": 3,
+        "phase": "active",
+        "activation": 1.085156557390374,
+        "archive_pressure": 0.0
+      }
+    },
+    "wet": {
+      "bright curiosity": {
+        "usage": 1.4,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 1.0,
+        "tier": 4,
+        "phase": "active",
+        "activation": 0.7,
+        "archive_pressure": 0.0
+      }
+    },
+    "for": {
+      "bright curiosity": {
+        "usage": 1.4,
+        "reward_trace": 0.0,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 1.0,
+        "tier": 4,
+        "phase": "active",
+        "activation": 0.7,
+        "archive_pressure": 0.0
+      }
+    },
+    "mean": {
+      "bright curiosity": {
+        "usage": 1.329159716562844,
+        "reward_trace": 0.6562431422953717,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.5,
+        "tier": 2,
+        "phase": "active",
+        "activation": 1.0472833585115304,
+        "archive_pressure": 0.0
+      },
+      "greetings": {
+        "usage": 1.329159716562844,
+        "reward_trace": 0.6562431422953717,
+        "last_interaction": 22,
+        "last_decay_interaction": 0,
+        "probability": 0.5,
+        "tier": 2,
+        "phase": "active",
+        "activation": 1.0472833585115304,
+        "archive_pressure": 0.0
+      }
+    }
+  },
+  "conflict_history": [
+    {
+      "word": "hello",
+      "labels": [
+        "greetings",
+        "bright curiosity"
+      ],
+      "kept": "greetings",
+      "interaction_index": 7,
+      "timestamp": 1789467481.8105822
+    },
+    {
+      "word": "fire",
+      "labels": [
+        "greetings",
+        "bright curiosity"
+      ],
+      "kept": "bright curiosity",
+      "interaction_index": 22,
+      "timestamp": 1789468541.0653613
+    }
+  ]
 }
