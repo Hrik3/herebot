@@ -1,0 +1,56 @@
+{
+  "id": "ep_3e2e345f13f6",
+  "timestamp": 1789475853.0134757,
+  "user_input": "water",
+  "system_response": "TPL.DEF.MAYBE word='water' value='water means liquid' TPL.STATE.CONF",
+  "factor_vector": {
+    "curiosity": 0.20210428726130933,
+    "threat": 0.0999201964080739,
+    "trust": 0.7375648037820418,
+    "confidence": 0.7983261628490095,
+    "uncertainty": 0.01879460147674187,
+    "energy": 0.37,
+    "attention": 0.05,
+    "comprehension": 0.5,
+    "fluency": 0.7,
+    "cognitive_load": 0.9815,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.1617133236161571,
+  "metadata": {
+    "ci_confidence": 0.7983261628490095,
+    "generated_plugin_influence": null
+  },
+  "active_states_at_time": [],
+  "provenance": "OBSERVED",
+  "global_broadcast_state": null,
+  "factor_space_id": "control",
+  "factor_space_version": 1,
+  "factor_names": [
+    "curiosity",
+    "threat",
+    "trust",
+    "confidence",
+    "uncertainty",
+    "energy",
+    "attention",
+    "comprehension",
+    "fluency",
+    "cognitive_load",
+    "conscience_active"
+  ],
+  "factor_statuses": {
+    "curiosity": "observed",
+    "threat": "observed",
+    "trust": "observed",
+    "confidence": "observed",
+    "uncertainty": "observed",
+    "energy": "observed",
+    "attention": "observed",
+    "comprehension": "observed",
+    "fluency": "observed",
+    "cognitive_load": "observed",
+    "conscience_active": "observed"
+  }
+}

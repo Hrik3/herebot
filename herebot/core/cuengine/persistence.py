@@ -308,6 +308,16 @@ class HeartPersistenceMixin:
                 }
                 self._cold_start_threshold = 100
 
+        cand_path = os.path.join(STATE_DIR, 'candidate_associations.json')
+        from components.candidate_ledger import CandidateLedger
+        cfg = self.config_manager.get('idle_reasoner.candidate_ledger', {}) if getattr(self, 'config_manager', None) else {}
+        self.candidate_ledger = CandidateLedger(cfg)
+        if os.path.exists(cand_path):
+            try:
+                self.candidate_ledger.load(cand_path)
+            except Exception as e:
+                print(f"Could not load candidate ledger: {e}")
+
     def _save_state(self):
         """Persist current state, including the persistent latent state concept."""
         now = time.time()
@@ -373,6 +383,8 @@ class HeartPersistenceMixin:
                 json.dump(self.state_manager.aliases, f)
             with open(current_state_path, 'w') as f:
                 json.dump(data, f, indent=2)
+            if hasattr(self, 'candidate_ledger') and self.candidate_ledger is not None:
+                self.candidate_ledger.save(os.path.join(STATE_DIR, 'candidate_associations.json'))
         except Exception as e:
             print(f"Error saving state: {e}. State may be incomplete.")
             print(traceback.format_exc())

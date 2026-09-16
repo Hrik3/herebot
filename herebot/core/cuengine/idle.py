@@ -213,7 +213,9 @@ class HeartIdleMixin:
             system_response="[synthetic]",
             factor_vector={},
             intrinsic_reward=0.0,
-            metadata={'synthetic': True}
+            metadata={'synthetic': True},
+            active_states_at_time=list(getattr(self, "current_state_labels", []) or []),
+            provenance="DREAMED",
         )
 
     def active_memory_rehearsal(self):
@@ -511,7 +513,7 @@ class HeartIdleMixin:
             print(f"   ⚠️ Identity phase transition detected (drift={drift:.3f}). New attractor formed.")
 
     def cross_modal_alignment(self):
-        """7. Cross‑modal representation alignment (contrastive learning)."""
+        """7. Cross-modal representation alignment — now candidate-gated."""
         if not self.config_manager.get('idle_reasoner.enable_cross_modal_alignment', True):
             return
 
@@ -525,19 +527,13 @@ class HeartIdleMixin:
             print(f"   [Resource Aware] Skipping Cross‑modal Alignment due to low resources (throttle={throttle:.2f}).")
             return
 
-        print("🔄 [Cross‑modal Alignment] Aligning semantic, state, episodic embeddings...")
-        # Cross-modal alignment associates words from recent episodes with active state labels
-        # via WordStateAssociator, NEVER directly mutating semantic word vectors with factor control vectors.
-        if hasattr(self.reasoner, 'word_state') and getattr(self, 'current_state_labels', None):
-            for ep in self.episodic_memory.episodes[-100:]:
-                tokens = self._tokenize(ep.get('user_input', ''))
-                for t in tokens:
-                    for lbl in self.current_state_labels:
-                        self.reasoner.word_state.add_association(
-                            t, lbl, confidence=0.7 * throttle, source="cross_modal_alignment",
-                            interaction_index=getattr(self, 'interaction_counter', 0)
-                        )
-        print("   Cross‑modal association alignment completed (throttle={:.2f}).".format(throttle))
+        print("🔄 [Cross‑modal Alignment] Generating candidate associations (not committing)...")
+        if not hasattr(self, 'candidate_ledger') or self.candidate_ledger is None:
+            from components.candidate_ledger import CandidateLedger
+            self.candidate_ledger = CandidateLedger(self.config_manager.get('idle_reasoner.candidate_ledger', {}))
+
+        added = self.candidate_ledger.generate(self.episodic_memory, self._tokenize, window=100)
+        print(f"   Generated {added} candidate associations (unconsolidated).")
 
     def exploration_policy_distillation(self):
         """8. Exploration Policy Distillation."""
@@ -1099,14 +1095,14 @@ class HeartIdleMixin:
         During idle, use semantic similarity to propagate word-state labels.
         If two words have high embedding similarity, they likely share labels.
         """
-        if not self.config_manager.get('idle_reasoner.enable_semantic_self_talk', True):  # reuse existing config
+        if not self.config_manager.get('idle_reasoner.enable_word_state_propagation', True):
             return
         cpu_ok, mem_ok, throttle, cpu_p, mem_p = self._get_resource_status()
         if not cpu_ok or not mem_ok:
             print(f"   [Resource Aware] Skipping word-state propagation (CPU:{cpu_p:.1f}% MEM:{mem_p:.1f}%).")
             return
 
-        print("🔄 [Word-State Propagation] Spreading labels via semantic similarity...")
+        print("🔄 [Word-State Propagation] Staging candidate labels via semantic similarity...")
         assoc = self.reasoner.word_state
         # Get all words that have embeddings
         all_words = list(self.semantic_learner.word_embeddings.keys())
@@ -1122,45 +1118,61 @@ class HeartIdleMixin:
                 if w1 >= w2:
                     continue
                 sim = self.semantic_learner.similarity(w1, w2)
-                if sim > 0.8:  # high similarity
+                if sim > 0.85:  # high similarity (stricter threshold for un-PMI-gated channel)
                     similarities[(w1, w2)] = sim
 
-        # Propagate labels between similar words
-        propagated = 0
+        if not hasattr(self, 'candidate_ledger') or self.candidate_ledger is None:
+            from components.candidate_ledger import CandidateLedger
+            self.candidate_ledger = CandidateLedger(self.config_manager.get('idle_reasoner.candidate_ledger', {}))
+
+        # Propagate candidate labels between similar words
+        staged = 0
         for (w1, w2), sim in similarities.items():
             labels1 = set(assoc.get_labels(w1, threshold=0.3))
             labels2 = set(assoc.get_labels(w2, threshold=0.3))
-            # For each label in w1, add to w2 with confidence scaled by similarity
-            for lab in labels1:
-                if lab not in labels2:
-                    assoc.add_association(
-                        w2,
-                        lab,
-                        confidence=sim * 0.8,
-                        source="similarity",
-                        interaction_index=getattr(self, 'interaction_counter', 0),
-                        reward=float(getattr(self.reward_tracker, 'episode_reward', 0.0) or 0.0),
-                    )
-                    propagated += 1
-            for lab in labels2:
-                if lab not in labels1:
-                    assoc.add_association(
-                        w1,
-                        lab,
-                        confidence=sim * 0.8,
-                        source="similarity",
-                        interaction_index=getattr(self, 'interaction_counter', 0),
-                        reward=float(getattr(self.reward_tracker, 'episode_reward', 0.0) or 0.0),
-                    )
-                    propagated += 1
-        print(f"   Propagated {propagated} label associations.")
+            ep_id = f"similarity_prop_{w1}_{w2}_{int(time.time())}"
+            for src_word, src_labels, dst_labels, dst_word in (
+                (w1, labels1, labels2, w2), (w2, labels2, labels1, w1)
+            ):
+                for lab in src_labels:
+                    if lab in dst_labels:
+                        continue
+                    from components.candidate_ledger import CandidateAssociation
+                    self.candidate_ledger.candidates[(dst_word, lab)].append(CandidateAssociation(
+                        token=dst_word,
+                        label=lab,
+                        episode_id=ep_id,
+                        timestamp=time.time(),
+                        provenance='INFERRED',
+                        state_diversity=2,
+                        pmi=sim,
+                        raw_weight=sim * 0.5,
+                        was_broadcast_winner=False,
+                    ))
+                    staged += 1
+        print(f"   Staged {staged} candidate propagations (unconsolidated).")
 
         # Check for conflicts (words with multiple labels of similar confidence)
         for word in all_words:
-            conflicts = assoc.detect_conflicts(word)
+            conflicts = assoc.detect_conflicts(word, interaction_index=getattr(self, 'interaction_counter', 0))
             if conflicts:
                 print(f"   ⚠️ Word '{word}' has ambiguous labels: {conflicts}. (Will ask user later)")
                 # We could add a hypothesis to ask the user, but for now just note.
+
+    def consolidate_candidates(self):
+        """Consolidate staged candidate associations using grounded-evidence and belief-change gates."""
+        if not hasattr(self, 'candidate_ledger') or self.candidate_ledger is None:
+            return
+        self.candidate_ledger.age_and_prune()
+        committed = self.candidate_ledger.consolidate(
+            self.reasoner.word_state, interaction_index=getattr(self, 'interaction_counter', 0)
+        )
+        for token, label, evidence, margin, kl in committed:
+            print(f"   🧠 [Consolidated] '{token}' -> '{label}' "
+                  f"(evidence={evidence:.3f}, margin={margin:.3f}, kl={kl:.3f})")
+        if committed:
+            self.save_word_state_immediately()
+        self.candidate_ledger.save(os.path.join(STATE_DIR, 'candidate_associations.json'))
 
     def mine_phrase_relations(self):
         """
@@ -1304,6 +1316,7 @@ class HeartIdleMixin:
             self.contextual_sentiment_analysis,
             self.deep_behavioral_pattern_mining,
             self.propagate_word_state_associations,
+            self.consolidate_candidates,
             self.mine_phrase_relations,
             self._metabolic_maintenance,
             self.converge_knowledge_graph,

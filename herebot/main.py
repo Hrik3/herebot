@@ -135,6 +135,10 @@ def main():
         print("\nInterrupted. Exiting.")
     finally:
         idle_reasoner.running = False
+        try:
+            engine._save_state()
+        except Exception:
+            pass
         engine.tracker.save_data()
         engine.tracker.plot_all(engine)
 if __name__ == "__main__":
