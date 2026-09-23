@@ -1,0 +1,15 @@
+{
+  "id": "ep_00bc7d70090a",
+  "timestamp": 1789642139.1712387,
+  "user_input": "flows like river",
+  "system_response": "[synthetic]",
+  "factor_vector": {},
+  "factor_dim": 0,
+  "intrinsic_reward": 0.0,
+  "metadata": {
+    "synthetic": true
+  },
+  "active_states_at_time": [],
+  "provenance": "DREAMED",
+  "global_broadcast_state": null
+}

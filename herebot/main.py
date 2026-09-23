@@ -65,6 +65,9 @@ class IdleReasoner(threading.Thread):
                     print(f"\n⏳ [Idle at {time.strftime('%H:%M:%S')}]\n{thought}\n")
                     self.engine.tracker.record(self.engine, trigger="idle_short")
                     time.sleep(self.short_thresh)
+                    # Recompute idle_time after short-idle sleep so the long-idle
+                    # check below uses fresh wall-clock time, not stale pre-sleep value.
+                    idle_time = time.time() - self.engine.last_interaction_time
 
                 # Long idle → deep state introspection AND all idle tasks
                 if idle_time > self.long_thresh and not self.long_idle_done:

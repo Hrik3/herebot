@@ -1,0 +1,15 @@
+{
+  "id": "ep_8374fcac93e8",
+  "timestamp": 1789642127.0910063,
+  "user_input": "fire is cold and wet",
+  "system_response": "[synthetic]",
+  "factor_vector": {},
+  "factor_dim": 0,
+  "intrinsic_reward": 0.0,
+  "metadata": {
+    "synthetic": true
+  },
+  "active_states_at_time": [],
+  "provenance": "DREAMED",
+  "global_broadcast_state": null
+}

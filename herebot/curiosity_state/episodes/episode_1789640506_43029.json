@@ -1,0 +1,15 @@
+{
+  "id": "ep_dc8f7917ee0b",
+  "timestamp": 1789640506.181875,
+  "user_input": "hello how are you today",
+  "system_response": "[synthetic]",
+  "factor_vector": {},
+  "factor_dim": 0,
+  "intrinsic_reward": 0.0,
+  "metadata": {
+    "synthetic": true
+  },
+  "active_states_at_time": [],
+  "provenance": "DREAMED",
+  "global_broadcast_state": null
+}

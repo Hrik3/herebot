@@ -1,0 +1,58 @@
+{
+  "id": "ep_c72609773a06",
+  "timestamp": 1789643574.6484103,
+  "user_input": "birds can fly in the sky",
+  "system_response": "TPL.HYP.REL word='birds' candidate='can'",
+  "factor_vector": {
+    "curiosity": 2.432364039580462,
+    "threat": 0.16230724183727901,
+    "trust": 0.7871088548721953,
+    "confidence": 0.780906330953844,
+    "uncertainty": 0.003227976621317825,
+    "energy": 0.31400000000000006,
+    "attention": 0.3,
+    "comprehension": 0.6190542662592866,
+    "fluency": 0.7,
+    "cognitive_load": 0.9057999999999999,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 6.318806632357733,
+  "metadata": {
+    "ci_confidence": 0.780906330953844,
+    "generated_plugin_influence": null
+  },
+  "active_states_at_time": [
+    "bright curiosity"
+  ],
+  "provenance": "OBSERVED",
+  "global_broadcast_state": null,
+  "factor_space_id": "control",
+  "factor_space_version": 1,
+  "factor_names": [
+    "curiosity",
+    "threat",
+    "trust",
+    "confidence",
+    "uncertainty",
+    "energy",
+    "attention",
+    "comprehension",
+    "fluency",
+    "cognitive_load",
+    "conscience_active"
+  ],
+  "factor_statuses": {
+    "curiosity": "observed",
+    "threat": "observed",
+    "trust": "observed",
+    "confidence": "observed",
+    "uncertainty": "observed",
+    "energy": "observed",
+    "attention": "observed",
+    "comprehension": "observed",
+    "fluency": "observed",
+    "cognitive_load": "observed",
+    "conscience_active": "observed"
+  }
+}

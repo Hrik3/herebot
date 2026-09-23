@@ -1,0 +1,18 @@
+{
+  "id": "ep_2204326a6a46",
+  "timestamp": 1789645207.502764,
+  "user_input": "hello how are you doing today",
+  "system_response": "[synthetic]",
+  "factor_vector": {},
+  "factor_dim": 0,
+  "intrinsic_reward": 0.0,
+  "metadata": {
+    "synthetic": true
+  },
+  "active_states_at_time": [
+    "greetings",
+    "bright curiosity"
+  ],
+  "provenance": "DREAMED",
+  "global_broadcast_state": null
+}

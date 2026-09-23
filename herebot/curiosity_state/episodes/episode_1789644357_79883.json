@@ -1,0 +1,59 @@
+{
+  "id": "ep_429608a66751",
+  "timestamp": 1789644357.3105562,
+  "user_input": "fire is hot and bright and burns things",
+  "system_response": "TPL.RECALL.PHRASE phrase='fire burns bright'",
+  "factor_vector": {
+    "curiosity": 2.3898786861207375,
+    "threat": 0.16433622361416902,
+    "trust": 0.8479668167485452,
+    "confidence": 0.7365174571112049,
+    "uncertainty": 0.002696901057758004,
+    "energy": 0.4620000000000001,
+    "attention": 0.4,
+    "comprehension": 0.8710237249320767,
+    "fluency": 0.7,
+    "cognitive_load": 0.8151999999999999,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 8.834368341467751,
+  "metadata": {
+    "ci_confidence": 0.7365174571112049,
+    "generated_plugin_influence": null
+  },
+  "active_states_at_time": [
+    "greetings",
+    "bright curiosity"
+  ],
+  "provenance": "OBSERVED",
+  "global_broadcast_state": null,
+  "factor_space_id": "control",
+  "factor_space_version": 1,
+  "factor_names": [
+    "curiosity",
+    "threat",
+    "trust",
+    "confidence",
+    "uncertainty",
+    "energy",
+    "attention",
+    "comprehension",
+    "fluency",
+    "cognitive_load",
+    "conscience_active"
+  ],
+  "factor_statuses": {
+    "curiosity": "observed",
+    "threat": "observed",
+    "trust": "observed",
+    "confidence": "observed",
+    "uncertainty": "observed",
+    "energy": "observed",
+    "attention": "observed",
+    "comprehension": "observed",
+    "fluency": "observed",
+    "cognitive_load": "observed",
+    "conscience_active": "observed"
+  }
+}

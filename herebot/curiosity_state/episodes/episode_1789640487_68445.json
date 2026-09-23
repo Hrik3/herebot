@@ -1,0 +1,15 @@
+{
+  "id": "ep_99c4c2bc3b96",
+  "timestamp": 1789640487.100974,
+  "user_input": "is bright today",
+  "system_response": "[synthetic]",
+  "factor_vector": {},
+  "factor_dim": 0,
+  "intrinsic_reward": 0.0,
+  "metadata": {
+    "synthetic": true
+  },
+  "active_states_at_time": [],
+  "provenance": "DREAMED",
+  "global_broadcast_state": null
+}

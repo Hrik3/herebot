@@ -1,0 +1,56 @@
+{
+  "id": "ep_60908ca65d33",
+  "timestamp": 1789552755.8609004,
+  "user_input": "water is essential for life",
+  "system_response": "TPL.STATE.CURIOUS word='hard' | TPL.CHAT.MORE?",
+  "factor_vector": {
+    "curiosity": 1.7132374314675223,
+    "threat": 0.08541241545674835,
+    "trust": 0.7884482898826588,
+    "confidence": 0.8676271616243347,
+    "uncertainty": 0.006758318521419561,
+    "energy": 0.264,
+    "attention": 0.25,
+    "comprehension": 0.5,
+    "fluency": 0.7,
+    "cognitive_load": 0.9339999999999999,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 14.82597525023782,
+  "metadata": {
+    "ci_confidence": 0.8676271616243347,
+    "generated_plugin_influence": null
+  },
+  "active_states_at_time": [],
+  "provenance": "OBSERVED",
+  "global_broadcast_state": null,
+  "factor_space_id": "control",
+  "factor_space_version": 1,
+  "factor_names": [
+    "curiosity",
+    "threat",
+    "trust",
+    "confidence",
+    "uncertainty",
+    "energy",
+    "attention",
+    "comprehension",
+    "fluency",
+    "cognitive_load",
+    "conscience_active"
+  ],
+  "factor_statuses": {
+    "curiosity": "observed",
+    "threat": "observed",
+    "trust": "observed",
+    "confidence": "observed",
+    "uncertainty": "observed",
+    "energy": "observed",
+    "attention": "observed",
+    "comprehension": "observed",
+    "fluency": "observed",
+    "cognitive_load": "observed",
+    "conscience_active": "observed"
+  }
+}

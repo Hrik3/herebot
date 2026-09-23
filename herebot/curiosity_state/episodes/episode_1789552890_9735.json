@@ -1,0 +1,56 @@
+{
+  "id": "ep_2e114770469b",
+  "timestamp": 1789552890.0072298,
+  "user_input": "the sky is blue and beautiful",
+  "system_response": "TPL.STATE.CURIOUS word='the' | TPL.CHAT.MORE?",
+  "factor_vector": {
+    "curiosity": 2.166816218214568,
+    "threat": 0.1308387284805332,
+    "trust": 0.7650277698841451,
+    "confidence": 0.8111482900797906,
+    "uncertainty": 0.00629752407676368,
+    "energy": 0.31400000000000006,
+    "attention": 0.3,
+    "comprehension": 0.5,
+    "fluency": 0.7,
+    "cognitive_load": 0.9057999999999999,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 15.57676926885567,
+  "metadata": {
+    "ci_confidence": 0.8111482900797906,
+    "generated_plugin_influence": null
+  },
+  "active_states_at_time": [],
+  "provenance": "OBSERVED",
+  "global_broadcast_state": null,
+  "factor_space_id": "control",
+  "factor_space_version": 1,
+  "factor_names": [
+    "curiosity",
+    "threat",
+    "trust",
+    "confidence",
+    "uncertainty",
+    "energy",
+    "attention",
+    "comprehension",
+    "fluency",
+    "cognitive_load",
+    "conscience_active"
+  ],
+  "factor_statuses": {
+    "curiosity": "observed",
+    "threat": "observed",
+    "trust": "observed",
+    "confidence": "observed",
+    "uncertainty": "observed",
+    "energy": "observed",
+    "attention": "observed",
+    "comprehension": "observed",
+    "fluency": "observed",
+    "cognitive_load": "observed",
+    "conscience_active": "observed"
+  }
+}

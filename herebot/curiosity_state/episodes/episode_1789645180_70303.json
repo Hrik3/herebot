@@ -1,0 +1,18 @@
+{
+  "id": "ep_4fd69309ff30",
+  "timestamp": 1789645180.3234642,
+  "user_input": "can fly in the dark night sky",
+  "system_response": "[synthetic]",
+  "factor_vector": {},
+  "factor_dim": 0,
+  "intrinsic_reward": 0.0,
+  "metadata": {
+    "synthetic": true
+  },
+  "active_states_at_time": [
+    "greetings",
+    "bright curiosity"
+  ],
+  "provenance": "DREAMED",
+  "global_broadcast_state": null
+}

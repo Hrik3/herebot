@@ -557,7 +557,7 @@ class CuriosityTracker:
         prev_reward: Dict[str, float] = {}
         for d in sorted(data, key=lambda x: x.get("timestamp", 0)):
             sid = d.get("session_id", "?")[:6]
-            r = d.get("total_reward", 0.0)
+            r = d.get("total_reward") or 0.0
             if sid in prev_reward:
                 delta = r - prev_reward[sid]
                 if delta >= 0:
@@ -598,8 +598,8 @@ class CuriosityTracker:
                 ["avg_entropy", "top_curiosity_score", "avg_gp_variance"],
                 ["Avg Entropy", "Top Curiosity Score", "Avg GP Variance"],
             ):
-                idle_vals  = [d.get(metric, 0) for d, m in zip(data, idle_mask)  if m]
-                inter_vals = [d.get(metric, 0) for d, m in zip(data, inter_mask) if m]
+                idle_vals  = [d.get(metric, 0) or 0 for d, m in zip(data, idle_mask)  if m]
+                inter_vals = [d.get(metric, 0) or 0 for d, m in zip(data, inter_mask) if m]
                 bp = ax.boxplot(
                     [inter_vals, idle_vals],
                     labels=["Interaction", "Idle"],

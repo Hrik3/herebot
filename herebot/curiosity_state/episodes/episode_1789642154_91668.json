@@ -1,0 +1,15 @@
+{
+  "id": "ep_e8109ed14744",
+  "timestamp": 1789642154.6845791,
+  "user_input": "cats are curious animals",
+  "system_response": "[synthetic]",
+  "factor_vector": {},
+  "factor_dim": 0,
+  "intrinsic_reward": 0.0,
+  "metadata": {
+    "synthetic": true
+  },
+  "active_states_at_time": [],
+  "provenance": "DREAMED",
+  "global_broadcast_state": null
+}

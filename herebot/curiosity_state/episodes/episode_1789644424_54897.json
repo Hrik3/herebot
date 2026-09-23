@@ -1,0 +1,59 @@
+{
+  "id": "ep_630be344919f",
+  "timestamp": 1789644424.1835303,
+  "user_input": "ice is frozen water and it is cold",
+  "system_response": "TPL.DEF.KNOWN word='cold' value='cold means low temperature'",
+  "factor_vector": {
+    "curiosity": 2.016533275026371,
+    "threat": 0.1353809413513989,
+    "trust": 0.7851639739018026,
+    "confidence": 0.767328371652708,
+    "uncertainty": 0.0025133233736738666,
+    "energy": 0.2829999999999999,
+    "attention": 0.4,
+    "comprehension": 0.6235786316502056,
+    "fluency": 0.7,
+    "cognitive_load": 0.8868,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 16.87963209043449,
+  "metadata": {
+    "ci_confidence": 0.767328371652708,
+    "generated_plugin_influence": null
+  },
+  "active_states_at_time": [
+    "greetings",
+    "bright curiosity"
+  ],
+  "provenance": "OBSERVED",
+  "global_broadcast_state": null,
+  "factor_space_id": "control",
+  "factor_space_version": 1,
+  "factor_names": [
+    "curiosity",
+    "threat",
+    "trust",
+    "confidence",
+    "uncertainty",
+    "energy",
+    "attention",
+    "comprehension",
+    "fluency",
+    "cognitive_load",
+    "conscience_active"
+  ],
+  "factor_statuses": {
+    "curiosity": "observed",
+    "threat": "observed",
+    "trust": "observed",
+    "confidence": "observed",
+    "uncertainty": "observed",
+    "energy": "observed",
+    "attention": "observed",
+    "comprehension": "observed",
+    "fluency": "observed",
+    "cognitive_load": "observed",
+    "conscience_active": "observed"
+  }
+}
