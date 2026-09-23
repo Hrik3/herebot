@@ -1,0 +1,59 @@
+{
+  "id": "ep_f6bbb880abac",
+  "timestamp": 1789644681.9271278,
+  "user_input": "stars shine bright in the dark night sky",
+  "system_response": "TPL.TOPIC topic='the ocean'",
+  "factor_vector": {
+    "curiosity": 2.3571863951584406,
+    "threat": 0.17985068789212655,
+    "trust": 0.7667639018142569,
+    "confidence": 0.7220899482529507,
+    "uncertainty": 0.00231724352675361,
+    "energy": 0.31400000000000006,
+    "attention": 0.4,
+    "comprehension": 0.6239734491230233,
+    "fluency": 0.7,
+    "cognitive_load": 0.8744,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 13.423499226833272,
+  "metadata": {
+    "ci_confidence": 0.7220899482529507,
+    "generated_plugin_influence": null
+  },
+  "active_states_at_time": [
+    "greetings",
+    "bright curiosity"
+  ],
+  "provenance": "OBSERVED",
+  "global_broadcast_state": null,
+  "factor_space_id": "control",
+  "factor_space_version": 1,
+  "factor_names": [
+    "curiosity",
+    "threat",
+    "trust",
+    "confidence",
+    "uncertainty",
+    "energy",
+    "attention",
+    "comprehension",
+    "fluency",
+    "cognitive_load",
+    "conscience_active"
+  ],
+  "factor_statuses": {
+    "curiosity": "observed",
+    "threat": "observed",
+    "trust": "observed",
+    "confidence": "observed",
+    "uncertainty": "observed",
+    "energy": "observed",
+    "attention": "observed",
+    "comprehension": "observed",
+    "fluency": "observed",
+    "cognitive_load": "observed",
+    "conscience_active": "observed"
+  }
+}

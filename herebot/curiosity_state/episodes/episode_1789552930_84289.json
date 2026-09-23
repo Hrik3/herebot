@@ -1,0 +1,56 @@
+{
+  "id": "ep_4f91b0370b19",
+  "timestamp": 1789552930.6347833,
+  "user_input": "cats are curious animals",
+  "system_response": "TPL.STATE.CURIOUS word='life' | TPL.CHAT.MORE?",
+  "factor_vector": {
+    "curiosity": 1.7991683752046064,
+    "threat": 0.09021118791038304,
+    "trust": 0.7947254784910759,
+    "confidence": 0.8874572720381917,
+    "uncertainty": 0.005895554454829827,
+    "energy": 0.30799999999999994,
+    "attention": 0.2,
+    "comprehension": 0.5,
+    "fluency": 0.7,
+    "cognitive_load": 0.9384,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 14.387638885183428,
+  "metadata": {
+    "ci_confidence": 0.8874572720381917,
+    "generated_plugin_influence": null
+  },
+  "active_states_at_time": [],
+  "provenance": "OBSERVED",
+  "global_broadcast_state": null,
+  "factor_space_id": "control",
+  "factor_space_version": 1,
+  "factor_names": [
+    "curiosity",
+    "threat",
+    "trust",
+    "confidence",
+    "uncertainty",
+    "energy",
+    "attention",
+    "comprehension",
+    "fluency",
+    "cognitive_load",
+    "conscience_active"
+  ],
+  "factor_statuses": {
+    "curiosity": "observed",
+    "threat": "observed",
+    "trust": "observed",
+    "confidence": "observed",
+    "uncertainty": "observed",
+    "energy": "observed",
+    "attention": "observed",
+    "comprehension": "observed",
+    "fluency": "observed",
+    "cognitive_load": "observed",
+    "conscience_active": "observed"
+  }
+}

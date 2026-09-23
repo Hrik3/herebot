@@ -1,0 +1,15 @@
+{
+  "id": "ep_e62e31e8f39c",
+  "timestamp": 1789639745.2463953,
+  "user_input": "is blue and beautiful",
+  "system_response": "[synthetic]",
+  "factor_vector": {},
+  "factor_dim": 0,
+  "intrinsic_reward": 0.0,
+  "metadata": {
+    "synthetic": true
+  },
+  "active_states_at_time": [],
+  "provenance": "DREAMED",
+  "global_broadcast_state": null
+}

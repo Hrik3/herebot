@@ -1,0 +1,56 @@
+{
+  "id": "ep_c21fe98700d1",
+  "timestamp": 1789552648.900068,
+  "user_input": "hello, how are you doing today?",
+  "system_response": "TPL.DEF.KNOWN word='hello' value='hello is a greeting'",
+  "factor_vector": {
+    "curiosity": 1.9561654342446446,
+    "threat": 0.1205009034830594,
+    "trust": 0.6080758533055113,
+    "confidence": 0.7886787984053829,
+    "uncertainty": 0.007291869983652685,
+    "energy": 0.30799999999999994,
+    "attention": 0.3,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9076,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 22.418943101339426,
+  "metadata": {
+    "ci_confidence": 0.7886787984053829,
+    "generated_plugin_influence": null
+  },
+  "active_states_at_time": [],
+  "provenance": "OBSERVED",
+  "global_broadcast_state": null,
+  "factor_space_id": "control",
+  "factor_space_version": 1,
+  "factor_names": [
+    "curiosity",
+    "threat",
+    "trust",
+    "confidence",
+    "uncertainty",
+    "energy",
+    "attention",
+    "comprehension",
+    "fluency",
+    "cognitive_load",
+    "conscience_active"
+  ],
+  "factor_statuses": {
+    "curiosity": "observed",
+    "threat": "observed",
+    "trust": "observed",
+    "confidence": "observed",
+    "uncertainty": "observed",
+    "energy": "observed",
+    "attention": "observed",
+    "comprehension": "observed",
+    "fluency": "observed",
+    "cognitive_load": "observed",
+    "conscience_active": "observed"
+  }
+}

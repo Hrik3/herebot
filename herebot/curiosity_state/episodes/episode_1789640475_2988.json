@@ -1,0 +1,15 @@
+{
+  "id": "ep_8463f9a777a3",
+  "timestamp": 1789640475.8981242,
+  "user_input": "bright in the dark",
+  "system_response": "[synthetic]",
+  "factor_vector": {},
+  "factor_dim": 0,
+  "intrinsic_reward": 0.0,
+  "metadata": {
+    "synthetic": true
+  },
+  "active_states_at_time": [],
+  "provenance": "DREAMED",
+  "global_broadcast_state": null
+}

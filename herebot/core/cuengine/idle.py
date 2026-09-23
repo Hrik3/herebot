@@ -606,9 +606,11 @@ class HeartIdleMixin:
             if name not in self.meta_learner.dynamic_factor_names:
                 continue
             idx = self.meta_learner.factor_names.index(name)
+            # Build keep mask BEFORE removing from dynamic_factor_names,
+            # so the index matches the current array layout.
+            keep = [i for i in range(len(self.meta_learner.factor_names)) if i != idx]
             self.meta_learner.dynamic_factor_names.remove(name)
             # Remove from arrays
-            keep = [i for i in range(len(self.meta_learner.factor_names)) if i != idx]
             self.meta_learner.mu = self.meta_learner.mu[keep]
             self.meta_learner.lambda_ = self.meta_learner.lambda_[keep]
             self.meta_learner.alpha = self.meta_learner.alpha[keep]
@@ -617,6 +619,13 @@ class HeartIdleMixin:
                 del self.meta_learner.dynamic_compute_functions[name]
             if name in self.meta_learner.factor_metadata:
                 del self.meta_learner.factor_metadata[name]
+            # Retire from factor_space so its version history stays in sync
+            if hasattr(self.meta_learner, 'factor_space'):
+                try:
+                    self.meta_learner.factor_space.retire(name)
+                except Exception:
+                    pass
+            self.meta_learner.n_factors = len(self.meta_learner.mu)
             print(f"   Removed weak drive: '{name}'")
         # Spawn new drive from residual variance (simplified) – reduce probability when throttled
         spawn_prob = 0.2 * throttle

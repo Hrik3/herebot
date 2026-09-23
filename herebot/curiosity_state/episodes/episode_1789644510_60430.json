@@ -1,0 +1,59 @@
+{
+  "id": "ep_5a13fd36581c",
+  "timestamp": 1789644510.8079,
+  "user_input": "the ocean is deep and blue",
+  "system_response": "TPL.PFX.TRUST | TPL.TOPIC topic='ice is'",
+  "factor_vector": {
+    "curiosity": 1.9192366084365533,
+    "threat": 0.0982390554924574,
+    "trust": 0.8337171755242392,
+    "confidence": 0.8658569517154826,
+    "uncertainty": 0.0024534823409625836,
+    "energy": 0.37,
+    "attention": 0.3,
+    "comprehension": 0.6651878866578748,
+    "fluency": 0.7,
+    "cognitive_load": 0.889,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 11.553477748171906,
+  "metadata": {
+    "ci_confidence": 0.8658569517154826,
+    "generated_plugin_influence": null
+  },
+  "active_states_at_time": [
+    "greetings",
+    "bright curiosity"
+  ],
+  "provenance": "OBSERVED",
+  "global_broadcast_state": null,
+  "factor_space_id": "control",
+  "factor_space_version": 1,
+  "factor_names": [
+    "curiosity",
+    "threat",
+    "trust",
+    "confidence",
+    "uncertainty",
+    "energy",
+    "attention",
+    "comprehension",
+    "fluency",
+    "cognitive_load",
+    "conscience_active"
+  ],
+  "factor_statuses": {
+    "curiosity": "observed",
+    "threat": "observed",
+    "trust": "observed",
+    "confidence": "observed",
+    "uncertainty": "observed",
+    "energy": "observed",
+    "attention": "observed",
+    "comprehension": "observed",
+    "fluency": "observed",
+    "cognitive_load": "observed",
+    "conscience_active": "observed"
+  }
+}

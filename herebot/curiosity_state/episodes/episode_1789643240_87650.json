@@ -1,0 +1,18 @@
+{
+  "id": "ep_51b9a659c0c2",
+  "timestamp": 1789643240.7053308,
+  "user_input": "where can zibber be found near caves",
+  "system_response": "[synthetic]",
+  "factor_vector": {},
+  "factor_dim": 0,
+  "intrinsic_reward": 0.0,
+  "metadata": {
+    "synthetic": true
+  },
+  "active_states_at_time": [
+    "greetings",
+    "bright curiosity"
+  ],
+  "provenance": "DREAMED",
+  "global_broadcast_state": null
+}

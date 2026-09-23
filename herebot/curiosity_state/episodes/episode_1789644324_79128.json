@@ -1,0 +1,18 @@
+{
+  "id": "ep_78097465b809",
+  "timestamp": 1789644324.28709,
+  "user_input": "zibber near caves",
+  "system_response": "[synthetic]",
+  "factor_vector": {},
+  "factor_dim": 0,
+  "intrinsic_reward": 0.0,
+  "metadata": {
+    "synthetic": true
+  },
+  "active_states_at_time": [
+    "greetings",
+    "bright curiosity"
+  ],
+  "provenance": "DREAMED",
+  "global_broadcast_state": null
+}

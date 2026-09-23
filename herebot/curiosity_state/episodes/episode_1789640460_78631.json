@@ -1,0 +1,15 @@
+{
+  "id": "ep_97c2c0ddf6f8",
+  "timestamp": 1789640460.2258272,
+  "user_input": "sky is blue and beautiful",
+  "system_response": "[synthetic]",
+  "factor_vector": {},
+  "factor_dim": 0,
+  "intrinsic_reward": 0.0,
+  "metadata": {
+    "synthetic": true
+  },
+  "active_states_at_time": [],
+  "provenance": "DREAMED",
+  "global_broadcast_state": null
+}

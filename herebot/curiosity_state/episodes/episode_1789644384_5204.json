@@ -1,0 +1,18 @@
+{
+  "id": "ep_12f8f3a1c8f5",
+  "timestamp": 1789644384.5716145,
+  "user_input": "flint like water",
+  "system_response": "[synthetic]",
+  "factor_vector": {},
+  "factor_dim": 0,
+  "intrinsic_reward": 0.0,
+  "metadata": {
+    "synthetic": true
+  },
+  "active_states_at_time": [
+    "greetings",
+    "bright curiosity"
+  ],
+  "provenance": "DREAMED",
+  "global_broadcast_state": null
+}
