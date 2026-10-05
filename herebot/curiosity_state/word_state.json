@@ -71,7 +71,16 @@
     "shine": {},
     "night": {},
     "moon": {},
-    "something": {}
+    "something": {},
+    "who": {},
+    "herebot": {},
+    "hi": {},
+    "hrishi": {},
+    "name": {},
+    "with": {},
+    "talking": {},
+    "learns": {},
+    "am": {}
   },
   "label_to_words": {},
   "word_label_stats": {
@@ -146,7 +155,16 @@
     "shine": {},
     "night": {},
     "moon": {},
-    "something": {}
+    "something": {},
+    "who": {},
+    "herebot": {},
+    "hi": {},
+    "hrishi": {},
+    "name": {},
+    "with": {},
+    "talking": {},
+    "learns": {},
+    "am": {}
   },
   "conflict_history": [],
   "conflict_cooldown": {}

@@ -6,19 +6,20 @@
     "phase": "active",
     "last_used": 1781029568.019288,
     "confidence": 1.0,
-    "usage": 242.9172797791805,
-    "reward_trace": 228.78316660195208,
-    "last_interaction": 9,
-    "last_decay_interaction": 9,
-    "probability": 0.9833392875315361,
+    "usage": 274.7086740497649,
+    "reward_trace": 258.62210144144365,
+    "last_interaction": 12,
+    "last_decay_interaction": 12,
+    "probability": 0.9843652999137129,
     "tier": 4,
-    "activation": 242.9172797791805,
+    "activation": 274.7086740497649,
     "archive_pressure": 0.0,
     "state_groups": [
       "is zibber what",
       "zibber is can",
       "zibber is cold",
-      "zibber is to"
+      "zibber is to",
+      "zibber is means"
     ]
   },
   "bright curiosity": {
@@ -28,19 +29,20 @@
     "phase": "active",
     "last_used": 1789216163.857052,
     "confidence": 1.0,
-    "usage": 4.125123543026501,
-    "reward_trace": 3.0421403573642736,
-    "last_interaction": 9,
-    "last_decay_interaction": 9,
-    "probability": 0.016660712468463918,
+    "usage": 4.369719512874848,
+    "reward_trace": 3.2534751254406533,
+    "last_interaction": 12,
+    "last_decay_interaction": 12,
+    "probability": 0.015634700086287135,
     "tier": 0,
-    "activation": 4.115746216325701,
+    "activation": 4.36320513354765,
     "archive_pressure": 0.0,
     "state_groups": [
       "is zibber what",
       "zibber is can",
       "zibber is cold",
-      "zibber is to"
+      "zibber is to",
+      "zibber is means"
     ]
   },
   "old": {

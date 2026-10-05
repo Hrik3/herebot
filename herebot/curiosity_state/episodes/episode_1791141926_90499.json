@@ -1,0 +1,58 @@
+{
+  "id": "ep_78239b6d42fe",
+  "timestamp": 1791141926.310147,
+  "user_input": "talking means herebot listens and learns",
+  "system_response": "TPL.HYP.REL word='talking' candidate='herebot'",
+  "factor_vector": {
+    "curiosity": 1.7625737452424135,
+    "threat": 0.1309114925645642,
+    "trust": 0.6260454040253358,
+    "confidence": 0.7638528723616513,
+    "uncertainty": 0.00197309844849317,
+    "energy": 0.852,
+    "attention": 0.3,
+    "comprehension": 0.09848810426214526,
+    "fluency": 0.7,
+    "cognitive_load": 0.7444,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 5.631630770821322,
+  "metadata": {
+    "ci_confidence": 0.7638528723616513,
+    "generated_plugin_influence": null
+  },
+  "active_states_at_time": [
+    "bright curiosity"
+  ],
+  "provenance": "OBSERVED",
+  "global_broadcast_state": null,
+  "factor_space_id": "control",
+  "factor_space_version": 1,
+  "factor_names": [
+    "curiosity",
+    "threat",
+    "trust",
+    "confidence",
+    "uncertainty",
+    "energy",
+    "attention",
+    "comprehension",
+    "fluency",
+    "cognitive_load",
+    "conscience_active"
+  ],
+  "factor_statuses": {
+    "curiosity": "observed",
+    "threat": "observed",
+    "trust": "observed",
+    "confidence": "observed",
+    "uncertainty": "observed",
+    "energy": "observed",
+    "attention": "observed",
+    "comprehension": "observed",
+    "fluency": "observed",
+    "cognitive_load": "observed",
+    "conscience_active": "observed"
+  }
+}

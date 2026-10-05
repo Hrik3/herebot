@@ -1,0 +1,18 @@
+{
+  "id": "ep_6a7eb4506529",
+  "timestamp": 1791142628.43203,
+  "user_input": "say something to someone",
+  "system_response": "[synthetic]",
+  "factor_vector": {},
+  "factor_dim": 0,
+  "intrinsic_reward": 0.0,
+  "metadata": {
+    "synthetic": true
+  },
+  "active_states_at_time": [
+    "greetings",
+    "bright curiosity"
+  ],
+  "provenance": "DREAMED",
+  "global_broadcast_state": null
+}

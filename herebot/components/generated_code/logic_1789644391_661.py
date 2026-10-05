@@ -1,7 +1,7 @@
 # AUTO-GENERATED HEREBOT PLUGIN
 # Logic ID: logic_1789644391_661
 # Rule type: state_definition
-# Created: 2026-09-17 16:56:31
+# Created: 2026-10-05 00:44:35
 # Contract: HerebotGeneratedPlugin.v1
 
 import math
@@ -10,58 +10,56 @@ import time
 
 GENERATED_PLUGIN_METADATA = {
   "contract": "HerebotGeneratedPlugin.v1",
-  "created": "2026-09-17 16:56:31",
+  "created": "2026-10-05 00:44:35",
   "logic_id": "logic_1789644391_661",
   "memory_count": 50,
   "memory_hashes": [
-    "a2e64f137d8b455b",
-    "dedc3e413915c1b7",
-    "0b8a56325f90bd2b",
-    "8e2fa5ea0e1436dc",
-    "a9a18efe64543376",
-    "f00372f2138ae1ab",
-    "08428804e00c43b9",
-    "cde0355a7945dcfe",
-    "fc9d9ea090ee8302",
-    "75e50e555287c168",
-    "3ad6a27835b0b528",
-    "cafcfe3a707fe875",
-    "29c084f983a0d079",
-    "b9ecd804d5c12a5d",
-    "30eaa3cdee20a1ef",
-    "2c2968205e896d0e",
-    "a4c9dafd3b1fccab",
-    "dc27dba16d18218e",
-    "12ab7b6dd7783d6d",
-    "d02296f7933e9dbe"
+    "14806d589a21c6ae",
+    "33f16698e5fe1f34",
+    "ab445c23a864f77e",
+    "6bc1591bc46791c1",
+    "a89672c2a6a63c79",
+    "9158562b6442c935",
+    "91b44aa6030cc97a",
+    "ea66b2cd3ce507bc",
+    "0a663ee347fc325c",
+    "eb978b89a428720b",
+    "2ba1ac0fe57edd50",
+    "802c1b8c512cc48a",
+    "a811bbe40004fe9a",
+    "193889c5a4e62800",
+    "4dbe8f5833ed899c",
+    "ba7bd4219e973883",
+    "ccf35024c68ef8b6",
+    "1a810b3d5044f527",
+    "90416cc9d68c5db1",
+    "2d1afbd15cfd0584"
   ],
-  "rule_hash": "0dc31c51f9a385ab",
+  "rule_hash": "283086f8fd1043a1",
   "rule_type": "state_definition",
-  "snapshot_hash": "3129cb99ed124d06",
+  "snapshot_hash": "5e8aaa4279ab6d7f",
   "trigger_tokens": [
     "'greetings'",
+    "can",
     "co",
-    "earth",
-    "essential",
-    "fire",
+    "dark",
     "greetings",
-    "life",
-    "like",
+    "night",
     "occur",
-    "on",
     "recognize",
+    "shine",
+    "stars",
     "state",
-    "the",
-    "today"
+    "the"
   ]
 }
 GENERATED_RULE = {
-  "confirmed": false,
+  "confirmed": False,
   "created": 1789644391.884351,
   "description": "Recognize the 'greetings' state",
   "energy_cost": 0.5,
   "label": "greetings",
-  "last_used": null,
+  "last_used": 1791141275.401277,
   "logic_id": "logic_1789644391_661",
   "phase": "active",
   "predictive_gain": 0.5,
@@ -117,7 +115,7 @@ GENERATED_RULE = {
     0.01401939887343844,
     0.11473039882702359
   ],
-  "recent_usage": 0.0,
+  "recent_usage": 0.1,
   "rule_type": "state_definition"
 }
 ACTION_DESCRIPTOR = {
@@ -247,15 +245,16 @@ def run(context):
     return HerebotGeneratedPlugin().run(context)
 
 
-# SHADOW TEST ERROR [2026-09-17 16:56:31]:
+# SHADOW TEST ERROR [2026-10-05 00:44:35]:
 # NameError: name 'false' is not defined
 # Traceback:
 # Traceback (most recent call last):
 #   File "/home/hrirake/herebot/herebot/traits/code_generator.py", line 1446, in test_code_file
 #     spec.loader.exec_module(module)
-#   File "<frozen importlib._bootstrap_external>", line 883, in exec_module
-#   File "<frozen importlib._bootstrap>", line 241, in _call_with_frames_removed
-#   File "/home/hrirake/herebot/herebot/components/generated_code/logic_1789644391_661.py", line 59, in <module>
+#   File "<frozen importlib._bootstrap_external>", line 995, in exec_module
+#   File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+#   File "/home/hrirake/herebot/herebot/components/generated_code/logic_1789644391_661.py", line 57, in <module>
 #     "confirmed": false,
-# NameError: name 'false' is not defined
+#                  ^^^^^
+# NameError: name 'false' is not defined. Did you mean: 'False'?
 # 

@@ -1,0 +1,18 @@
+{
+  "id": "ep_94ff685a53d0",
+  "timestamp": 1791142591.6139843,
+  "user_input": "stars shine bright in the dark night sky",
+  "system_response": "[synthetic]",
+  "factor_vector": {},
+  "factor_dim": 0,
+  "intrinsic_reward": 0.0,
+  "metadata": {
+    "synthetic": true
+  },
+  "active_states_at_time": [
+    "greetings",
+    "bright curiosity"
+  ],
+  "provenance": "DREAMED",
+  "global_broadcast_state": null
+}

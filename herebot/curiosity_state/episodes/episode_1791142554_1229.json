@@ -1,0 +1,18 @@
+{
+  "id": "ep_3e90253e8242",
+  "timestamp": 1791142554.652626,
+  "user_input": "remember what zibber is cold and wet",
+  "system_response": "[synthetic]",
+  "factor_vector": {},
+  "factor_dim": 0,
+  "intrinsic_reward": 0.0,
+  "metadata": {
+    "synthetic": true
+  },
+  "active_states_at_time": [
+    "greetings",
+    "bright curiosity"
+  ],
+  "provenance": "DREAMED",
+  "global_broadcast_state": null
+}

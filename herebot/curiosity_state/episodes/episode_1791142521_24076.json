@@ -1,0 +1,18 @@
+{
+  "id": "ep_29592732c322",
+  "timestamp": 1791142521.244142,
+  "user_input": "is bright today",
+  "system_response": "[synthetic]",
+  "factor_vector": {},
+  "factor_dim": 0,
+  "intrinsic_reward": 0.0,
+  "metadata": {
+    "synthetic": true
+  },
+  "active_states_at_time": [
+    "greetings",
+    "bright curiosity"
+  ],
+  "provenance": "DREAMED",
+  "global_broadcast_state": null
+}

@@ -1,0 +1,18 @@
+{
+  "id": "ep_f94d5203c0c5",
+  "timestamp": 1791142610.187863,
+  "user_input": "be found near caves",
+  "system_response": "[synthetic]",
+  "factor_vector": {},
+  "factor_dim": 0,
+  "intrinsic_reward": 0.0,
+  "metadata": {
+    "synthetic": true
+  },
+  "active_states_at_time": [
+    "greetings",
+    "bright curiosity"
+  ],
+  "provenance": "DREAMED",
+  "global_broadcast_state": null
+}
