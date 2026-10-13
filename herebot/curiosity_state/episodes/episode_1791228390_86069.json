@@ -1,0 +1,58 @@
+{
+  "id": "ep_df7d9c5e3787",
+  "timestamp": 1791228390.4223056,
+  "user_input": "TPL.CHAT",
+  "system_response": "TPL.HYP.REL word='tpl' candidate='chat'",
+  "factor_vector": {
+    "curiosity": 2.0383615822535903,
+    "threat": 0.3104675141918818,
+    "trust": 0.5454166303045518,
+    "confidence": 0.6563928735280639,
+    "uncertainty": 0.0018848932784763946,
+    "energy": 0.387,
+    "attention": 0.1,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9613,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 2.8754858097576164,
+  "metadata": {
+    "ci_confidence": 0.6563928735280639,
+    "generated_plugin_influence": null
+  },
+  "active_states_at_time": [
+    "maths"
+  ],
+  "provenance": "OBSERVED",
+  "global_broadcast_state": null,
+  "factor_space_id": "control",
+  "factor_space_version": 1,
+  "factor_names": [
+    "curiosity",
+    "threat",
+    "trust",
+    "confidence",
+    "uncertainty",
+    "energy",
+    "attention",
+    "comprehension",
+    "fluency",
+    "cognitive_load",
+    "conscience_active"
+  ],
+  "factor_statuses": {
+    "curiosity": "observed",
+    "threat": "observed",
+    "trust": "observed",
+    "confidence": "observed",
+    "uncertainty": "observed",
+    "energy": "observed",
+    "attention": "observed",
+    "comprehension": "observed",
+    "fluency": "observed",
+    "cognitive_load": "observed",
+    "conscience_active": "observed"
+  }
+}

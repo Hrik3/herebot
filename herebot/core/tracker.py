@@ -132,8 +132,13 @@ class CuriosityTracker:
 
     DATA_FILE = "tracker_data.json"
 
-    def __init__(self, graphs_dir: str = "graphs", plot_every: int = 5):
-        self.graphs_dir = graphs_dir
+    def __init__(self, graphs_dir: Optional[str] = None, plot_every: int = 5):
+        # Keep tracker output inside the Herebot package regardless of the
+        # shell's working directory (the application is normally launched
+        # from ``herebot/`` but tools/tests may be launched elsewhere).
+        if graphs_dir is None:
+            graphs_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "graphs")
+        self.graphs_dir = os.path.abspath(graphs_dir)
         self.plot_every = plot_every
         self._session_id: str = str(uuid.uuid4())[:8]
         self._records_since_last_plot: int = 0
@@ -341,27 +346,47 @@ class CuriosityTracker:
         # Sort data chronologically (may be out of order if loaded from file)
         data = sorted(self._data, key=lambda d: d.get("timestamp", 0))
 
+        # Never draw a line across an engine restart.  The sessions with at
+        # least ten snapshots form the readable trajectory panels; shorter
+        # sessions remain represented in the session-count summary and all
+        # sessions remain present in the heatmap.
+        session_rows: Dict[str, List[Dict]] = defaultdict(list)
+        for row in data:
+            session_rows[row.get("session_id", "?")].append(row)
+        substantive_sessions = [
+            (session_id, rows) for session_id, rows in session_rows.items()
+            if len(rows) >= 10
+        ]
+
         # Build time axis as datetime objects for x-axis labels
         import datetime
         ts = [datetime.datetime.fromtimestamp(d["timestamp"]) for d in data]
         idx = list(range(len(data)))
 
+        def _is_boundary(i: int) -> bool:
+            """Return True at a real session change or a long recording gap."""
+            if i <= 0:
+                return False
+            gap = (ts[i] - ts[i - 1]).total_seconds()
+            return (
+                data[i].get("session_id") != data[i - 1].get("session_id")
+                or gap > _SESSION_GAP_SECONDS
+            )
+
         def _bs(vals):
-            """Sequential x-axis; None break inserted at session gaps."""
+            """Sequential x-axis with a pen lift at each session boundary."""
             xs, ys = [], []
             for i, (x, y) in enumerate(zip(idx, vals)):
-                if i > 0:
-                    gap = (ts[i] - ts[i - 1]).total_seconds()
-                    if gap > _SESSION_GAP_SECONDS:
-                        xs.append((idx[i - 1] + idx[i]) / 2.0)
-                        ys.append(None)
+                if _is_boundary(i):
+                    xs.append((idx[i - 1] + idx[i]) / 2.0)
+                    ys.append(None)
                 xs.append(x)
                 ys.append(y)
             return xs, ys
 
         # ── helper: shade sessions ──
         def _shade_sessions(ax, data, ts):
-            """Dashed vertical line wherever a session gap occurred."""
+            """Mark material recording gaps without obscuring dense sessions."""
             for i in range(1, len(data)):
                 gap = (ts[i] - ts[i - 1]).total_seconds()
                 if gap > _SESSION_GAP_SECONDS:
@@ -379,6 +404,24 @@ class CuriosityTracker:
             "grid.alpha": 0.3,
         })
 
+        def _plot_metric_by_session(ax, metric: str, title: str, ylabel: str,
+                                    *, zero_is_missing: bool = False) -> None:
+            """Draw comparable session-local traces, never a merged timeline."""
+            for i, (session_id, rows) in enumerate(substantive_sessions):
+                values = []
+                for row in rows:
+                    value = row.get(metric)
+                    if value is None or (zero_is_missing and value == 0.0):
+                        values.append(np.nan)
+                    else:
+                        values.append(value)
+                ax.plot(range(1, len(rows) + 1), values,
+                        color=_PALETTE[i % len(_PALETTE)], linewidth=1.5,
+                        label=f"{session_id[:8]} (n={len(rows)})")
+            ax.set_title(title)
+            ax.set_ylabel(ylabel)
+            ax.set_xlabel("Snapshot within session", fontsize=7)
+
         # ──────────────────────────────────────────────────────────────────────
         # 1.  Overview dashboard  (3-row grid)
         # ──────────────────────────────────────────────────────────────────────
@@ -386,97 +429,49 @@ class CuriosityTracker:
         fig.suptitle("Herebot Curiosity Engine – Session Tracker", fontsize=15, fontweight="bold")
         gs = GridSpec(3, 2, figure=fig, hspace=0.45, wspace=0.35)
 
-        # 1a. Words & Concepts
+        # All dashboard traces use a session-local axis.  A global index would
+        # turn state restoration between sessions into misleading jumps.
+        # 1a. Vocabulary
         ax = fig.add_subplot(gs[0, 0])
-        ax.plot(*_bs([d.get("words_known", 0) for d in data]),
-                color=_PALETTE[0], linewidth=1.8, label="Words known")
-        ax.plot(*_bs([d.get("concepts_formed", 0) for d in data]),
-                color=_PALETTE[1], linewidth=1.8, linestyle="--", label="Concepts formed")
-        _shade_sessions(ax, data, ts)
-        ax.set_title("Vocabulary & Concept Growth")
-        ax.set_ylabel("Count")
-        ax.legend(fontsize=8)
-        ax.set_xlabel("Interaction index", fontsize=7)
+        _plot_metric_by_session(ax, "words_known", "Vocabulary by Session", "Words known")
+        ax.legend(fontsize=6, ncol=2, loc="best", title="Session", title_fontsize=7)
 
         # 1b. Intrinsic reward
         ax = fig.add_subplot(gs[0, 1])
-        ax.plot(*_bs([d.get("total_reward", 0) for d in data]),
-                color=_PALETTE[2], linewidth=1.8, label="Cumulative")
-        ep_rewards = [d.get("episode_reward") for d in data]
-        if any(r is not None and r != 0.0 for r in ep_rewards):
-            ax.plot(*_bs([d.get("episode_reward", 0) for d in data]),
-                    color=_PALETTE[8], linewidth=1.2, linestyle="--", alpha=0.75, label="Episode")
-            ax.legend(fontsize=7, loc="upper left")
-        _shade_sessions(ax, data, ts)
-        ax.set_title("Intrinsic Reward")
-        ax.set_ylabel("Reward")
-        ax.set_xlabel("Interaction index", fontsize=7)
+        _plot_metric_by_session(ax, "total_reward", "Cumulative Reward by Session", "Reward")
 
         # 1c. Entropy & GP variance
         ax = fig.add_subplot(gs[1, 0])
-        ax.plot(*_bs([d.get("avg_entropy", 0) for d in data]),
-                color=_PALETTE[3], linewidth=1.8, label="Avg entropy")
-        
-        # Pen-lift on historical missing/zero GP variance
-        gp_vars = []
-        for d in data:
-            v = d.get("avg_gp_variance")
-            # In historical data (schema 1 or unversioned), exactly 0.0 was the swallowed exception
-            if v is None or v == 0.0:
-                gp_vars.append(None)
-            else:
-                gp_vars.append(v)
-        
-        ax.plot(*_bs(gp_vars),
-                color=_PALETTE[4], linewidth=1.8, linestyle=":", label="Avg GP variance")
-                
-        turn_gpus = [d.get("turn_gp_uncertainty") for d in data]
-        if any(u is not None for u in turn_gpus):
-            ax.plot(*_bs(turn_gpus),
-                    color=_PALETTE[9], linewidth=1.3, alpha=0.8, linestyle="-.", label="Turn GP uncertainty")
-
-        _shade_sessions(ax, data, ts)
-        ax.set_title("Uncertainty Signals")
-        ax.set_ylabel("Value")
-        ax.legend(fontsize=8)
-        ax.set_xlabel("Interaction index", fontsize=7)
+        _plot_metric_by_session(ax, "avg_entropy", "Average Entropy by Session", "Entropy")
 
         # 1d. Top curiosity score
         ax = fig.add_subplot(gs[1, 1])
-        ax.plot(*_bs([d.get("top_curiosity_score", 0) for d in data]),
-                color=_PALETTE[5], linewidth=1.8)
-        _shade_sessions(ax, data, ts)
-        ax.set_title("Top Word Curiosity Score")
-        ax.set_ylabel("Score")
-        ax.set_xlabel("Interaction index", fontsize=7)
+        _plot_metric_by_session(ax, "top_curiosity_score", "Top Curiosity Score by Session", "Score")
 
         # 1e. States & unique tokens
         ax = fig.add_subplot(gs[2, 0])
-        ax.plot(*_bs([d.get("states_learned", 0) for d in data]),
-                color=_PALETTE[6], linewidth=1.8, label="States learned")
-        ax.plot(*_bs([d.get("unique_tokens", 0) for d in data]),
-                color=_PALETTE[7], linewidth=1.8, linestyle="--", label="Unique tokens")
-        _shade_sessions(ax, data, ts)
-        ax.set_title("State & Token Diversity")
-        ax.set_ylabel("Count")
-        ax.legend(fontsize=8)
-        ax.set_xlabel("Interaction index", fontsize=7)
+        _plot_metric_by_session(ax, "unique_tokens", "Unique Tokens by Session", "Tokens")
 
         # 1f. Session interaction distribution (bar chart)
         ax = fig.add_subplot(gs[2, 1])
         sessions: Dict[str, int] = defaultdict(int)
         for d in data:
             sessions[d.get("session_id", "?")[:6]] += 1
-        sess_labels = list(sessions.keys())
-        sess_counts = [sessions[k] for k in sess_labels]
-        bars = ax.bar(sess_labels, sess_counts, color=_PALETTE[:len(sess_labels)])
-        ax.set_title("Interactions per Session")
-        ax.set_ylabel("Interactions")
-        ax.set_xlabel("Session ID (short)")
-        plt.setp(ax.xaxis.get_majorticklabels(), rotation=30, ha="right", fontsize=7)
+        # A horizontal ranking remains legible even with many short sessions.
+        ordered_sessions = sorted(sessions.items(), key=lambda item: (-item[1], item[0]))
+        sess_labels = [item[0] for item in ordered_sessions]
+        sess_counts = [item[1] for item in ordered_sessions]
+        bars = ax.barh(sess_labels, sess_counts,
+                       color=[_PALETTE[i % len(_PALETTE)] for i in range(len(sess_labels))])
+        ax.set_title("Recorded Snapshots per Session")
+        ax.set_xlabel("Snapshots")
+        ax.set_ylabel("Session ID (short)")
+        ax.invert_yaxis()
+        ax.tick_params(axis="y", labelsize=7)
         for bar, count in zip(bars, sess_counts):
-            ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.3,
-                    str(count), ha="center", va="bottom", fontsize=8)
+            ax.text(bar.get_width() + max(sess_counts) * 0.01,
+                    bar.get_y() + bar.get_height() / 2,
+                    str(count), ha="left", va="center", fontsize=7)
 
         self._savefig(fig, "overview_dashboard.png")
         plt.close(fig)
@@ -491,36 +486,61 @@ class CuriosityTracker:
                     all_factor_names.append(k)
 
         if all_factor_names:
+            # A missing factor did not have a weight at that snapshot.  It is
+            # unknown, not zero; preserving it as NaN prevents invented zero
+            # bands in the heatmap and factor traces.
             matrix = np.array([
-                [d.get("factor_weights", {}).get(f, 0.0) for f in all_factor_names]
+                [d.get("factor_weights", {}).get(f, np.nan) for f in all_factor_names]
                 for d in data
-            ]).T                              # shape: (n_factors, n_interactions)
+            ], dtype=float).T                 # shape: (n_factors, n_snapshots)
+            limit = float(np.nanmax(np.abs(matrix)))
+            limit = max(limit, 1e-9)
+            cmap = plt.get_cmap("RdYlGn").copy()
+            cmap.set_bad(color="#e6e6e6")
 
-            fig, ax = plt.subplots(figsize=(max(10, len(data) * 0.3 + 2), max(4, len(all_factor_names) * 0.6 + 1)))
-            im = ax.imshow(matrix, aspect="auto", cmap="RdYlGn", vmin=-1.0, vmax=1.0)
+            fig, ax = plt.subplots(figsize=(18, max(7, len(all_factor_names) * 0.34 + 2)))
+            im = ax.imshow(matrix, aspect="auto", cmap=cmap, vmin=-limit, vmax=limit,
+                           interpolation="nearest")
             ax.set_yticks(range(len(all_factor_names)))
             ax.set_yticklabels(all_factor_names, fontsize=8)
-            ax.set_xlabel("Interaction index (chronological)")
-            ax.set_title("Meta-Learner Factor Weight Evolution")
-            plt.colorbar(im, ax=ax, label="Weight")
+            ax.set_xlabel("Chronological snapshot index")
+            ax.set_title("Meta-Learner Factor Weights (grey = factor not yet present)")
+            plt.colorbar(im, ax=ax, label="Weight", pad=0.01)
             fig.tight_layout()
             self._savefig(fig, "factor_weights_heatmap.png")
             plt.close(fig)
 
-            # Factor weight lines (cleaner for small factor counts)
-            fig, ax = plt.subplots(figsize=(14, 5))
-            for i, fname in enumerate(all_factor_names):
-                vals = [d.get("factor_weights", {}).get(fname, 0.0) for d in data]
-                ax.plot(*_bs(vals), label=fname, color=_PALETTE[i % len(_PALETTE)],
-                        linewidth=1.5, alpha=0.85)
-            ax.axhline(0, color="black", linewidth=0.7, linestyle="--", alpha=0.4)
-            _shade_sessions(ax, data, ts)
-            ax.set_title("Meta-Learner Factor Weights Over Time")
-            ax.set_ylabel("Weight")
-            ax.legend(fontsize=7, loc="upper left", ncol=3)
-            ax.xaxis.set_major_formatter(mdates.DateFormatter("%m/%d %H:%M"))
-            plt.setp(ax.xaxis.get_majorticklabels(), rotation=30, ha="right", fontsize=7)
-            fig.tight_layout()
+            # Factor weight trajectories are faceted by run.  Earlier plots
+            # laid independent sessions end-to-end, which made resets appear
+            # as random mid-series jumps.  Dynamic factors remain fully
+            # visible in the heatmap; these panels focus on comparable core
+            # factor trajectories within each actual engine run.
+            core_factors = [f for f in all_factor_names if not (
+                f.startswith("residual_") or f.startswith("drive_") or f.startswith("ctrl_")
+            )]
+            panel_sessions = substantive_sessions or list(session_rows.items())
+            cols = 2
+            rows = int(np.ceil(len(panel_sessions) / cols))
+            fig, axes = plt.subplots(rows, cols, figsize=(18, max(6, rows * 3.4)),
+                                     squeeze=False, sharey=True)
+            flat_axes = axes.ravel()
+            for panel, (session_id, session_data) in enumerate(panel_sessions):
+                ax = flat_axes[panel]
+                local_x = range(1, len(session_data) + 1)
+                for i, fname in enumerate(core_factors):
+                    vals = [d.get("factor_weights", {}).get(fname, np.nan) for d in session_data]
+                    ax.plot(local_x, vals, label=fname, color=_PALETTE[i % len(_PALETTE)],
+                            linewidth=1.25, alpha=0.9)
+                ax.axhline(0, color="black", linewidth=0.7, linestyle="--", alpha=0.4)
+                ax.set_title(f"Session {session_id[:8]}  (n={len(session_data)})", loc="left", fontsize=10)
+                ax.set_ylabel("Weight")
+                ax.set_xlabel("Snapshot within this session")
+            for ax in flat_axes[len(panel_sessions):]:
+                ax.set_visible(False)
+            handles, labels = flat_axes[0].get_legend_handles_labels()
+            fig.legend(handles, labels, loc="center right", fontsize=7, title="Core factors")
+            fig.suptitle("Core Meta-Learner Weights Within Individual Sessions", fontsize=15, fontweight="bold")
+            fig.subplots_adjust(left=0.06, right=0.82, bottom=0.07, top=0.91, hspace=0.36, wspace=0.18)
             self._savefig(fig, "factor_weights_lines.png")
             plt.close(fig)
 
@@ -551,17 +571,20 @@ class CuriosityTracker:
             plt.close(fig)
 
         # ──────────────────────────────────────────────────────────────────────
-        # 4.  Per-session comparison (box-plot of reward increments)
+        # 4.  Per-session comparison (box-plot of observed reward changes)
         # ──────────────────────────────────────────────────────────────────────
         session_rewards: Dict[str, List[float]] = defaultdict(list)
         prev_reward: Dict[str, float] = {}
         for d in sorted(data, key=lambda x: x.get("timestamp", 0)):
             sid = d.get("session_id", "?")[:6]
-            r = d.get("total_reward") or 0.0
+            r = d.get("total_reward")
+            if r is None:
+                continue
             if sid in prev_reward:
                 delta = r - prev_reward[sid]
-                if delta >= 0:
-                    session_rewards[sid].append(delta)
+                # Negative changes are valid observations and must not be
+                # silently discarded from a research plot.
+                session_rewards[sid].append(delta)
             prev_reward[sid] = r
 
         if session_rewards:
@@ -576,8 +599,9 @@ class CuriosityTracker:
             for patch, color in zip(bp["boxes"], _PALETTE):
                 patch.set_facecolor(color)
                 patch.set_alpha(0.7)
-            ax.set_title("Per-Interaction Reward Gain by Session")
-            ax.set_ylabel("Δ Intrinsic Reward")
+            ax.axhline(0, color="black", linewidth=0.8, linestyle="--", alpha=0.6)
+            ax.set_title("Cumulative-Reward Change per Recorded Event by Session")
+            ax.set_ylabel("Δ cumulative intrinsic reward")
             ax.set_xlabel("Session ID (short)")
             fig.tight_layout()
             self._savefig(fig, "reward_per_session.png")
@@ -598,8 +622,12 @@ class CuriosityTracker:
                 ["avg_entropy", "top_curiosity_score", "avg_gp_variance"],
                 ["Avg Entropy", "Top Curiosity Score", "Avg GP Variance"],
             ):
-                idle_vals  = [d.get(metric, 0) or 0 for d, m in zip(data, idle_mask)  if m]
-                inter_vals = [d.get(metric, 0) or 0 for d, m in zip(data, inter_mask) if m]
+                # Omit absent/non-finite measurements instead of converting
+                # them to zero, which would fabricate a distributional mass.
+                idle_vals = [float(d[metric]) for d, m in zip(data, idle_mask)
+                             if m and d.get(metric) is not None and np.isfinite(d[metric])]
+                inter_vals = [float(d[metric]) for d, m in zip(data, inter_mask)
+                              if m and d.get(metric) is not None and np.isfinite(d[metric])]
                 bp = ax.boxplot(
                     [inter_vals, idle_vals],
                     labels=["Interaction", "Idle"],
@@ -610,7 +638,7 @@ class CuriosityTracker:
                 bp["boxes"][1].set_facecolor(_PALETTE[2])
                 for box in bp["boxes"]:
                     box.set_alpha(0.7)
-                ax.set_title(label)
+                ax.set_title(f"{label}  (interaction n={len(inter_vals)}, idle n={len(idle_vals)})")
             fig.tight_layout()
             self._savefig(fig, "idle_vs_interaction.png")
             plt.close(fig)

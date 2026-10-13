@@ -234,4 +234,6 @@ class CuriosityEngine(HeartPersistenceMixin, HeartCuriosityMixin, HeartProcessin
             self._load_state()
         self.structured_world_model = StructuredWorldModel(self.reasoner.knowledge_graph, self.state_manager)
         from .tracker import CuriosityTracker
-        self.tracker = CuriosityTracker(graphs_dir="graphs", plot_every=5)
+        # The tracker resolves its default output alongside the package, so
+        # graph persistence does not depend on the process working directory.
+        self.tracker = CuriosityTracker(plot_every=5)

@@ -1,26 +1,26 @@
 {
   "group::bright curiosity||greetings": {
-    "head_label": "zibber is means",
+    "head_label": "is zibber means",
     "child_labels": [
       "bright curiosity",
       "greetings"
     ],
     "centroid_vector": [
-      0.3733476756968188,
-      0.08705435096111452,
-      0.38500551721735576,
-      0.386510654528865,
-      0.007280292254226622,
-      0.18758559279830092,
-      0.028566070247082853,
-      0.27206167685270155,
-      0.38723255954890795,
-      0.5434973135550224,
+      0.3729820903875019,
+      0.08709718603416057,
+      0.3850783810842506,
+      0.38640158850443057,
+      0.007288617266195015,
+      0.18758881117331222,
+      0.028486042975498106,
+      0.27247971502157703,
+      0.38724926790579633,
+      0.5435490428678895,
       0.0
     ],
     "dominant_tokens": [
-      "zibber",
       "is",
+      "zibber",
       "means",
       "to",
       "found",
@@ -42,7 +42,7 @@
       },
       {
         "factor_index": 2,
-        "mean_delta": 0.07003625374577944
+        "mean_delta": 0.07003625374577943
       },
       {
         "factor_index": 9,
@@ -50,12 +50,12 @@
       },
       {
         "factor_index": 6,
-        "mean_delta": 0.04776565095509509
+        "mean_delta": 0.0477656509550951
       }
     ],
-    "probability": 1.0,
-    "reward_trace": 226.8683728721664,
-    "last_interaction": 12,
+    "probability": 0.9979227105142702,
+    "reward_trace": 250.91106222214873,
+    "last_interaction": 20,
     "phase": "active",
     "first_interaction": 7
   }

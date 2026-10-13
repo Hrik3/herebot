@@ -1,0 +1,58 @@
+{
+  "id": "ep_c06b1c332c03",
+  "timestamp": 1791229059.9412518,
+  "user_input": "e='means' | someone",
+  "system_response": "TPL.PFX.CURIOUS | | someone word='sun' crow something be who What living thanks",
+  "factor_vector": {
+    "curiosity": 1.5961204085576348,
+    "threat": 0.17321301140531797,
+    "trust": 0.6206033497982697,
+    "confidence": 0.835737886573301,
+    "uncertainty": 0.001930248244681623,
+    "energy": 0.392,
+    "attention": 0.1,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9608,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 4.842946891688951,
+  "metadata": {
+    "ci_confidence": 0.835737886573301,
+    "generated_plugin_influence": null
+  },
+  "active_states_at_time": [
+    "maths"
+  ],
+  "provenance": "OBSERVED",
+  "global_broadcast_state": null,
+  "factor_space_id": "control",
+  "factor_space_version": 1,
+  "factor_names": [
+    "curiosity",
+    "threat",
+    "trust",
+    "confidence",
+    "uncertainty",
+    "energy",
+    "attention",
+    "comprehension",
+    "fluency",
+    "cognitive_load",
+    "conscience_active"
+  ],
+  "factor_statuses": {
+    "curiosity": "observed",
+    "threat": "observed",
+    "trust": "observed",
+    "confidence": "observed",
+    "uncertainty": "observed",
+    "energy": "observed",
+    "attention": "observed",
+    "comprehension": "observed",
+    "fluency": "observed",
+    "cognitive_load": "observed",
+    "conscience_active": "observed"
+  }
+}

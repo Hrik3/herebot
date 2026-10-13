@@ -1,0 +1,58 @@
+{
+  "id": "ep_87dfd043d1c7",
+  "timestamp": 1791229106.3497677,
+  "user_input": "[Chat Mode] Reward multiplier: 2.00 (original: 2.241 \u2192 boosted: 4.483)",
+  "system_response": "TPL.PFX.CURIOUS | TPL.ASK.MEAN word='chat'?",
+  "factor_vector": {
+    "curiosity": 2.605473729143683,
+    "threat": 0.24100070437280038,
+    "trust": 0.5705722727543645,
+    "confidence": 0.6889915584997919,
+    "uncertainty": 0.001824687793789658,
+    "energy": 0.392,
+    "attention": 0.45,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.8236,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 35.72985431323247,
+  "metadata": {
+    "ci_confidence": 0.6889915584997919,
+    "generated_plugin_influence": null
+  },
+  "active_states_at_time": [
+    "maths"
+  ],
+  "provenance": "OBSERVED",
+  "global_broadcast_state": null,
+  "factor_space_id": "control",
+  "factor_space_version": 1,
+  "factor_names": [
+    "curiosity",
+    "threat",
+    "trust",
+    "confidence",
+    "uncertainty",
+    "energy",
+    "attention",
+    "comprehension",
+    "fluency",
+    "cognitive_load",
+    "conscience_active"
+  ],
+  "factor_statuses": {
+    "curiosity": "observed",
+    "threat": "observed",
+    "trust": "observed",
+    "confidence": "observed",
+    "uncertainty": "observed",
+    "energy": "observed",
+    "attention": "observed",
+    "comprehension": "observed",
+    "fluency": "observed",
+    "cognitive_load": "observed",
+    "conscience_active": "observed"
+  }
+}

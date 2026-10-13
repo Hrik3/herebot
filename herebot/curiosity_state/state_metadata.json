@@ -6,20 +6,21 @@
     "phase": "active",
     "last_used": 1781029568.019288,
     "confidence": 1.0,
-    "usage": 274.7086740497649,
-    "reward_trace": 258.62210144144365,
-    "last_interaction": 12,
-    "last_decay_interaction": 12,
-    "probability": 0.9843652999137129,
+    "usage": 262.6720043596689,
+    "reward_trace": 247.00963050572452,
+    "last_interaction": 19,
+    "last_decay_interaction": 21,
+    "probability": 0.9808076173257178,
     "tier": 4,
-    "activation": 274.7086740497649,
+    "activation": 262.6720043596689,
     "archive_pressure": 0.0,
     "state_groups": [
       "is zibber what",
       "zibber is can",
       "zibber is cold",
       "zibber is to",
-      "zibber is means"
+      "zibber is means",
+      "is zibber means"
     ]
   },
   "bright curiosity": {
@@ -29,20 +30,21 @@
     "phase": "active",
     "last_used": 1789216163.857052,
     "confidence": 1.0,
-    "usage": 4.369719512874848,
-    "reward_trace": 3.2534751254406533,
-    "last_interaction": 12,
-    "last_decay_interaction": 12,
-    "probability": 0.015634700086287135,
+    "usage": 4.589767164271916,
+    "reward_trace": 3.4887557554671385,
+    "last_interaction": 21,
+    "last_decay_interaction": 21,
+    "probability": 0.01712205363742788,
     "tier": 0,
-    "activation": 4.36320513354765,
+    "activation": 4.585490638785858,
     "archive_pressure": 0.0,
     "state_groups": [
       "is zibber what",
       "zibber is can",
       "zibber is cold",
       "zibber is to",
-      "zibber is means"
+      "zibber is means",
+      "is zibber means"
     ]
   },
   "old": {
@@ -60,5 +62,21 @@
     "tier": 4,
     "activation": 0.55,
     "archive_pressure": 0.0
+  },
+  "maths": {
+    "energy_cost": 1.0,
+    "recent_usage": 0.0,
+    "predictive_gain": 1.0,
+    "phase": "active",
+    "last_used": 1791228309.6901348,
+    "confidence": 1.0,
+    "usage": 1.0154442742654661,
+    "reward_trace": 0.09231311289347888,
+    "last_interaction": 5,
+    "last_decay_interaction": 21,
+    "probability": 0.0020703290368542676,
+    "tier": 0,
+    "activation": 0.5544588644991489,
+    "archive_pressure": 0.10178969315932722
   }
 }

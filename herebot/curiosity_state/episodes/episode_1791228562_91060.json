@@ -1,0 +1,58 @@
+{
+  "id": "ep_b3a113be191b",
+  "timestamp": 1791228562.644508,
+  "user_input": "herebot",
+  "system_response": "TPL.PFX.TRUST | TPL.RECALL.PHRASE phrase='herebot'",
+  "factor_vector": {
+    "curiosity": 0.24443732353152825,
+    "threat": 0.10134535436319465,
+    "trust": 0.7547413462535874,
+    "confidence": 0.8025428691803437,
+    "uncertainty": 0.0022718817151485124,
+    "energy": 0.366,
+    "attention": 0.05,
+    "comprehension": 0.5,
+    "fluency": 0.7,
+    "cognitive_load": 0.9817,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 0.3330276877511484,
+  "metadata": {
+    "ci_confidence": 0.8025428691803437,
+    "generated_plugin_influence": null
+  },
+  "active_states_at_time": [
+    "maths"
+  ],
+  "provenance": "OBSERVED",
+  "global_broadcast_state": null,
+  "factor_space_id": "control",
+  "factor_space_version": 1,
+  "factor_names": [
+    "curiosity",
+    "threat",
+    "trust",
+    "confidence",
+    "uncertainty",
+    "energy",
+    "attention",
+    "comprehension",
+    "fluency",
+    "cognitive_load",
+    "conscience_active"
+  ],
+  "factor_statuses": {
+    "curiosity": "observed",
+    "threat": "observed",
+    "trust": "observed",
+    "confidence": "observed",
+    "uncertainty": "observed",
+    "energy": "observed",
+    "attention": "observed",
+    "comprehension": "observed",
+    "fluency": "observed",
+    "cognitive_load": "observed",
+    "conscience_active": "observed"
+  }
+}

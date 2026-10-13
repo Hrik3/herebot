@@ -1,0 +1,58 @@
+{
+  "id": "ep_32bef65dd181",
+  "timestamp": 1791228862.2657695,
+  "user_input": "iron is hot",
+  "system_response": "TPL.NGRAM seed='is hot' next='and'?",
+  "factor_vector": {
+    "curiosity": 1.5969023915914935,
+    "threat": 0.12591550388336062,
+    "trust": 0.7856019999251889,
+    "confidence": 0.7839570849828645,
+    "uncertainty": 0.0019793223526023427,
+    "energy": 0.397,
+    "attention": 0.15,
+    "comprehension": 0.6665745643861157,
+    "fluency": 0.7,
+    "cognitive_load": 0.94045,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 6.316752501562842,
+  "metadata": {
+    "ci_confidence": 0.7839570849828645,
+    "generated_plugin_influence": null
+  },
+  "active_states_at_time": [
+    "maths"
+  ],
+  "provenance": "OBSERVED",
+  "global_broadcast_state": null,
+  "factor_space_id": "control",
+  "factor_space_version": 1,
+  "factor_names": [
+    "curiosity",
+    "threat",
+    "trust",
+    "confidence",
+    "uncertainty",
+    "energy",
+    "attention",
+    "comprehension",
+    "fluency",
+    "cognitive_load",
+    "conscience_active"
+  ],
+  "factor_statuses": {
+    "curiosity": "observed",
+    "threat": "observed",
+    "trust": "observed",
+    "confidence": "observed",
+    "uncertainty": "observed",
+    "energy": "observed",
+    "attention": "observed",
+    "comprehension": "observed",
+    "fluency": "observed",
+    "cognitive_load": "observed",
+    "conscience_active": "observed"
+  }
+}

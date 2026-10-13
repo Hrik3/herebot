@@ -1,0 +1,58 @@
+{
+  "id": "ep_6e9572abdf65",
+  "timestamp": 1791228596.5800405,
+  "user_input": "identity",
+  "system_response": "knows yellow learns value='is candidate='human' earth thanks fire animal word='car' candidate='means' | someone",
+  "factor_vector": {
+    "curiosity": 1.5302875809649463,
+    "threat": 0.11721504429100157,
+    "trust": 0.7402036493269157,
+    "confidence": 0.7673814915573512,
+    "uncertainty": 0.00225122824500898,
+    "energy": 0.397,
+    "attention": 0.05,
+    "comprehension": 0.5,
+    "fluency": 0.7,
+    "cognitive_load": 0.98015,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 4.482904489036135,
+  "metadata": {
+    "ci_confidence": 0.7673814915573512,
+    "generated_plugin_influence": null
+  },
+  "active_states_at_time": [
+    "maths"
+  ],
+  "provenance": "OBSERVED",
+  "global_broadcast_state": null,
+  "factor_space_id": "control",
+  "factor_space_version": 1,
+  "factor_names": [
+    "curiosity",
+    "threat",
+    "trust",
+    "confidence",
+    "uncertainty",
+    "energy",
+    "attention",
+    "comprehension",
+    "fluency",
+    "cognitive_load",
+    "conscience_active"
+  ],
+  "factor_statuses": {
+    "curiosity": "observed",
+    "threat": "observed",
+    "trust": "observed",
+    "confidence": "observed",
+    "uncertainty": "observed",
+    "energy": "observed",
+    "attention": "observed",
+    "comprehension": "observed",
+    "fluency": "observed",
+    "cognitive_load": "observed",
+    "conscience_active": "observed"
+  }
+}

@@ -1,0 +1,58 @@
+{
+  "id": "ep_3d10ca520bc9",
+  "timestamp": 1791228730.1783853,
+  "user_input": "i will kill you",
+  "system_response": "TPL.PFX.CURIOUS | i you and someone candidate='living' rain candidate='living' found? flows value='is TPL.HYP.REL flows friend candidate='zibber'",
+  "factor_vector": {
+    "curiosity": 1.7606850960579619,
+    "threat": 0.12729327126451806,
+    "trust": 0.6360184727968727,
+    "confidence": 0.866567753650698,
+    "uncertainty": 0.0021722377802648046,
+    "energy": 0.392,
+    "attention": 0.15,
+    "comprehension": 0.0,
+    "fluency": 0.7,
+    "cognitive_load": 0.9412,
+    "conscience_active": 0.0
+  },
+  "factor_dim": 11,
+  "intrinsic_reward": 9.89247599358944,
+  "metadata": {
+    "ci_confidence": 0.866567753650698,
+    "generated_plugin_influence": null
+  },
+  "active_states_at_time": [
+    "maths"
+  ],
+  "provenance": "OBSERVED",
+  "global_broadcast_state": null,
+  "factor_space_id": "control",
+  "factor_space_version": 1,
+  "factor_names": [
+    "curiosity",
+    "threat",
+    "trust",
+    "confidence",
+    "uncertainty",
+    "energy",
+    "attention",
+    "comprehension",
+    "fluency",
+    "cognitive_load",
+    "conscience_active"
+  ],
+  "factor_statuses": {
+    "curiosity": "observed",
+    "threat": "observed",
+    "trust": "observed",
+    "confidence": "observed",
+    "uncertainty": "observed",
+    "energy": "observed",
+    "attention": "observed",
+    "comprehension": "observed",
+    "fluency": "observed",
+    "cognitive_load": "observed",
+    "conscience_active": "observed"
+  }
+}
